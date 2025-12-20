@@ -49,6 +49,10 @@ TextArea {
   background: transparent !important;
 }
 
+VerticalScroll {
+  scrollbar-visibility: hidden;
+}
+
 TodoContainer,
 Projects {
   border: round $primary;
