@@ -1,14 +1,15 @@
 from textual.widgets import Static
-from src.components.todos import Todos
-from src.components.customHeader import CustomHeader
 from src.components.body import Body
+from src.components.todoContainer import TodoContainer
+from src.components.projects import Projects
+from textual.containers import Container
+
 
 class Content(Static):
     def compose(self):
-        yield Todos()
+        yield Container(Projects(), TodoContainer())
         yield Body()
 
 class ContentWrapper(Static):
     def compose(self):
-        yield CustomHeader()
         yield Content()

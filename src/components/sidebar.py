@@ -16,8 +16,11 @@ class Form(Container):
 
     def compose(self) -> ComposeResult:
         yield Input(placeholder="Enter title here...", id=TITLE_ID)
-        yield TextArea.code_editor(
-            placeholder="Enter content here....", language="markdown", id=CONTENT_ID
+        yield TextArea(
+            placeholder="Enter content here....",
+            language="markdown",
+            id=CONTENT_ID,
+            classes="editor",
         )
 
     def action_submit(self) -> None:

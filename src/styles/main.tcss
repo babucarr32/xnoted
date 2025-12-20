@@ -6,23 +6,53 @@ ContentWrapper {
 Content {
   layout: grid;
   grid-size: 2;
-  grid-columns: 1fr 2fr;
-  height: 95vh;
+  grid-columns: 1fr 3fr;
+  /* height: 95vh; */
 }
 
 CustomHeader {
   /* padding: 1; */
   text-align: center;
-  border: solid green;
+  border: solid $primary;
 }
 
-Body,
-Todos {
-  border: solid green;
+Body {
+  border: solid round $primary;
+}
+
+Todos,
+Input,
+Select,
+Projects {
+  background: transparent;
+}
+
+Input {
+  margin: 0;
+  border: round $primary;
+}
+
+Select,
+SelectOverlay {
+  background: transparent !important;
+  border: solid round $primary;
 }
 
 #title {
-  margin-bottom: 1;
+  /* margin-bottom: 1; */
+}
+
+TextArea {
+  border: round $primary;
+  background: transparent !important;
+}
+
+TodoContainer,
+Projects {
+  border: round $primary;
+  border-title-align: left;
+  border-title-style: bold;
+  /* padding: 1; */
 }
 
 #content {
@@ -30,8 +60,8 @@ Todos {
 }
 
 .box {
-  height: 100%;
-  border: solid green;
+  height: 0%;
+  border: solid $primary;
 }
 
 #submit {
@@ -55,6 +85,6 @@ CreateToDoModal Vertical {
   width: 70%;
   height: 50%;
   /* padding: 1; */
-  /* border: round green; */
+  /* border: round $primary; */
   background: transparent;
 }
