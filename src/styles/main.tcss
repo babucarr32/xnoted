@@ -1,12 +1,13 @@
 ContentWrapper {
   layout: vertical;
-  height: 100vh;
+  height: 100%;
 }
 
 Content {
   layout: grid;
   grid-size: 2;
   grid-columns: 1fr 3fr;
+  height: 100%;
   /* height: 95vh; */
 }
 
@@ -18,6 +19,7 @@ CustomHeader {
 
 Body {
   border: solid round $primary;
+  height: 100%;
 }
 
 Todos,

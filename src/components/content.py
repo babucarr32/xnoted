@@ -7,7 +7,7 @@ from textual.containers import Container
 
 class Content(Static):
     def compose(self):
-        yield Container(Projects(), TodoContainer())
+        yield Container(TodoContainer())
         yield Body()
 
 class ContentWrapper(Static):
