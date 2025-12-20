@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List
 
-class Storage():
+class Storage:
     def __init__(self, path: str):
         self.path = path
 
@@ -16,8 +16,8 @@ class Storage():
     def load(self) -> List[Dict[str, Any]]:
         try:
             file_path = Path(self.path)
-            if (file_path.exists()):
-                with open(file_path, 'r') as f:
+            if file_path.exists():
+                with open(file_path, "r") as f:
                     return json.load(f)
             return []
         except Exception as e:
@@ -35,3 +35,11 @@ class Storage():
 
     def is_storage_exist(self) -> bool:
         return isinstance(self.load(), list)
+    
+    def get_last_id(self) -> str | None:
+        todos = self.load()
+        if todos:
+            last_todo = todos[-1]
+            if last_todo:
+                return last_todo.get('id')        
+        return "0"

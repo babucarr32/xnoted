@@ -1,7 +1,10 @@
+import uuid
 from textual.containers import Container
 from textual.widgets import Input, TextArea, Button
 from textual.app import ComposeResult
 from src.utils.storage import Storage
+from src.components.todos import Todos
+from src.utils.constants import DB_PATH
 
 TEXT = """\
 ```
@@ -15,7 +18,7 @@ def goodbye(name):
 
 TITLE_ID = "title"
 CONTENT_ID = "content"
-DB_PATH = "db.json"
+
 
 class Form(Container):
     def compose(self) -> ComposeResult:
@@ -23,16 +26,15 @@ class Form(Container):
         yield TextArea.code_editor(TEXT, language="markdown", id=CONTENT_ID)
         yield Button("Submit", id="submit", variant="primary")
 
-    # def on_input_changed(self, event: Input.Changed):
-    #     self.log(f"Input changed: {event.value}")
-
     def on_button_pressed(self, event: Button.Pressed) -> None:
         storage = Storage(DB_PATH)
         title = self.query_one(f"#{TITLE_ID}").value
         content = self.query_one(f"#{CONTENT_ID}").text
+
         data = {
+            "id": str(uuid.uuid4()),
             "title": title,
-            "content": content
+            "content": content,
         }
 
         if storage.is_storage_exist():
@@ -42,3 +44,6 @@ class Form(Container):
 
         self.log(f"Title: {title}")
         self.log(f"Content: {content}")
+
+        todos_widget = self.app.query_one(Todos)
+        todos_widget.refresh_todos()
