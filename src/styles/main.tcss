@@ -49,7 +49,8 @@ TextArea {
   background: transparent !important;
 }
 
-VerticalScroll {
+VerticalScroll,
+TextArea {
   scrollbar-visibility: hidden;
 }
 

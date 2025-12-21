@@ -33,6 +33,13 @@ class Storage:
         except Exception as e:
             print(f"Error updating data {e}")
 
+    def update(self, data: Dict[str, Any]):
+        try:
+            with open(self.path, "w") as f:
+                json.dump(data, f, indent=2)
+        except Exception as e:
+            print(f"Error updating data {e}")
+
     def is_storage_exist(self) -> bool:
         return isinstance(self.load(), list)
     

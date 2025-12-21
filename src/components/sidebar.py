@@ -3,19 +3,33 @@ from textual.containers import Container
 from textual.widgets import Input, TextArea
 from textual.app import ComposeResult
 from src.utils.storage import Storage
-from src.components.todos import Todos
 from src.utils.constants import DB_PATH
 
 TITLE_ID = "title"
 CONTENT_ID = "content"
 
 class Form(Container):
+    def __init__(self, title="", content="", editing=False, todo_id=""):
+        super().__init__()
+        self.title = title
+        self.content = content
+        self.editing = editing
+        self.todo_id = todo_id
+
     BINDINGS = [
         ("ctrl+s", "submit", "Toggle dark mode"),
     ]
 
+    def on_mount(self):
+        input_widget = self.query_one(f"#{TITLE_ID}")
+        textarea_widget = self.query_one(f"#{CONTENT_ID}")
+
+        input_widget.value = self.title
+        textarea_widget.text = self.content
+
     def compose(self) -> ComposeResult:
         yield Input(placeholder="Enter title here...", id=TITLE_ID)
+
         yield TextArea(
             placeholder="Enter content here....",
             language="markdown",
@@ -23,7 +37,7 @@ class Form(Container):
             classes="editor",
         )
 
-    def action_submit(self) -> None:
+    def handle_save_new(self) -> None:
         storage = Storage(DB_PATH)
         title = self.query_one(f"#{TITLE_ID}").value
         content = self.query_one(f"#{CONTENT_ID}").text
@@ -41,8 +55,28 @@ class Form(Container):
             else:
                 storage.save(data)
 
-            self.log(f"Title: {title}")
-            self.log(f"Content: {content}")
-
-            todos_widget = self.app.query_one(Todos)
+            todos_widget = self.app.query_one("#todos")
             todos_widget.refresh_todos()
+
+    def handle_edit(self) -> None:
+        storage = Storage(DB_PATH)
+        updated_title = self.query_one(f"#{TITLE_ID}").value
+        updated_content = self.query_one(f"#{CONTENT_ID}").text
+
+        todos = storage.load()
+        for todo in todos:
+            if todo.get("id") == self.todo_id:
+                todo["title"] = updated_title
+                todo["content"] = updated_content
+                break
+
+        storage.update(todos)
+
+        todos_widget = self.app.query_one("#todos")
+        todos_widget.refresh_todos()
+
+    def action_submit(self) -> None:
+        if self.editing:
+            self.handle_edit()
+        else:
+            self.handle_save_new()
