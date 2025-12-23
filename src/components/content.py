@@ -1,7 +1,6 @@
 from textual.widgets import Static
 from src.components.body import Body
 from src.components.todoContainer import TodoContainer
-from src.components.projects import Projects
 from textual.containers import Container
 
 

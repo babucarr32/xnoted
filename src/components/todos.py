@@ -1,16 +1,16 @@
 from textual.widgets import ListView, ListItem, Label
-from src.utils.constants import DB_PATH, ICONS
+from src.utils.constants import ICONS
 from src.components.body import Body
 from src.screens.createTodo import CreateToDoModal
-from src.utils.storage import Storage
+from src.utils.database import Database
 from textual.binding import Binding
 from textual.reactive import reactive
-
 
 class Todos(ListView):
     def __init__(self):
         super().__init__(id="todos")
         self.has_todo_result = True
+        self.database = Database()
 
     BINDINGS = [
         Binding("enter", "select_cursor", "Select", show=False),
@@ -27,8 +27,7 @@ class Todos(ListView):
         self.load_todos()
 
     def load_todos(self) -> None:
-        storage = Storage(DB_PATH)
-        todos = storage.load()
+        todos = self.database.load()
         self.clear()
         if todos:
             for todo in todos:
@@ -48,8 +47,7 @@ class Todos(ListView):
 
     def quick_search(self, text: str) -> None:
         """Public method to quick search the todo list"""
-        storage = Storage(DB_PATH)
-        todos = storage.load()
+        todos = self.database.load()
 
         if not text:
             self.has_todo_result = True
@@ -84,11 +82,10 @@ class Todos(ListView):
             body_widget.show_todo(todo_id)
 
     def action_edit_todo(self):
-        storage = Storage(DB_PATH)
         child = self.highlighted_child
 
         if child and hasattr(child, "todo_id"):
-            todos = storage.load()
+            todos = self.database.load()
             todo_id = child.todo_id
 
             for todo in todos:
@@ -125,11 +122,11 @@ class Todos(ListView):
         label.update(f"{ICONS[new_status].get('icon')} {title}")
         child.status = new_status
 
-        # Update storage
-        storage = Storage(DB_PATH)
-        todos = storage.load()
+        # Update self.storage
+        
+        todos = self.database.load()
         for todo in todos:
             if todo.get("id") == child.todo_id:
                 todo["status"] = new_status
                 break
-        storage.update(todos)
+        self.database.update(todos)

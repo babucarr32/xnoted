@@ -29,7 +29,8 @@ Projects {
   background: transparent;
 }
 
-Input {
+Input,
+InputContainer {
   margin: 0;
   border: round $primary;
 }

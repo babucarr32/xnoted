@@ -2,11 +2,29 @@ import uuid
 from textual.containers import Container
 from textual.widgets import Input, TextArea
 from textual.app import ComposeResult
-from src.utils.storage import Storage
-from src.utils.constants import DB_PATH
+from src.utils.database import Database
 
 TITLE_ID = "title"
 CONTENT_ID = "content"
+
+
+class InputContainer(Input):
+    BORDER_TITLE = "Title"
+    
+    def __init__(self):
+        super().__init__(id=TITLE_ID)
+
+
+class ContentContainer(TextArea):
+    BORDER_TITLE = "Content"
+
+    def __init__(self):
+        super().__init__(
+            language="markdown",
+            id=CONTENT_ID,
+            classes="editor",
+        )
+
 
 class Form(Container):
     def __init__(self, title="", content="", editing=False, todo_id=""):
@@ -15,6 +33,7 @@ class Form(Container):
         self.content = content
         self.editing = editing
         self.todo_id = todo_id
+        self.storage = Database()
 
     BINDINGS = [
         ("ctrl+s", "submit", "Toggle dark mode"),
@@ -28,17 +47,10 @@ class Form(Container):
         textarea_widget.text = self.content
 
     def compose(self) -> ComposeResult:
-        yield Input(placeholder="Enter title here...", id=TITLE_ID)
-
-        yield TextArea(
-            placeholder="Enter content here....",
-            language="markdown",
-            id=CONTENT_ID,
-            classes="editor",
-        )
+        yield InputContainer()
+        yield ContentContainer()
 
     def handle_save_new(self) -> None:
-        storage = Storage(DB_PATH)
         title = self.query_one(f"#{TITLE_ID}").value
         content = self.query_one(f"#{CONTENT_ID}").text
 
@@ -50,27 +62,26 @@ class Form(Container):
                 "content": content,
             }
 
-            if storage.is_storage_exist():
-                storage.append(data)
+            if self.storage.is_storage_exist():
+                self.storage.append(data)
             else:
-                storage.save(data)
+                self.storage.save(data)
 
             todos_widget = self.app.query_one("#todos")
             todos_widget.refresh_todos()
 
     def handle_edit(self) -> None:
-        storage = Storage(DB_PATH)
         updated_title = self.query_one(f"#{TITLE_ID}").value
         updated_content = self.query_one(f"#{CONTENT_ID}").text
 
-        todos = storage.load()
+        todos = self.storage.load()
         for todo in todos:
             if todo.get("id") == self.todo_id:
                 todo["title"] = updated_title
                 todo["content"] = updated_content
                 break
 
-        storage.update(todos)
+        self.storage.update(todos)
 
         todos_widget = self.app.query_one("#todos")
         todos_widget.refresh_todos()
