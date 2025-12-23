@@ -27,13 +27,13 @@ class ContentContainer(TextArea):
 
 
 class Form(Container):
-    def __init__(self, title="", content="", editing=False, todo_id=""):
+    def __init__(self, database: Database, title="", content="", editing=False, todo_id="",):
         super().__init__()
         self.title = title
         self.content = content
         self.editing = editing
         self.todo_id = todo_id
-        self.storage = Database()
+        self.database = database
 
     BINDINGS = [
         ("ctrl+s", "submit", "Toggle dark mode"),
@@ -62,10 +62,10 @@ class Form(Container):
                 "content": content,
             }
 
-            if self.storage.is_storage_exist():
-                self.storage.append(data)
+            if self.database.is_storage_exist():
+                self.database.append(data)
             else:
-                self.storage.save(data)
+                self.database.save(data)
 
             todos_widget = self.app.query_one("#todos")
             todos_widget.refresh_todos()
@@ -74,14 +74,14 @@ class Form(Container):
         updated_title = self.query_one(f"#{TITLE_ID}").value
         updated_content = self.query_one(f"#{CONTENT_ID}").text
 
-        todos = self.storage.load()
+        todos = self.database.load()
         for todo in todos:
             if todo.get("id") == self.todo_id:
                 todo["title"] = updated_title
                 todo["content"] = updated_content
                 break
 
-        self.storage.update(todos)
+        self.database.update(todos)
 
         todos_widget = self.app.query_one("#todos")
         todos_widget.refresh_todos()

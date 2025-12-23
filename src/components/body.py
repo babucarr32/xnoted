@@ -3,10 +3,10 @@ from src.utils.database import Database
 
 
 class Body(MarkdownViewer):
-    def __init__(self):
+    def __init__(self, database: Database):
         super().__init__(show_table_of_contents=False)
         self.code_indent_guides = False
-        self.storage = Database()
+        self.storage = database
 
     def show_todo(self, todo_id: str) -> None:
         """Display the content of a specific todo by its ID"""

@@ -6,11 +6,12 @@ from src.utils.database import Database
 from textual.binding import Binding
 from textual.reactive import reactive
 
+
 class Todos(ListView):
-    def __init__(self):
+    def __init__(self, database=Database):
         super().__init__(id="todos")
         self.has_todo_result = True
-        self.database = Database()
+        self.database = database
 
     BINDINGS = [
         Binding("enter", "select_cursor", "Select", show=False),
@@ -93,7 +94,13 @@ class Todos(ListView):
                     title = todo.get("title")
                     content = todo.get("content")
                     self.app.push_screen(
-                        CreateToDoModal(title, content, editing=True, todo_id=todo_id)
+                        CreateToDoModal(
+                            database=self.database,
+                            title=title,
+                            content=content,
+                            editing=True,
+                            todo_id=todo_id,
+                        )
                     )
                     break
 
@@ -123,7 +130,7 @@ class Todos(ListView):
         child.status = new_status
 
         # Update self.storage
-        
+
         todos = self.database.load()
         for todo in todos:
             if todo.get("id") == child.todo_id:
