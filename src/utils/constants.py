@@ -8,3 +8,12 @@ ICONS = [
     {"icon": "✓", "title": "Done"},
     {"icon": "✗", "title": "Canceled/Won't do"},
 ]
+PROJECT_TITLE_ID = "project-title"
+PROJECT_DESCRIPTION_ID = "project-description"
+PROJECT_TASK_TYPE_ID = "task"
+PROJECT_TYPE_ID = "project-type"
+PROJECTS_ID = "projects"
+CREATE_PROJECTS_ID = "create_to_do_modal"
+SELECT_PROJECT_ID = "create_Project_Modal"
+PROJECT_OTHER_TYPE_ID = "other"
+PROJECT_MODAL_CONTENT = "project-modal-content"

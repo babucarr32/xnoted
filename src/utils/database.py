@@ -19,9 +19,19 @@ def get_query_all_data(project_name: str):
     )
 
 
-CREATE_PROJECT_TABLE = "CREATE TABLE IF NOT EXISTS project(id TEXT PRIMARY KEY, title TEXT, createdAt TEXT DEFAULT CURRENT_TIMESTAMP)"
-INSERT_PROJECT_DATA = "INSERT INTO project(id, title) VALUES(?, ?)"
-QUERY_ALL_PROJECT_DATA = "SELECT id, title, createdAt FROM project ORDER BY createdAt"
+CREATE_PROJECT_TABLE = "CREATE TABLE IF NOT EXISTS project(id TEXT PRIMARY KEY, title TEXT, description TEXT, type TEXT, createdAt TEXT DEFAULT CURRENT_TIMESTAMP)"
+INSERT_PROJECT_DATA = (
+    "INSERT INTO project(id, title, description, type) VALUES(?, ?, ?, ?)"
+)
+UPDATE_PROJECT_DATA = (
+    "UPDATE project SET title = ?, description = ?, type = ? WHERE id = ?"
+)
+QUERY_ALL_PROJECT_DATA = (
+    "SELECT id, title, description, type, createdAt FROM project ORDER BY createdAt"
+)
+QUERY_ONE_PROJECT_DATA = (
+    "SELECT id, title, description, type, createdAt FROM project WHERE id = ?"
+)
 
 
 class Database:
@@ -46,12 +56,25 @@ class Database:
 
     def save_project(self, data: Dict[str, Any]):
         try:
-            self.cur.execute(INSERT_PROJECT_DATA, (data["id"], data["title"]))
+            self.cur.execute(
+                INSERT_PROJECT_DATA,
+                (data["id"], data["title"], data["description"], data["type"]),
+            )
             self.con.commit()
             # Create new table for the project
             self.cur.execute(get_create_table(slugify(data["title"])))
         except Exception as e:
             print(f"Error saving data: {e}")
+
+    def update_project(self, project_id: str, data: Dict[str, Any]):
+        try:
+            self.cur.execute(
+                UPDATE_PROJECT_DATA,
+                (data["title"], data["description"], data["type"], project_id),
+            )
+            self.con.commit()
+        except Exception as e:
+            print(f"Error updating project: {e}")
 
     def load(self) -> List[Dict[str, Any]]:
         try:
@@ -70,11 +93,32 @@ class Database:
             res = self.cur.execute(QUERY_ALL_PROJECT_DATA)
             rows = res.fetchall()
             return [
-                {"id": row[0], "title": row[1], "createdAt": row[2]} for row in rows
+                {
+                    "id": row[0],
+                    "title": row[1],
+                    "description": row[2],
+                    "type": row[3],
+                    "createdAt": row[4],
+                }
+                for row in rows
             ]
         except Exception as e:
             print(f"Error loading data: {e}")
             return []
+
+    def get_project(self, project_id: str) -> Dict[str, Any]:
+        try:
+            self.cur.execute(QUERY_ONE_PROJECT_DATA, (project_id,))
+            (id, title, description, project_type, createdAt) = self.cur.fetchone()
+            return {
+                "id": id,
+                "title": title,
+                "description": description,
+                "type": project_type,
+                "createdAt": createdAt,
+            }
+        except Exception as e:
+            print(f"Error loading data: {e}")
 
     def append(self, data: Dict[str, Any]):
         self.save(data)  # Same as save

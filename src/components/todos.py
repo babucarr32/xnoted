@@ -125,11 +125,8 @@ class Todos(ListView):
         # Update only the highlighted item's label
         label = child.query_one(Label)
         title = label.content.split(" ", 1)[1]
-        self.log("Changing title", title)
         label.update(f"{ICONS[new_status].get('icon')} {title}")
         child.status = new_status
-
-        # Update self.storage
 
         todos = self.database.load()
         for todo in todos:

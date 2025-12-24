@@ -25,12 +25,14 @@ Body {
 Todos,
 Input,
 Select,
+RadioSet,
 Projects {
   background: transparent;
 }
 
 Input,
-InputContainer {
+InputContainer,
+RadioSet {
   margin: 0;
   border: round $primary;
 }
@@ -53,6 +55,14 @@ TextArea {
 VerticalScroll,
 TextArea {
   scrollbar-visibility: hidden;
+}
+
+.toggle--button {
+  background: transparent;
+}
+
+RadioButton.-on .toggle--button {
+  color: $primary;
 }
 
 TodoContainer,
@@ -105,6 +115,6 @@ CreateToDoModal Vertical {
 
 CreateProjectModal Vertical {
   width: 50%;
-  height: 3;
+  height: 50%;
   background: transparent;
 }
