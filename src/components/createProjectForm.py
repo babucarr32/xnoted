@@ -40,7 +40,6 @@ class CreateProjectForm(Container):
                 "id": str(uuid.uuid4()),
                 "title": title,
             }
-
             self.database.save_project(data)
 
     def handle_edit(self) -> None:

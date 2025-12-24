@@ -2,6 +2,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Label, ListView, ListItem
 from src.utils.database import Database
 from textual.binding import Binding
+from src.utils.helpers import slugify
 
 
 class Projects(ListView):
@@ -28,20 +29,26 @@ class Projects(ListView):
         if projects:
             for project in projects:
                 title = project.get("title")
-                todo_id = project.get("id")
+                project_id = project.get("id")
                 list_item = ListItem(Label(f"{title}"))
-                list_item.todo_id = todo_id
+                list_item.project_id = project_id
+                list_item.project_name = slugify(title)
                 self.append(list_item)
         else:
             self.append(ListItem(Label("No projects yet")))
 
     def on_list_view_selected(self, event: ListView.Highlighted) -> None:
-        print("Selected......", event)
+        project_name = event.item.project_name
+
+        self.database.project_name = project_name
+        todos_widget = self.app.query_one("#todos")
+        todos_widget.refresh_todos()
+
 
 class SelectProjectModal(ModalScreen):
     def __init__(self, database: Database):
         self.database = database
-        super().__init__(id="createToDoModal")
+        super().__init__(id="createProjectModal")
 
     BINDINGS = [
         ("escape", "close", "Close modal"),
