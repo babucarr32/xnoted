@@ -1,72 +1,171 @@
 import sqlite3
-from src.utils.helpers import slugify
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 DB_NAME = "database.db"
 
+CREATE_TASK_TABLE = """
+CREATE TABLE IF NOT EXISTS task(
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    title TEXT,
+    content TEXT,
+    status INTEGER DEFAULT 0,
+    createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES project(id)
+)
+"""
 
-def get_create_table(project_name: str):
-    return f"CREATE TABLE IF NOT EXISTS {project_name}(id TEXT PRIMARY KEY, title TEXT, content TEXT, createdAt TEXT DEFAULT CURRENT_TIMESTAMP)"
+INSERT_TASK_DATA = (
+    "INSERT INTO task(id, project_id, title, content, status) VALUES(?, ?, ?, ?, ?)"
+)
 
+UPDATE_TASK_DATA = "UPDATE task SET title = ?, content = ?, status = ? WHERE id = ?"
 
-def get_insert_data(project_name: str):
-    return f"INSERT INTO {project_name}(id, title, content) VALUES(?, ?, ?)"
+QUERY_TASKS_BY_PROJECT = """
+SELECT id, title, content, status, createdAt 
+FROM task 
+WHERE project_id = ? 
+ORDER BY createdAt
+"""
 
+QUERY_ONE_TASKS_BY_ID = """
+SELECT id, title, content, status, createdAt 
+FROM task 
+WHERE id = ? 
+"""
 
-def get_query_all_data(project_name: str):
-    return (
-        f"SELECT id, title, content, createdAt FROM {project_name} ORDER BY createdAt"
-    )
+CREATE_PROJECT_TABLE = """
+CREATE TABLE IF NOT EXISTS project(
+    id TEXT PRIMARY KEY,
+    title TEXT,
+    description TEXT,
+    type TEXT,
+    createdAt TEXT DEFAULT CURRENT_TIMESTAMP
+)
+"""
 
-
-CREATE_PROJECT_TABLE = "CREATE TABLE IF NOT EXISTS project(id TEXT PRIMARY KEY, title TEXT, description TEXT, type TEXT, createdAt TEXT DEFAULT CURRENT_TIMESTAMP)"
 INSERT_PROJECT_DATA = (
     "INSERT INTO project(id, title, description, type) VALUES(?, ?, ?, ?)"
 )
+
 UPDATE_PROJECT_DATA = (
     "UPDATE project SET title = ?, description = ?, type = ? WHERE id = ?"
 )
-QUERY_ALL_PROJECT_DATA = (
-    "SELECT id, title, description, type, createdAt FROM project ORDER BY createdAt"
-)
-QUERY_ONE_PROJECT_DATA = (
-    "SELECT id, title, description, type, createdAt FROM project WHERE id = ?"
-)
+
+QUERY_ALL_PROJECT_DATA = """
+SELECT id, title, description, type, createdAt 
+FROM project 
+ORDER BY createdAt
+"""
+
+QUERY_ONE_PROJECT_DATA = """
+SELECT id, title, description, type, createdAt 
+FROM project 
+WHERE id = ?
+"""
+
+DELETE_PROJECT_DATA = "DELETE FROM project WHERE id = ?"
+
+DELETE_PROJECT_TASKS = "DELETE FROM task WHERE project_id = ?"
 
 
 class Database:
     def __init__(self):
         self.path = DB_NAME
-        self.project_name = "task"
+        self.current_project_id: Optional[str] = None
         self.con = sqlite3.connect(DB_NAME)
         self.cur = self.con.cursor()
-        self.cur.execute(get_create_table(self.project_name))
+        self.cur.execute(CREATE_TASK_TABLE)
         self.cur.execute(CREATE_PROJECT_TABLE)
         self.con.commit()
 
+        # Ensure a default project exists
+        self._ensure_default_project()
+
+        # Set current project to the first project
+        projects = self.load_projects()
+        if projects:
+            self.current_project_id = projects[0]["id"]
+
+    def _ensure_default_project(self):
+        """Create a default project if no projects exist"""
+        try:
+            self.cur.execute("SELECT COUNT(*) FROM project")
+            count = self.cur.fetchone()[0]
+
+            if count == 0:
+                import uuid
+
+                default_project = {
+                    "id": str(uuid.uuid4()),
+                    "title": "Default",
+                    "description": "Default project",
+                    "type": "general",
+                }
+                self.cur.execute(
+                    INSERT_PROJECT_DATA,
+                    (
+                        default_project["id"],
+                        default_project["title"],
+                        default_project["description"],
+                        default_project["type"],
+                    ),
+                )
+                self.con.commit()
+        except Exception as e:
+            print(f"Error creating default project: {e}")
+
+    def set_current_project(self, project_id: str):
+        """Set the current project context"""
+        self.current_project_id = project_id
+
     def save(self, data: Dict[str, Any]):
+        """Save a task to the current project"""
+        if not self.current_project_id:
+            raise ValueError("No project selected. Call set_current_project() first.")
+
         try:
             self.cur.execute(
-                get_insert_data(self.project_name),
-                (data["id"], data["title"], data["content"]),
+                INSERT_TASK_DATA,
+                (
+                    data["id"],
+                    self.current_project_id,
+                    data["title"],
+                    data["content"],
+                    0,
+                ),
             )
             self.con.commit()
         except Exception as e:
             print(f"Error saving data: {e}")
+            raise
 
     def save_project(self, data: Dict[str, Any]):
+        """Create a new project"""
         try:
             self.cur.execute(
                 INSERT_PROJECT_DATA,
                 (data["id"], data["title"], data["description"], data["type"]),
             )
             self.con.commit()
-            # Create new table for the project
-            self.cur.execute(get_create_table(slugify(data["title"])))
         except Exception as e:
-            print(f"Error saving data: {e}")
+            print(f"Error saving project: {e}")
+            raise
+
+    def update_task(self, task_id: str, data: Dict[str, Any]):
+        """Update an existing task"""
+        try:
+            self.cur.execute(
+                UPDATE_TASK_DATA,
+                (data["title"], data["content"], data.get("status", 0), task_id),
+            )
+            self.con.commit()
+        except Exception as e:
+            print(f"Error updating task: {e}")
+            raise
 
     def update_project(self, project_id: str, data: Dict[str, Any]):
+        """Update an existing project"""
         try:
             self.cur.execute(
                 UPDATE_PROJECT_DATA,
@@ -75,20 +174,64 @@ class Database:
             self.con.commit()
         except Exception as e:
             print(f"Error updating project: {e}")
+            raise
 
-    def load(self) -> List[Dict[str, Any]]:
+    def delete_project(self, project_id: str):
+        """Delete a project and all its tasks"""
         try:
-            res = self.cur.execute(get_query_all_data(self.project_name))
+            self.cur.execute(DELETE_PROJECT_TASKS, (project_id,))
+            self.cur.execute(DELETE_PROJECT_DATA, (project_id,))
+            self.con.commit()
+        except Exception as e:
+            print(f"Error deleting project: {e}")
+            raise
+
+    def load(self, project_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Load all tasks for a specific project"""
+        pid = project_id or self.current_project_id
+        if not pid:
+            raise ValueError(
+                "No project specified. Provide project_id or call set_current_project() first."
+            )
+
+        try:
+            res = self.cur.execute(QUERY_TASKS_BY_PROJECT, (pid,))
             rows = res.fetchall()
+            print(rows, "----------")
             return [
-                {"id": row[0], "title": row[1], "content": row[2], "createdAt": row[3]}
+                {
+                    "id": row[0],
+                    "title": row[1],
+                    "content": row[2],
+                    "status": row[3],
+                    "createdAt": row[4],
+                }
                 for row in rows
             ]
         except Exception as e:
             print(f"Error loading data: {e}")
             return []
 
+    def get_task(self, task_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        if not task_id:
+            raise ValueError("No task id specified. Provide task_id.")
+
+        try:
+            res = self.cur.execute(QUERY_ONE_TASKS_BY_ID, (task_id,))
+            row = res.fetchone()
+            return {
+                "id": row[0],
+                "title": row[1],
+                "content": row[2],
+                "status": row[3],
+                "createdAt": row[4],
+            }
+        except Exception as e:
+            print(f"Error loading data: {e}")
+            return {}
+
     def load_projects(self) -> List[Dict[str, Any]]:
+        """Load all projects"""
         try:
             res = self.cur.execute(QUERY_ALL_PROJECT_DATA)
             rows = res.fetchall()
@@ -103,39 +246,58 @@ class Database:
                 for row in rows
             ]
         except Exception as e:
-            print(f"Error loading data: {e}")
+            print(f"Error loading projects: {e}")
             return []
 
-    def get_project(self, project_id: str) -> Dict[str, Any]:
+    def get_project(self, project_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific project by ID"""
         try:
             self.cur.execute(QUERY_ONE_PROJECT_DATA, (project_id,))
-            (id, title, description, project_type, createdAt) = self.cur.fetchone()
-            return {
-                "id": id,
-                "title": title,
-                "description": description,
-                "type": project_type,
-                "createdAt": createdAt,
-            }
+            row = self.cur.fetchone()
+            if row:
+                return {
+                    "id": row[0],
+                    "title": row[1],
+                    "description": row[2],
+                    "type": row[3],
+                    "createdAt": row[4],
+                }
+            return None
         except Exception as e:
-            print(f"Error loading data: {e}")
+            print(f"Error loading project: {e}")
+            return None
 
     def append(self, data: Dict[str, Any]):
-        self.save(data)  # Same as save
+        """Alias for save()"""
+        self.save(data)
 
     def update(self, data: List[Dict[str, Any]]):
+        """Batch update/insert tasks for the current project"""
+        if not self.current_project_id:
+            raise ValueError("No project selected. Call set_current_project() first.")
+
         try:
-            values = [(d["id"], d["title"], d["content"]) for d in data]
-            self.cur.executemany(get_insert_data(self.project_name), values)
+            values = [
+                (d["id"], self.current_project_id, d["title"], d["content"], 0)
+                for d in data
+            ]
+            self.cur.executemany(INSERT_TASK_DATA, values)
             self.con.commit()
         except Exception as e:
             print(f"Error updating data: {e}")
+            raise
 
     def is_storage_exist(self) -> bool:
-        return isinstance(self.load(), list)
+        """Check if storage is accessible"""
+        try:
+            self.cur.execute("SELECT 1 FROM task LIMIT 1")
+            return True
+        except Exception:
+            return False
 
-    def get_last_id(self) -> str:
-        todos = self.load()
+    def get_last_id(self, project_id: Optional[str] = None) -> str:
+        """Get the last task ID for a project"""
+        todos = self.load(project_id)
         if todos:
             return todos[-1]["id"]
         return "0"

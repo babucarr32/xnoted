@@ -10,7 +10,7 @@ CONTENT_ID = "content"
 
 class InputContainer(Input):
     BORDER_TITLE = "Title"
-    
+
     def __init__(self):
         super().__init__(id=TITLE_ID)
 
@@ -27,7 +27,14 @@ class ContentContainer(TextArea):
 
 
 class Form(Container):
-    def __init__(self, database: Database, title="", content="", editing=False, todo_id="",):
+    def __init__(
+        self,
+        database: Database,
+        title="",
+        content="",
+        editing=False,
+        todo_id="",
+    ):
         super().__init__()
         self.title = title
         self.content = content
@@ -36,7 +43,7 @@ class Form(Container):
         self.database = database
 
     BINDINGS = [
-        ("ctrl+s", "submit", "Toggle dark mode"),
+        ("ctrl+s", "submit", "Save form"),
     ]
 
     def on_mount(self):
@@ -61,7 +68,6 @@ class Form(Container):
                 "title": title,
                 "content": content,
             }
-
             if self.database.is_storage_exist():
                 self.database.append(data)
             else:
@@ -74,14 +80,12 @@ class Form(Container):
         updated_title = self.query_one(f"#{TITLE_ID}").value
         updated_content = self.query_one(f"#{CONTENT_ID}").text
 
-        todos = self.database.load()
-        for todo in todos:
-            if todo.get("id") == self.todo_id:
-                todo["title"] = updated_title
-                todo["content"] = updated_content
-                break
+        new_data = {
+            "title": updated_title,
+            "content": updated_content,
+        }
 
-        self.database.update(todos)
+        self.database.update_task(self.todo_id, new_data)
 
         todos_widget = self.app.query_one("#todos")
         todos_widget.refresh_todos()

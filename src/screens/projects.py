@@ -1,17 +1,19 @@
 from textual.screen import ModalScreen
+from collections.abc import Callable
 from textual.widgets import Label, ListView, ListItem
 from src.utils.database import Database
 from textual.binding import Binding
 from src.utils.helpers import slugify
 from src.screens.createProject import CreateProjectModal
-from src.utils.constants import PROJECTS_ID, SELECT_PROJECT_ID
+from src.utils.constants import PROJECTS_ID
 
 
 class Projects(ListView):
-    def __init__(self, database: Database):
+    def __init__(self, database: Database, close_app: Callable[[], None]):
         super().__init__(id=PROJECTS_ID)
         self.has_todo_result = True
         self.database = database
+        self.close_app = close_app
 
     BORDER_TITLE = "Projects"
     BINDINGS = [
@@ -39,10 +41,11 @@ class Projects(ListView):
             self.append(ListItem(Label("No projects yet")))
 
     def on_list_view_selected(self, event: ListView.Highlighted) -> None:
-        project_name = event.item.project_name
-        self.database.project_name = project_name
+        project_id = event.item.project_id
+        self.database.current_project_id = project_id
         todos_widget = self.app.query_one("#todos")
         todos_widget.refresh_todos()
+        self.close_app()
 
     def action_edit_project(self):
         child: ListItem = self.highlighted_child
@@ -72,7 +75,7 @@ class SelectProjectModal(ModalScreen):
     ]
 
     def compose(self):
-        yield Projects(database=self.database)
+        yield Projects(database=self.database, close_app=self.action_close)
 
     def action_close(self):
         self.app.pop_screen()

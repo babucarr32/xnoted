@@ -127,10 +127,12 @@ class Todos(ListView):
         title = label.content.split(" ", 1)[1]
         label.update(f"{ICONS[new_status].get('icon')} {title}")
         child.status = new_status
+        task = self.database.get_task(child.todo_id)
 
-        todos = self.database.load()
-        for todo in todos:
-            if todo.get("id") == child.todo_id:
-                todo["status"] = new_status
-                break
-        self.database.update(todos)
+        new_data = {
+            "title": task["title"],
+            "content": task["content"],
+            "status": new_status,
+        }
+
+        self.database.update_task(child.todo_id, new_data)

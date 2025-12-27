@@ -14,6 +14,9 @@ PROJECT_TASK_TYPE_ID = "task"
 PROJECT_TYPE_ID = "project-type"
 PROJECTS_ID = "projects"
 CREATE_PROJECTS_ID = "create_to_do_modal"
-SELECT_PROJECT_ID = "create_Project_Modal"
 PROJECT_OTHER_TYPE_ID = "other"
 PROJECT_MODAL_CONTENT = "project-modal-content"
+
+# Screens
+CREATE_PROJECT_ID = "create-project-modal"
+SELECT_PROJECT_MODAL_ID = "select-project"
