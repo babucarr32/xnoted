@@ -249,6 +249,22 @@ class Database:
             print(f"Error loading projects: {e}")
             return []
 
+    def get_first_project(self) -> Dict[str, Any]:
+        """Get the first project"""
+        try:
+            res = self.cur.execute(QUERY_ALL_PROJECT_DATA)
+            row = res.fetchone()
+            return {
+                "id": row[0],
+                "title": row[1],
+                "description": row[2],
+                "type": row[3],
+                "createdAt": row[4],
+            }
+        except Exception as e:
+            print(f"Error loading project: {e}")
+            return {}
+
     def get_project(self, project_id: str) -> Optional[Dict[str, Any]]:
         """Get a specific project by ID"""
         try:

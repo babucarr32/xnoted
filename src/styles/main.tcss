@@ -47,6 +47,38 @@ SelectOverlay {
   /* margin-bottom: 1; */
 }
 
+ConfirmModal {
+  align: center middle;
+}
+
+#modal-dialog {
+  border: solid round $primary;
+  border-title-align: left;
+  border-title-style: bold;
+  width: 60;
+  height: auto;
+  background: transparent;
+  padding: 1 2;
+}
+
+#modal-title {
+  width: 100%;
+  text-style: bold;
+  margin-bottom: 1;
+}
+
+#modal-message {
+  width: 100%;
+  margin-bottom: 1;
+}
+
+#modal-hint {
+  width: 100%;
+  content-align: center middle;
+  color: $text-muted;
+  text-style: italic;
+}
+
 TextArea {
   border: round $primary;
   background: transparent !important;

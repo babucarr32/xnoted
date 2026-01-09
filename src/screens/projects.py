@@ -5,6 +5,7 @@ from src.utils.database import Database
 from textual.binding import Binding
 from src.utils.helpers import slugify
 from src.screens.createProject import CreateProjectModal
+from src.screens.confirm import ConfirmModal
 from src.utils.constants import PROJECTS_ID
 
 
@@ -17,16 +18,17 @@ class Projects(ListView):
 
     BORDER_TITLE = "Projects"
     BINDINGS = [
-        Binding("enter", "select_cursor", "Select", show=False),
         Binding("k", "cursor_up", "Cursor up", show=False),
         Binding("j", "cursor_down", "Cursor down", show=False),
         Binding("e", "edit_project", "Cursor down", show=False),
+        Binding("d", "delete_project", "Cursor down", show=False),
     ]
 
     def on_mount(self):
         self.load_projects()
 
     def load_projects(self) -> None:
+        self.clear()
         projects = self.database.load_projects()
 
         if projects:
@@ -42,7 +44,7 @@ class Projects(ListView):
 
     def on_list_view_selected(self, event: ListView.Highlighted) -> None:
         project_id = event.item.project_id
-        self.database.current_project_id = project_id
+        self.database.set_current_project(project_id)
         todos_widget = self.app.query_one("#todos")
         todos_widget.refresh_todos()
         self.close_app()
@@ -59,10 +61,26 @@ class Projects(ListView):
                     title=project["title"],
                     description=project["description"],
                     editing=True,
-                    project_id = project_id,
+                    project_id=project_id,
                     project_type=project["type"],
                 )
             )
+
+    def action_delete_project(self):
+        child: ListItem = self.highlighted_child
+
+        if child and hasattr(child, "project_id"):
+            project_id = child.project_id
+
+            def on_confirm():
+                self.database.delete_project(project_id)
+                first_project = self.database.get_first_project()
+                self.database.set_current_project(first_project["id"])
+                self.load_projects()
+                todos_widget = self.app.query_one("#todos")
+                todos_widget.refresh_todos()
+
+            self.app.push_screen(ConfirmModal(on_confirm=on_confirm))
 
 
 class SelectProjectModal(ModalScreen):
