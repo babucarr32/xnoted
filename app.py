@@ -7,7 +7,7 @@ from src.components.body import Body
 from src.utils.database import Database
 
 
-class TodoCLIApp(App):
+class XNotedApp(App):
     def __init__(self):
         super().__init__()
         self.database = Database()

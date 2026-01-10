@@ -1,5 +1,5 @@
-from app import TodoCLIApp
+from app import XNotedApp
 
 if __name__ == "__main__":
-    app = TodoCLIApp()
+    app = XNotedApp()
     app.run()
