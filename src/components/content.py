@@ -1,6 +1,6 @@
 from textual.widgets import Static
 from src.components.body import Body
-from src.components.todoContainer import TodoContainer
+from src.components.taskContainer import TaskContainer
 from textual.containers import Container
 from src.utils.database import Database
 
@@ -11,7 +11,7 @@ class Content(Static):
         self.database = database
 
     def compose(self):
-        yield Container(TodoContainer(database=self.database))
+        yield Container(TaskContainer(database=self.database))
         yield Body(database=self.database)
 
 class ContentWrapper(Static):

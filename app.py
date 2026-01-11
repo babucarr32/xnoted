@@ -1,5 +1,5 @@
 from textual.app import App
-from src.screens.createTodo import CreateToDoModal
+from src.screens.createTask import CreateTaskModal
 from src.screens.projects import SelectProjectModal
 from src.screens.createProject import CreateProjectModal
 from src.components.content import ContentWrapper
@@ -14,7 +14,7 @@ class XNotedApp(App):
 
     CSS_PATH = "src/styles/main.tcss"
     BINDINGS = [
-        ("ctrl+n", "create_new_todo", "Create new todo"),
+        ("ctrl+n", "create_new_task", "Create new task"),
         ("ctrl+l", "select_project", "Select project"),
         ("ctrl+b", "create_new_project", "Create project"),
         ("ctrl+d", "scroll_body_down", "Scroll body down"),
@@ -24,8 +24,8 @@ class XNotedApp(App):
     def compose(self):
         yield ContentWrapper(database=self.database)
 
-    def action_create_new_todo(self):
-        self.app.push_screen(CreateToDoModal(database=self.database))
+    def action_create_new_task(self):
+        self.app.push_screen(CreateTaskModal(database=self.database))
 
     def action_create_new_project(self):
         self.app.push_screen(CreateProjectModal(database=self.database))

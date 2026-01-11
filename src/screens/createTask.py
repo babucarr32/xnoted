@@ -4,15 +4,15 @@ from src.components.sidebar import Form
 from src.utils.database import Database
 
 
-class CreateToDoModal(ModalScreen):
+class CreateTaskModal(ModalScreen):
     def __init__(
-        self, database: Database, title="", content="", editing=False, todo_id=""
+        self, database: Database, title="", content="", editing=False, task_id=""
     ):
-        super().__init__(id="createToDoModal")
+        super().__init__(id="createTaskModal")
         self.title = title
         self.content = content
         self.editing = editing
-        self.todo_id = todo_id
+        self.task_id = task_id
         self.database = database
 
     TITLE = "Modal Title"
@@ -28,7 +28,7 @@ class CreateToDoModal(ModalScreen):
                 title=self.title,
                 content=self.content,
                 editing=self.editing,
-                todo_id=self.todo_id,
+                task_id=self.task_id,
             ),
             id="modal-content",
         )

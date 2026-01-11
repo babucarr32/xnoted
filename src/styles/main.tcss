@@ -35,13 +35,13 @@ RadioSet,
 Select,
 SelectOverlay,
 TextArea,
-TodoContainer,
+TaskContainer,
 Projects,
 #confirm {
   border: round $primary;
 }
 
-TodoContainer,
+TaskContainer,
 Projects {
   border-title-align: left;
   border-title-style: bold;
@@ -56,13 +56,13 @@ Projects {
    Backgrounds
    =================== */
 
-Todos,
+Tasks,
 Input,
 Select,
 RadioSet,
 Projects,
 #modal-dialog,
-CreateToDoModal Vertical,
+CreateTaskModal Vertical,
 CreateProjectModal Vertical {
   background: transparent;
 }
@@ -76,7 +76,7 @@ TextArea {
    Modals
    =================== */
 
-CreateToDoModal,
+CreateTaskModal,
 SelectProjectModal,
 CreateProjectModal,
 ConfirmModal,
@@ -95,7 +95,7 @@ Confirm {
   text-style: italic;
 }
 
-CreateToDoModal Vertical {
+CreateTaskModal Vertical {
   width: 70%;
   height: 50%;
 }
@@ -133,7 +133,7 @@ RadioButton.-on .toggle--button {
   width: 100%;
 }
 
-#createTodoLabel {
+#createTaskLabel {
   margin-bottom: 1;
 }
 

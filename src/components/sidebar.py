@@ -33,13 +33,13 @@ class Form(Container):
         title="",
         content="",
         editing=False,
-        todo_id="",
+        task_id="",
     ):
         super().__init__()
         self.title = title
         self.content = content
         self.editing = editing
-        self.todo_id = todo_id
+        self.task_id = task_id
         self.database = database
 
     BINDINGS = [
@@ -73,8 +73,8 @@ class Form(Container):
             else:
                 self.database.save(data)
 
-            todos_widget = self.app.query_one("#todos")
-            todos_widget.refresh_todos()
+            tasks_widget = self.app.query_one("#tasks")
+            tasks_widget.refresh_tasks()
 
     def handle_edit(self) -> None:
         updated_title = self.query_one(f"#{TITLE_ID}").value
@@ -85,10 +85,10 @@ class Form(Container):
             "content": updated_content,
         }
 
-        self.database.update_task(self.todo_id, new_data)
+        self.database.update_task(self.task_id, new_data)
 
-        todos_widget = self.app.query_one("#todos")
-        todos_widget.refresh_todos()
+        tasks_widget = self.app.query_one("#tasks")
+        tasks_widget.refresh_tasks()
 
     def action_submit(self) -> None:
         if self.editing:

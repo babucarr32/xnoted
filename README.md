@@ -1,12 +1,12 @@
 # XNoted
 
-A terminal-based todo, notes and project management application built with Python and Textual.
+A terminal-based task, notes and project management application built with Python and Textual.
 
 ## Features
 
 - **Notes Management**: Organize notes into projects
-- **Project Management**: Organize todos into projects
-- **Task Management**: Create, update, and track todos within projects
+- **Project Management**: Organize tasks into projects
+- **Task Management**: Create, update, and track tasks within projects
 - **Terminal UI**: Modern, keyboard-driven interface powered by Textual
 - **SQLite Database**: Persistent storage for projects and tasks
 - **Keyboard Shortcuts**: Fast navigation and task creation
@@ -57,7 +57,7 @@ textual run --dev main.py
 
 ### Keyboard Shortcuts
 
-- `Ctrl+N` - Create new todo/note
+- `Ctrl+N` - Create new task/note
 - `Ctrl+L` - Select project
 - `Ctrl+B` - Create new project
 - `Ctrl+D` - Scroll body down
@@ -84,7 +84,7 @@ The application uses Textual for the terminal UI. Key components:
 
 - **XNotedApp**: Main application class with keyboard bindings
 - **Database**: SQLite wrapper for data persistence
-- **Screens**: Modal dialogs for creating todos and projects
+- **Screens**: Modal dialogs for creating tasks and projects
 - **Components**: Reusable UI elements
 
 ## License

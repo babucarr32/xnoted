@@ -1,23 +1,25 @@
 from textual.widgets import ListView, ListItem, Label
 from src.utils.constants import ICONS
 from src.components.body import Body
-from src.screens.createTodo import CreateToDoModal
+from src.screens.createTask import CreateTaskModal
+from src.screens.confirm import ConfirmModal
 from src.utils.database import Database
 from textual.binding import Binding
 from textual.reactive import reactive
 
 
-class Todos(ListView):
+class Tasks(ListView):
     def __init__(self, database=Database):
-        super().__init__(id="todos")
-        self.has_todo_result = True
+        super().__init__(id="tasks")
+        self.has_task_result = True
         self.database = database
 
     BINDINGS = [
         Binding("enter", "select_cursor", "Select", show=False),
         Binding("k", "cursor_up", "Cursor up", show=False),
         Binding("j", "cursor_down", "Cursor down", show=False),
-        Binding("e", "edit_todo", "Cursor down", show=False),
+        Binding("e", "edit_task", "Cursor down", show=False),
+        Binding("d", "delete_task", "Cursor down", show=False),
         Binding("left", "change_status('left')", "Change status", show=False),
         Binding("right", "change_status('right')", "Change status", show=False),
     ]
@@ -25,88 +27,88 @@ class Todos(ListView):
     status_index = reactive(2)
 
     def on_mount(self):
-        self.load_todos()
+        self.load_tasks()
 
-    def load_todos(self) -> None:
-        todos = self.database.load()
+    def load_tasks(self) -> None:
+        tasks = self.database.load()
         self.clear()
-        if todos:
-            for todo in todos:
-                title = todo.get("title")
-                todo_id = todo.get("id")
-                status = todo.get("status", 0)
+        if tasks:
+            for task in tasks:
+                title = task.get("title")
+                task_id = task.get("id")
+                status = task.get("status", 0)
                 list_item = ListItem(Label(f"{ICONS[status].get('icon')} {title}"))
-                list_item.todo_id = todo_id
+                list_item.task_id = task_id
                 list_item.status = status
                 self.append(list_item)
         else:
-            self.append(ListItem(Label("No todos yet")))
+            self.append(ListItem(Label("No tasks yet")))
 
-    def refresh_todos(self):
-        """Public method to refresh the todo list"""
-        self.load_todos()
+    def refresh_tasks(self):
+        """Public method to refresh the task list"""
+        self.load_tasks()
 
     def quick_search(self, text: str) -> None:
-        """Public method to quick search the todo list"""
-        todos = self.database.load()
+        """Public method to quick search the task list"""
+        tasks = self.database.load()
 
         if not text:
-            self.has_todo_result = True
+            self.has_task_result = True
 
-        if not self.has_todo_result:
+        if not self.has_task_result:
             return
 
         self.clear()
 
-        if todos and self.has_todo_result:
+        if tasks and self.has_task_result:
             found_any = False
-            for todo in todos:
-                title = todo.get("title")
+            for task in tasks:
+                title = task.get("title")
                 if text.lower() in title.lower():
-                    todo_id = todo.get("id")
+                    task_id = task.get("id")
                     list_item = ListItem(Label(f"● {title}"))
-                    list_item.todo_id = todo_id
+                    list_item.task_id = task_id
                     self.append(list_item)
                     found_any = True
 
             if not found_any:
-                self.has_todo_result = False
-                self.append(ListItem(Label("No matching todos")))
+                self.has_task_result = False
+                self.append(ListItem(Label("No matching tasks")))
         else:
-            self.append(ListItem(Label("No todos yet")))
+            self.append(ListItem(Label("No tasks yet")))
 
     def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
-        if event.item and hasattr(event.item, "todo_id"):
-            # Display the highlighted todo
-            todo_id = event.item.todo_id
+        if event.item and hasattr(event.item, "task_id"):
+            # Display the highlighted task
+            task_id = event.item.task_id
             body_widget = self.app.query_one(Body)
-            body_widget.show_todo(todo_id)
+            body_widget.show_task(task_id)
 
-    def action_edit_todo(self):
+    def action_edit_task(self):
         child = self.highlighted_child
 
-        if child and hasattr(child, "todo_id"):
-            todos = self.database.load()
-            todo_id = child.todo_id
+        if child and hasattr(child, "task_id"):
+            tasks = self.database.load()
+            task_id = child.task_id
 
-            for todo in todos:
-                if todo.get("id") == todo_id:
-                    title = todo.get("title")
-                    content = todo.get("content")
+            for task in tasks:
+                if task.get("id") == task_id:
+                    title = task.get("title")
+                    content = task.get("content")
                     self.app.push_screen(
-                        CreateToDoModal(
+                        CreateTaskModal(
                             database=self.database,
                             title=title,
                             content=content,
                             editing=True,
-                            todo_id=todo_id,
+                            task_id=task_id,
                         )
                     )
                     break
 
     def action_change_status(self, direction: str):
         child = self.highlighted_child
-        if child is None or not hasattr(child, "todo_id"):
+        if child is None or not hasattr(child, "task_id"):
             return
 
         # Get current status for this specific item
@@ -127,7 +129,7 @@ class Todos(ListView):
         title = label.content.split(" ", 1)[1]
         label.update(f"{ICONS[new_status].get('icon')} {title}")
         child.status = new_status
-        task = self.database.get_task(child.todo_id)
+        task = self.database.get_task(child.task_id)
 
         new_data = {
             "title": task["title"],
@@ -135,4 +137,16 @@ class Todos(ListView):
             "status": new_status,
         }
 
-        self.database.update_task(child.todo_id, new_data)
+        self.database.update_task(child.task_id, new_data)
+
+    def action_delete_task(self):
+        child: ListItem = self.highlighted_child
+
+        if child and hasattr(child, "task_id"):
+            task_id = child.task_id
+
+            def on_confirm():
+                self.database.delete_task(task_id)
+                self.refresh_tasks()
+
+            self.app.push_screen(ConfirmModal(on_confirm=on_confirm))

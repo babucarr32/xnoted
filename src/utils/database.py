@@ -68,6 +68,7 @@ DELETE_PROJECT_DATA = "DELETE FROM project WHERE id = ?"
 
 DELETE_PROJECT_TASKS = "DELETE FROM task WHERE project_id = ?"
 
+DELETE_TASK = "DELETE FROM task WHERE id = ?"
 
 class Database:
     def __init__(self):
@@ -184,6 +185,15 @@ class Database:
             self.con.commit()
         except Exception as e:
             print(f"Error deleting project: {e}")
+            raise
+
+    def delete_task(self, task_id: str):
+        """Delete a task"""
+        try:
+            self.cur.execute(DELETE_TASK, (task_id,))
+            self.con.commit()
+        except Exception as e:
+            print(f"Error deleting task: {e}")
             raise
 
     def load(self, project_id: Optional[str] = None) -> List[Dict[str, Any]]:
@@ -313,9 +323,9 @@ class Database:
 
     def get_last_id(self, project_id: Optional[str] = None) -> str:
         """Get the last task ID for a project"""
-        todos = self.load(project_id)
-        if todos:
-            return todos[-1]["id"]
+        tasks = self.load(project_id)
+        if tasks:
+            return tasks[-1]["id"]
         return "0"
 
     def __del__(self):

@@ -1,5 +1,5 @@
 [project]
-name = "todo-cli"
+name = "xnoted"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"

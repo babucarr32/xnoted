@@ -12,7 +12,7 @@ from src.utils.constants import PROJECTS_ID
 class Projects(ListView):
     def __init__(self, database: Database, close_app: Callable[[], None]):
         super().__init__(id=PROJECTS_ID)
-        self.has_todo_result = True
+        self.has_task_result = True
         self.database = database
         self.close_app = close_app
 
@@ -45,8 +45,8 @@ class Projects(ListView):
     def on_list_view_selected(self, event: ListView.Highlighted) -> None:
         project_id = event.item.project_id
         self.database.set_current_project(project_id)
-        todos_widget = self.app.query_one("#todos")
-        todos_widget.refresh_todos()
+        tasks_widget = self.app.query_one("#tasks")
+        tasks_widget.refresh_tasks()
         self.close_app()
 
     def action_edit_project(self):
@@ -77,8 +77,8 @@ class Projects(ListView):
                 first_project = self.database.get_first_project()
                 self.database.set_current_project(first_project["id"])
                 self.load_projects()
-                todos_widget = self.app.query_one("#todos")
-                todos_widget.refresh_todos()
+                tasks_widget = self.app.query_one("#tasks")
+                tasks_widget.refresh_tasks()
 
             self.app.push_screen(ConfirmModal(on_confirm=on_confirm))
 
