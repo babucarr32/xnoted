@@ -19,6 +19,7 @@ class XNotedApp(App):
         ("ctrl+b", "create_new_project", "Create project"),
         ("ctrl+d", "scroll_body_down", "Scroll body down"),
         ("ctrl+u", "scroll_body_up", "Scroll body up"),
+        ("ctrl+r", "show_readme", "Show readme"),
     ]
 
     def compose(self):
@@ -34,8 +35,12 @@ class XNotedApp(App):
         self.app.push_screen(SelectProjectModal(database=self.database))
 
     def action_scroll_body_down(self):
-        body_widget = self.app.query_one(Body)
+        body_widget: Body = self.app.query_one(Body)
         body_widget.scroll_down()
+
+    def action_show_readme(self):
+        body_widget: Body = self.app.query_one(Body)
+        body_widget.welcome()
 
     def action_scroll_body_up(self):
         body_widget = self.app.query_one(Body)

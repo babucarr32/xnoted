@@ -70,6 +70,7 @@ DELETE_PROJECT_TASKS = "DELETE FROM task WHERE project_id = ?"
 
 DELETE_TASK = "DELETE FROM task WHERE id = ?"
 
+
 class Database:
     def __init__(self):
         self.path = DB_NAME
@@ -320,6 +321,23 @@ class Database:
             return True
         except Exception:
             return False
+
+    def is_empty(self) -> bool:
+        """Check if the database is empty (exactly 1 project and no tasks).
+
+        Returns:
+            True if there's exactly 1 project and 0 tasks, False otherwise
+        """
+        try:
+            self.cur.execute("SELECT COUNT(*) FROM project")
+            project_count = self.cur.fetchone()[0]
+
+            self.cur.execute("SELECT COUNT(*) FROM task")
+            task_count = self.cur.fetchone()[0]
+
+            return project_count == 1 and task_count == 0
+        except Exception:
+            return True
 
     def get_last_id(self, project_id: Optional[str] = None) -> str:
         """Get the last task ID for a project"""
