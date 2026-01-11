@@ -30,7 +30,7 @@ A terminal-based task, notes and project management application built with Pytho
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone git@github.com:babucarr32/xnoted.git
 cd xnoted
 ```
 
