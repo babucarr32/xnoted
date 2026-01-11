@@ -13,8 +13,6 @@ class Projects(Static):
     def __init__(self):
         super().__init__()
 
-    BORDER_TITLE = "Projects"
-
     def compose(self) -> ComposeResult:
         yield Select((line, line) for line in LINES)
 

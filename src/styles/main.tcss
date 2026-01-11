@@ -1,3 +1,7 @@
+/* ===================
+   Layout & Structure
+   =================== */
+
 ContentWrapper {
   layout: vertical;
   height: 100%;
@@ -8,68 +12,80 @@ Content {
   grid-size: 2;
   grid-columns: 1fr 3fr;
   height: 100%;
-  /* height: 95vh; */
 }
 
+SideBar,
+Body {
+  height: 100%;
+}
+
+/* ===================
+   Borders & Containers
+   =================== */
+
 CustomHeader {
-  /* padding: 1; */
   text-align: center;
   border: solid $primary;
 }
 
-Body {
-  border: solid round $primary;
-  height: 100%;
+Body,
+Input,
+InputContainer,
+RadioSet,
+Select,
+SelectOverlay,
+TextArea,
+TodoContainer,
+Projects,
+#confirm {
+  border: round $primary;
 }
+
+TodoContainer,
+Projects {
+  border-title-align: left;
+  border-title-style: bold;
+}
+
+.box {
+  height: 0%;
+  border: solid $primary;
+}
+
+/* ===================
+   Backgrounds
+   =================== */
 
 Todos,
 Input,
 Select,
 RadioSet,
-Projects {
+Projects,
+#modal-dialog,
+CreateToDoModal Vertical,
+CreateProjectModal Vertical {
   background: transparent;
 }
 
-Input,
-InputContainer,
-RadioSet {
-  margin: 0;
-  border: round $primary;
-}
-
-Select,
-SelectOverlay {
+SelectOverlay,
+TextArea {
   background: transparent !important;
-  border: solid round $primary;
 }
 
-#title {
-  /* margin-bottom: 1; */
-}
+/* ===================
+   Modals
+   =================== */
 
-ConfirmModal {
+CreateToDoModal,
+SelectProjectModal,
+CreateProjectModal,
+ConfirmModal,
+Confirm {
   align: center middle;
 }
 
 #modal-dialog {
-  border: solid round $primary;
-  border-title-align: left;
-  border-title-style: bold;
-  width: 60;
   height: auto;
-  background: transparent;
-  padding: 1 2;
-}
-
-#modal-title {
-  width: 100%;
-  text-style: bold;
-  margin-bottom: 1;
-}
-
-#modal-message {
-  width: 100%;
-  margin-bottom: 1;
 }
 
 #modal-hint {
@@ -79,14 +95,30 @@ ConfirmModal {
   text-style: italic;
 }
 
-TextArea {
-  border: round $primary;
-  background: transparent !important;
+CreateToDoModal Vertical {
+  width: 70%;
+  height: 50%;
 }
 
-VerticalScroll,
-TextArea {
-  scrollbar-visibility: hidden;
+CreateProjectModal Vertical,
+Projects {
+  width: 50%;
+  height: 50%;
+}
+
+#confirm {
+  padding: 0;
+  width: 60;
+}
+
+/* ===================
+   Form Elements
+   =================== */
+
+Input,
+InputContainer,
+RadioSet {
+  margin: 0;
 }
 
 .toggle--button {
@@ -97,25 +129,7 @@ RadioButton.-on .toggle--button {
   color: $primary;
 }
 
-TodoContainer,
-Projects {
-  border: round $primary;
-  border-title-align: left;
-  border-title-style: bold;
-  /* padding: 1; */
-}
-
-#content {
-  /* margin-bottom: 1; */
-}
-
-.box {
-  height: 0%;
-  border: solid $primary;
-}
-
 #submit {
-  /* margin: 1; */
   width: 100%;
 }
 
@@ -123,30 +137,11 @@ Projects {
   margin-bottom: 1;
 }
 
-SideBar {
-  height: 100%;
-}
+/* ===================
+   Scrollbars
+   =================== */
 
-CreateToDoModal,
-SelectProjectModal,
-CreateProjectModal {
-  align: center middle;
-}
-
-Projects {
-  width: 50%;
-  height: 50%;
-  background: transparent;
-}
-
-CreateToDoModal Vertical {
-  width: 70%;
-  height: 50%;
-  background: transparent;
-}
-
-CreateProjectModal Vertical {
-  width: 50%;
-  height: 50%;
-  background: transparent;
+VerticalScroll,
+TextArea {
+  scrollbar-visibility: hidden;
 }
