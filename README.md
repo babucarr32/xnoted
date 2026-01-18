@@ -8,16 +8,22 @@
  █████ █████ █████  ░░█████░░██████   ░░█████ ░░██████ ░░████████
 ░░░░░ ░░░░░ ░░░░░    ░░░░░  ░░░░░░     ░░░░░   ░░░░░░   ░░░░░░░░ 
 ```
-A terminal-based task, notes and project management application built with Python and Textual.
+
+A powerful terminal-based task and note management application built with Python and Textual. Organize your tasks and notes into projects with a modern, keyboard-driven interface.
 
 ## Features
 
-- **Notes Management**: Organize notes into projects
-- **Project Management**: Organize tasks into projects
-- **Task Management**: Create, update, and track tasks within projects
-- **Terminal UI**: Modern, keyboard-driven interface powered by Textual
-- **SQLite Database**: Persistent storage for projects and tasks
-- **Keyboard Shortcuts**: Fast navigation and task creation
+- **Project-Based Organization**: Group related tasks and notes into separate projects with custom titles and descriptions
+- **Task Management**: 
+  - Create, edit, and delete tasks with titles and markdown content
+  - Track task status with 6 different states: Not started, Completed, In progress, Under review, Done, and Canceled
+  - Search tasks in real-time as you type
+  - Visual status indicators (○, ●, ◐, ◎, ✓, ✗)
+- **Rich Text Support**: Write task content in Markdown with syntax highlighting
+- **Project Import/Export**: Share and backup projects across systems
+- **Keyboard-Driven Interface**: Navigate and manage tasks efficiently without touching the mouse
+- **Persistent Storage**: SQLite database ensures your data is saved automatically
+- **Modern Terminal UI**: Beautiful interface powered by Textual framework
 
 ## Requirements
 
@@ -46,54 +52,141 @@ pip install -e .
 
 ## Usage
 
-Activate the virtual environment
-### On macOS/Linux (Bash/Zsh):
+### Starting the Application
+
+1. Activate the virtual environment:
+
+**macOS/Linux (Bash/Zsh):**
 ```bash
 source .venv/bin/activate
 ```
 
-### On Windows:
-
-**Command Prompt (CMD):**
+**Windows (Command Prompt):**
 ```cmd
 .venv\Scripts\activate.bat
 ```
-Run the application:
+
+2. Run the application:
 ```bash
 textual run --dev main.py
 ```
 
+Or for production use:
+```bash
+python main.py
+```
+
+### Quick Start Guide
+
+1. **First Launch**: The app creates a default project automatically
+2. **Create a Task**: Press `Ctrl+N` to open the task creation modal
+3. **Navigate Tasks**: Use `j` and `k` to move up and down the task list
+4. **View Task Content**: Select a task with `Enter` to view its content in the right panel
+5. **Edit a Task**: Highlight a task and press `e` to edit it
+6. **Change Status**: Use arrow keys (`←`/`→`) to cycle through task statuses
+7. **Create Projects**: Press `Ctrl+B` to create new projects
+8. **Switch Projects**: Press `Ctrl+L` to select a different project
+
 ### Keyboard Shortcuts
 
-- `Ctrl+N` - Create new task/note
-- `Ctrl+L` - Select project
-- `Ctrl+B` - Create new project
-- `Ctrl+D` - Scroll body down
-- `Ctrl+U` - Scroll body up
+#### Global Application Shortcuts
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `Ctrl+N` | Create new task | Opens modal to create a new task in current project |
+| `Ctrl+B` | Create new project | Opens modal to create a new project |
+| `Ctrl+L` | Select project | Opens project selector to switch between projects |
+| `Ctrl+O` | Import/Export | Opens modal to import or export projects |
+| `Ctrl+R` | Show readme | Displays the README in the content panel |
+| `Ctrl+D` | Scroll down | Scrolls the content panel down |
+| `Ctrl+U` | Scroll up | Scrolls the content panel up |
 
-## Project Structure
+#### Task List Navigation
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `j` | Move down | Move cursor down in task list (Vim-style) |
+| `k` | Move up | Move cursor up in task list (Vim-style) |
+| `Enter` | Select task | View the selected task's content |
+| `e` | Edit task | Edit the highlighted task |
+| `d` | Delete task | Delete the highlighted task (with confirmation) |
+| `←` | Previous status | Cycle task status backward |
+| `→` | Next status | Cycle task status forward |
 
-```
-xnoted/
-├── app.py                 # Main application class
-├── main.py               # Entry point
-├── database.db           # SQLite database
-├── src/
-│   ├── components/       # UI components
-│   ├── screens/          # Modal screens
-│   ├── styles/           # Textual CSS styles
-│   └── utils/            # Database and utility functions
-└── pyproject.toml        # Project configuration
-```
+#### Task/Project Editor Shortcuts
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `Ctrl+S` | Save | Save the current task or project |
+| `Esc` | Cancel | Close modal without saving |
+
+#### Task Status Indicators
+- ○ **Not started** - Task hasn't been started yet
+- ● **Completed** - Task is finished
+- ◐ **In progress** - Task is actively being worked on
+- ◎ **Under review** - Task is waiting for review
+- ✓ **Done** - Task is verified complete
+- ✗ **Canceled** - Task was canceled or won't be done
 
 ## Development
 
-The application uses Textual for the terminal UI. Key components:
+### Architecture Overview
 
-- **XNotedApp**: Main application class with keyboard bindings
-- **Database**: SQLite wrapper for data persistence
-- **Screens**: Modal dialogs for creating tasks and projects
-- **Components**: Reusable UI elements
+xNoted is built with [Textual](https://textual.textualize.io/), a modern Python framework for building terminal user interfaces. The app follows a component-based architecture:
+
+#### Core Components
+
+- **XNotedApp** (`app.py`): Main application class that handles:
+  - Global keyboard bindings
+  - Screen navigation and modal management
+  - Database initialization
+
+- **Database** (`src/utils/database.py`): SQLite wrapper providing:
+  - Project and task CRUD operations
+  - Automatic schema initialization
+  - Current project context management
+  - Default project creation on first run
+
+- **Screens** (`src/screens/`): Modal overlays for user interactions:
+  - Task creation and editing
+  - Project creation and selection
+  - Import/export functionality
+  - Confirmation dialogs
+
+- **Components** (`src/components/`): Reusable UI building blocks:
+  - Task list with search and navigation
+  - Markdown content viewer
+  - Form inputs for tasks and projects
+
+### Data Model
+
+The SQLite database contains two main tables:
+
+**Projects**:
+- `id` (TEXT, PRIMARY KEY): Unique project identifier
+- `title` (TEXT): Project name
+- `description` (TEXT): Project description
+- `type` (TEXT): Project type (e.g., "task", "note", "general")
+- `createdAt` (TEXT): Creation timestamp
+
+**Tasks**:
+- `id` (TEXT, PRIMARY KEY): Unique task identifier
+- `project_id` (TEXT, FOREIGN KEY): Reference to parent project
+- `title` (TEXT): Task title
+- `content` (TEXT): Task content in Markdown
+- `status` (INTEGER): Status index (0-5)
+- `createdAt` (TEXT): Creation timestamp
+
+### Running in Development Mode
+
+Textual provides excellent development tools:
+
+```bash
+# Run with live reload and dev console
+textual run --dev main.py
+
+# Open the development console in another terminal
+textual console
+```
+
+The dev console shows real-time logs and application state for debugging.
 
 ## License
 
