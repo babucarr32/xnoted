@@ -2,6 +2,7 @@ from textual.app import App
 from src.screens.createTask import CreateTaskModal
 from src.screens.projects import SelectProjectModal
 from src.screens.createProject import CreateProjectModal
+from src.screens.importExportProject import ImportExportProjectModal
 from src.components.content import ContentWrapper
 from src.components.body import Body
 from src.utils.database import Database
@@ -16,6 +17,7 @@ class XNotedApp(App):
     BINDINGS = [
         ("ctrl+n", "create_new_task", "Create new task"),
         ("ctrl+l", "select_project", "Select project"),
+        ("ctrl+o", "import_export_project", "Import or Export project"),
         ("ctrl+b", "create_new_project", "Create project"),
         ("ctrl+d", "scroll_body_down", "Scroll body down"),
         ("ctrl+u", "scroll_body_up", "Scroll body up"),
@@ -30,6 +32,9 @@ class XNotedApp(App):
 
     def action_create_new_project(self):
         self.app.push_screen(CreateProjectModal(database=self.database))
+
+    def action_import_export_project(self):
+        self.app.push_screen(ImportExportProjectModal(database=self.database))
 
     def action_select_project(self):
         self.app.push_screen(SelectProjectModal(database=self.database))

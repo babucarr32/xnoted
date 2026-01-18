@@ -63,6 +63,7 @@ RadioSet,
 Projects,
 #modal-dialog,
 CreateTaskModal Vertical,
+ImportExportProjectModal Vertical,
 CreateProjectModal Vertical {
   background: transparent;
 }
@@ -80,6 +81,7 @@ CreateTaskModal,
 SelectProjectModal,
 CreateProjectModal,
 ConfirmModal,
+ImportExportProjectModal,
 Confirm {
   align: center middle;
 }
@@ -104,6 +106,11 @@ CreateProjectModal Vertical,
 Projects {
   width: 50%;
   height: 50%;
+}
+
+ImportExportProjectModal Vertical,
+Projects {
+  width: 50%;
 }
 
 #confirm {
