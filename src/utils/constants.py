@@ -9,6 +9,7 @@ ICONS = [
     {"icon": "✗", "title": "Canceled/Won't do"},
 ]
 PROJECT_TITLE_ID = "project-title"
+TASK_CONTAINER_ID = "task-container"
 PROJECT_DESCRIPTION_ID = "project-description"
 PROJECT_TASK_TYPE_ID = "task"
 PROJECT_TYPE_ID = "project-type"

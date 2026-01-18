@@ -6,7 +6,8 @@ from textual.binding import Binding
 from src.utils.helpers import slugify
 from src.screens.createProject import CreateProjectModal
 from src.screens.confirm import ConfirmModal
-from src.utils.constants import PROJECTS_ID
+from src.utils.constants import PROJECTS_ID, TASK_CONTAINER_ID
+from src.components.taskContainer import TaskContainer
 
 
 class Projects(ListView):
@@ -47,6 +48,8 @@ class Projects(ListView):
         self.database.set_current_project(project_id)
         tasks_widget = self.app.query_one("#tasks")
         tasks_widget.refresh_tasks()
+        task_container_widget: TaskContainer = self.app.query_one(f"#{TASK_CONTAINER_ID}")
+        task_container_widget.border_title = f"Project {self.database.project_name}"
         self.close_app()
 
     def action_edit_project(self):

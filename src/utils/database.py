@@ -75,6 +75,7 @@ class Database:
     def __init__(self):
         self.path = DB_NAME
         self.current_project_id: Optional[str] = None
+        self.project_name: str = "Project"
         self.con = sqlite3.connect(DB_NAME)
         self.cur = self.con.cursor()
         self.cur.execute(CREATE_TASK_TABLE)
@@ -120,6 +121,8 @@ class Database:
     def set_current_project(self, project_id: str):
         """Set the current project context"""
         self.current_project_id = project_id
+        project = self.get_project(project_id)
+        self.project_name = project['title']
 
     def save(self, data: Dict[str, Any]):
         """Save a task to the current project"""
