@@ -125,6 +125,32 @@ python main.py
 - ✓ **Done** - Task is verified complete
 - ✗ **Canceled** - Task was canceled or won't be done
 
+#### Import Project(s)
+Project data structure sample
+```.json
+{
+  "version": "1.0",
+  "exported_at": "2026-01-18T14:30:00.000000",
+  "project": {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "title": "Website Redesign",
+    "description": "Complete redesign of company website with modern UI/UX",
+    "type": "development",
+    "createdAt": "2025-12-15 10:00:00"
+  },
+  "tasks": [
+    {
+      "id": "task-001-uuid-1234",
+      "title": "Research competitor websites",
+      "content": "Analyze top 5 competitor websites and document design patterns, user flows, and features. Focus on:\n- Navigation structure\n- Color schemes\n- Typography choices\n- Mobile responsiveness\n- Accessibility features",
+      "status": 1,
+      "createdAt": "2025-12-15 10:15:00"
+    }
+  ],
+  "task_count": 8
+}
+  
+```
 ## Development
 
 ### Architecture Overview
