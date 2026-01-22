@@ -37,12 +37,14 @@ SelectOverlay,
 TextArea,
 TaskContainer,
 Projects,
+SelectProject,
 #confirm {
   border: round $primary;
 }
 
 TaskContainer,
-Projects {
+Projects,
+SelectProject {
   border-title-align: left;
   border-title-style: bold;
 }
@@ -61,6 +63,7 @@ Input,
 Select,
 RadioSet,
 Projects,
+SelectProject,
 #modal-dialog,
 CreateTaskModal Vertical,
 ImportExportProjectModal Vertical,
@@ -103,7 +106,8 @@ CreateTaskModal Vertical {
 }
 
 CreateProjectModal Vertical,
-Projects {
+Projects,
+SelectProject {
   width: 50%;
   height: 50%;
 }

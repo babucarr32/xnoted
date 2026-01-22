@@ -1,7 +1,9 @@
+import uuid
 from textual.widgets import ListView, ListItem, Label
 from src.utils.constants import ICONS
 from src.components.body import Body
 from src.screens.createTask import CreateTaskModal
+from src.screens.selectProjects import SelectProjectModal
 from src.screens.confirm import ConfirmModal
 from src.utils.database import Database
 from textual.binding import Binding
@@ -15,6 +17,7 @@ class Tasks(ListView):
         self.database = database
 
     BINDINGS = [
+        Binding("m", "move", "Move task"),
         Binding("enter", "select_cursor", "Select", show=False),
         Binding("k", "cursor_up", "Cursor up", show=False),
         Binding("j", "cursor_down", "Cursor down", show=False),
@@ -156,3 +159,45 @@ class Tasks(ListView):
                 self.refresh_tasks()
 
             self.app.push_screen(ConfirmModal(on_confirm=on_confirm))
+
+    def action_move(self) -> None:
+        child: ListItem = self.highlighted_child
+
+        if child and hasattr(child, "task_id"):
+            task_id = child.task_id
+            cached_project_id = self.database.current_project_id
+
+            def on_select(event: ListView.Highlighted):
+                project_id = event.item.project_id
+
+                if project_id:
+                    self.database.current_project_id = project_id
+                    # Save the highlited task to the selected project
+                    task = self.database.get_task(task_id)
+
+                    if task:
+                        title = task.get("title")
+                        content = task.get("content")
+                        data = {
+                            "id": str(uuid.uuid4()),
+                            "title": title,
+                            "content": content,
+                        }
+
+                        try:
+                            self.database.save(data)
+                            # Then delete the task
+                            self.database.delete_task(task_id)
+                            # Set the project id back
+                            self.database.current_project_id = cached_project_id
+                            self.refresh_tasks()
+                        except Exception as e:
+                            self.log(f"Unable to move task {e}")
+
+            self.app.push_screen(
+                SelectProjectModal(
+                    database=self.database,
+                    on_select=on_select,
+                    _border_title="Move to",
+                )
+            )
