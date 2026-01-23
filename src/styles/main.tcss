@@ -112,9 +112,9 @@ SelectProject {
   height: 50%;
 }
 
-ImportExportProjectModal Vertical,
-Projects {
+ImportExportProjectModal Vertical {
   width: 50%;
+  height: 7
 }
 
 #confirm {

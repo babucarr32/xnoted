@@ -2,21 +2,20 @@ import json
 from pathlib import Path
 from datetime import datetime
 from textual.containers import Container
-from textual.widgets import RadioSet, RadioButton, Static, Input
+from textual.widgets import RadioSet, RadioButton, Input
 from textual.app import ComposeResult
 from textual.binding import Binding
 from src.utils.database import Database
 from src.utils.constants import (
     EXPORT_PROJECT_ID,
     IMPORT_PROJECT_ID,
+    EXPORT_PROJECT_RADIO_ID,
 )
 
-
 class ProjectTypeContainer(RadioSet):
-    BORDER_TITLE = "Import or Export project"
-
     def __init__(self):
-        super().__init__(id="import_export_radio")
+        super().__init__(id=EXPORT_PROJECT_RADIO_ID)
+        self.border_title = "Import or Export project"
 
     def compose(self):
         yield RadioButton("Import", id=IMPORT_PROJECT_ID, value=True)
@@ -35,7 +34,6 @@ class ImportExportProject(Container):
     def compose(self) -> ComposeResult:
         yield ProjectTypeContainer()
         yield Input(placeholder="File path (e.g., export.json)", id="file_path_input")
-        yield Static("", id="status_message")
 
     def action_import_export(
         self,
@@ -177,11 +175,11 @@ class ImportExportProject(Container):
 
     def _update_status(self, message: str, status_type: str = "info") -> None:
         """Update status message with styling"""
-        status_widget = self.query_one("#status_message", Static)
+        project_type_container = self.query_one(f"#{EXPORT_PROJECT_RADIO_ID}")
 
         if status_type == "success":
-            status_widget.update(f"✓ {message}")
+            project_type_container.border_title = project_type_container.border_title + f" | ✓ {message}"
         elif status_type == "error":
-            status_widget.update(f"✗ {message}")
+            project_type_container.border_title = project_type_container.border_title + f" | ✗ {message}"
         else:
-            status_widget.update(message)
+            project_type_container.border_title = project_type_container.border_title + f" | {message}"

@@ -2,10 +2,6 @@ from textual.containers import Vertical
 from textual.screen import ModalScreen
 from src.components.importExportProject import ImportExportProject
 from src.utils.database import Database
-from src.utils.constants import (
-    PROJECT_MODAL_CONTENT,
-)
-
 
 class ImportExportProjectModal(ModalScreen):
     def __init__(
