@@ -4,6 +4,7 @@ from src.screens.projects import SelectProjectModal
 from src.screens.createProject import CreateProjectModal
 from src.screens.importExportProject import ImportExportProjectModal
 from src.components.content import ContentWrapper
+from src.components.footer import Footer
 from src.components.body import Body
 from src.utils.database import Database
 
@@ -26,6 +27,7 @@ class XNotedApp(App):
 
     def compose(self):
         yield ContentWrapper(database=self.database)
+        yield Footer(database=self.database)
 
     def action_create_new_task(self):
         self.app.push_screen(CreateTaskModal(database=self.database))

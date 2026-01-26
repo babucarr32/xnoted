@@ -8,6 +8,7 @@ from src.screens.confirm import ConfirmModal
 from src.utils.database import Database
 from textual.binding import Binding
 from textual.reactive import reactive
+from src.components.footerLabel import FooterLabel
 
 
 class Tasks(ListView):
@@ -21,6 +22,7 @@ class Tasks(ListView):
         Binding("enter", "select_cursor", "Select", show=False),
         Binding("k", "cursor_up", "Cursor up", show=False),
         Binding("j", "cursor_down", "Cursor down", show=False),
+        Binding("/", "search", "Search", show=False),
         Binding("e", "edit_task", "Cursor down", show=False),
         Binding("d", "delete_task", "Cursor down", show=False),
         Binding("left", "change_status('left')", "Change status", show=False),
@@ -94,6 +96,7 @@ class Tasks(ListView):
             body_widget.show_task(task_id)
 
     def action_edit_task(self):
+        # --------------- Refactor this ------------------
         child = self.highlighted_child
 
         if child and hasattr(child, "task_id"):
@@ -159,6 +162,10 @@ class Tasks(ListView):
                 self.refresh_tasks()
 
             self.app.push_screen(ConfirmModal(on_confirm=on_confirm))
+
+    def action_search(self):
+        footer: FooterLabel = self.app.query_one(FooterLabel)
+        footer.toggle_search()
 
     def action_move(self) -> None:
         child: ListItem = self.highlighted_child

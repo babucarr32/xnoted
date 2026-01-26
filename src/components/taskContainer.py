@@ -14,14 +14,13 @@ class TaskContainer(Container):
         self.border_title = f"Project {self.database.project_name}"
 
     def compose(self) -> ComposeResult:
-        yield Input(placeholder="Search...", id=SEARCH_ID)
+        # yield Input(placeholder="Search...", id=SEARCH_ID)
         yield Tasks(database=self.database)
     
     def on_mount(self):
         """Focus the search input when container is mounted"""
-        self.query_one(f"#{SEARCH_ID}").focus()
+        self.query_one("#tasks").focus()
 
     def on_input_changed(self, event: Input.Changed) -> None:
-        self.log(event.value)
         tasks_widget = self.app.query_one(Tasks)
         tasks_widget.quick_search(event.value)
