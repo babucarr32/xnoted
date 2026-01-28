@@ -4,7 +4,7 @@
 
 ContentWrapper {
   layout: vertical;
-  height: 95%;
+  height: 1fr;
 }
 
 Content {
@@ -38,7 +38,7 @@ TextArea,
 TaskContainer,
 Projects,
 SelectProject,
-Footer,
+FooterLabel,
 #confirm {
   border: round $primary;
 }

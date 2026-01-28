@@ -1,6 +1,6 @@
 import uuid
 from textual.widgets import ListView, ListItem, Label
-from src.utils.constants import ICONS
+from src.utils.constants import ICONS, FOOTER_ID
 from src.components.body import Body
 from src.screens.createTask import CreateTaskModal
 from src.screens.selectProjects import SelectProjectModal
@@ -164,7 +164,7 @@ class Tasks(ListView):
             self.app.push_screen(ConfirmModal(on_confirm=on_confirm))
 
     def action_search(self):
-        footer: FooterLabel = self.app.query_one(FooterLabel)
+        footer: FooterLabel = self.app.query_one(f"#{FOOTER_ID}")
         footer.toggle_search()
 
     def action_move(self) -> None:

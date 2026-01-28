@@ -1,12 +1,24 @@
 from textual.widgets import Static
 from src.utils.database import Database
+from textual.reactive import reactive
 from src.components.footerLabel import FooterLabel
+from src.components.footerSearch import FooterSearch
+from src.utils.constants import FOOTER_ID
 
 
 class Footer(Static):
+    is_searching = reactive(False, recompose=True)
+
     def __init__(self, database: Database):
-        super().__init__()
+        super().__init__(id=FOOTER_ID)
         self.database = database
 
     def compose(self):
-        yield FooterLabel(database=self.database)
+        if not self.is_searching:
+            yield FooterLabel(database=self.database)
+        else:
+            yield FooterSearch(database=self.database, toggle_search = self.toggle_search)
+        
+    def toggle_search(self):
+        """Toggle between help text and search input"""
+        self.is_searching = not self.is_searching
