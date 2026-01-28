@@ -1,5 +1,6 @@
 from textual.widgets import Static, Input
 from textual.reactive import reactive
+from src.utils.constants import TASKS_ID
 from src.utils.database import Database
 
 class FooterSearch(Static):    
@@ -19,6 +20,10 @@ class FooterSearch(Static):
             placeholder="Search tasks...",
             id="search-input",
         )
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        tasks_widget = self.app.query_one(f"#{TASKS_ID}")
+        tasks_widget.quick_search(event.value)
 
     def on_mount(self):
         self.query_one("#search-input").focus()

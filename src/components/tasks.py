@@ -1,6 +1,6 @@
 import uuid
 from textual.widgets import ListView, ListItem, Label
-from src.utils.constants import ICONS, FOOTER_ID
+from src.utils.constants import ICONS, FOOTER_ID, TASKS_ID
 from src.components.body import Body
 from src.screens.createTask import CreateTaskModal
 from src.screens.selectProjects import SelectProjectModal
@@ -13,7 +13,7 @@ from src.components.footerLabel import FooterLabel
 
 class Tasks(ListView):
     def __init__(self, database=Database):
-        super().__init__(id="tasks")
+        super().__init__(id=TASKS_ID)
         self.has_task_result = True
         self.database = database
 
