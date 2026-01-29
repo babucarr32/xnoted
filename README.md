@@ -110,6 +110,7 @@ python main.py
 | `d` | Delete task | Delete the highlighted task (with confirmation) |
 | `←` | Previous status | Cycle task status backward |
 | `→` | Next status | Cycle task status forward |
+| `/` | Search | Search the tasks |
 
 #### Task/Project Editor Shortcuts
 | Shortcut | Action | Description |
@@ -119,7 +120,6 @@ python main.py
 
 #### Task Status Indicators
 - ○ **Not started** - Task hasn't been started yet
-- ● **Completed** - Task is finished
 - ◐ **In progress** - Task is actively being worked on
 - ◎ **Under review** - Task is waiting for review
 - ✓ **Done** - Task is verified complete
