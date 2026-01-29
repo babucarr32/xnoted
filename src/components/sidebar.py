@@ -41,6 +41,7 @@ class Form(Container):
         self.editing = editing
         self.task_id = task_id
         self.database = database
+        self._debounce_timer = None
 
     BINDINGS = [
         ("ctrl+s", "submit", "Save form"),
@@ -90,8 +91,17 @@ class Form(Container):
         tasks_widget = self.app.query_one("#tasks")
         tasks_widget.refresh_tasks()
 
-    def action_submit(self) -> None:
+    def action_submit(self, debounce_ms: int = 150) -> None:
+        # Cancel previous timer
+        if self._debounce_timer is not None:
+            self._debounce_timer.stop()
+
         if self.editing:
-            self.handle_edit()
+            self._debounce_timer = self.set_timer(
+                debounce_ms / 1000, lambda: self.handle_edit()
+            )
+
         else:
-            self.handle_save_new()
+            self._debounce_timer = self.set_timer(
+                debounce_ms / 1000, lambda: self.handle_save_new()
+            )
