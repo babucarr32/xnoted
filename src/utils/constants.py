@@ -2,7 +2,6 @@ DB_PATH = "db.json"
 
 ICONS = [
     {"icon": "○", "title": "Not started"},
-    {"icon": "●", "title": "Completed"},
     {"icon": "◐", "title": "In progress"},
     {"icon": "◎", "title": "Under review"},
     {"icon": "✓", "title": "Done"},
@@ -20,6 +19,7 @@ PROJECTS_ID = "projects"
 CREATE_PROJECTS_ID = "create_to_do_modal"
 IMPORT_EXPORT_MODAL_ID = "import_export_modal"
 FOOTER_ID = "footer"
+TASK_HEADER_ID = "task-header"
 TASKS_ID = "tasks"
 PROJECT_OTHER_TYPE_ID = "other"
 PROJECT_MODAL_CONTENT = "project-modal-content"

@@ -8,7 +8,7 @@ class TaskContainer(Container):
     def __init__(self, database: Database):
         super().__init__(id=TASK_CONTAINER_ID)
         self.database = database
-        self.border_title = f"Project {self.database.project_name}"
+        self.border_title = "Tasks"
 
     def compose(self) -> ComposeResult:
         yield Tasks(database=self.database)
