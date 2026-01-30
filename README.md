@@ -76,6 +76,19 @@ Or for production use:
 python main.py
 ```
 
+## Build
+
+1. Install [hatch](https://hatch.pypa.io/latest/install/)
+2. To build your project with Hatch, change to the directory containing your pyproject.toml and run the hatch build subcommand:
+```bash
+cd textual-calculator
+hatch build
+```
+
+3. The output will be in the `dist` folder
+
+For more info see [Package with Hatch](https://textual.textualize.io/how-to/package-with-hatch/#building)
+
 ### Quick Start Guide
 
 1. **First Launch**: The app creates a default project automatically
