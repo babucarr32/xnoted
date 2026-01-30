@@ -18,7 +18,7 @@ A powerful terminal-based task and note management application built with Python
   - Create, edit, and delete tasks with titles and markdown content
   - Track task status with 6 different states: Not started, Completed, In progress, Under review, Done, and Canceled
   - Search tasks in real-time as you type
-  - Visual status indicators (○, ●, ◐, ◎, ✓, ✗)
+  - Visual status indicators (○, ◐, ◎, ✓, ✗)
 - **Rich Text Support**: Write task content in Markdown with syntax highlighting
 - **Project Import/Export**: Share and backup projects across systems
 - **Keyboard-Driven Interface**: Navigate and manage tasks efficiently without touching the mouse
