@@ -1,11 +1,14 @@
 import uuid
 from textual.containers import Container
-from textual.widgets import Input, TextArea, RadioSet, RadioButton
+from textual.widgets import Input, TextArea, RadioSet, RadioButton, Label
 from textual.app import ComposeResult
 from xnoted.utils.database import Database
+from xnoted.components.tasks import Tasks
 from xnoted.utils.constants import (
     PROJECT_TITLE_ID,
     PROJECT_DESCRIPTION_ID,
+    TASKS_ID,
+    TASK_HEADER_ID,
     PROJECT_TASK_TYPE_ID,
     PROJECT_TYPE_ID,
     PROJECT_OTHER_TYPE_ID,
@@ -58,7 +61,7 @@ class CreateProjectForm(Container):
         self.project_id = project_id
 
     BINDINGS = [
-        ("ctrl+s", "submit", "Toggle dark mode"),
+        ("ctrl+s", "submit", "Save project form"),
     ]
 
     def on_mount(self):
@@ -119,8 +122,16 @@ class CreateProjectForm(Container):
         }
 
         self.database.update_project(self.project_id, data)
-        # projects_widget = self.app.query_one(f"#{PROJECTS_ID}")
-        # projects_widget.load_projects()
+        tasks_widget: Tasks = self.app.query_one(f"#{TASKS_ID}")
+
+        task_header_label_widget: Label = self.app.query_one(f"#{TASK_HEADER_ID}")
+        task_header_label_widget.update("self.database.project_name")
+
+        # Refresh only if task type is selected
+        if self.database.project_type == project_type.pressed_button.id:
+            tasks_widget.refresh_tasks()
+            task_header_label_widget: Label = self.app.query_one(f"#{TASK_HEADER_ID}")
+            task_header_label_widget.update(self.database.project_name)
 
     def action_submit(self) -> None:
         if self.editing:
