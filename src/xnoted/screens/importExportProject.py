@@ -1,7 +1,7 @@
 from textual.containers import Vertical
 from textual.screen import ModalScreen
-from src.components.importExportProject import ImportExportProject
-from src.utils.database import Database
+from xnoted.components.importExportProject import ImportExportProject
+from xnoted.utils.database import Database
 
 class ImportExportProjectModal(ModalScreen):
     def __init__(

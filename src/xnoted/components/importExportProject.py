@@ -5,8 +5,8 @@ from textual.containers import Container
 from textual.widgets import RadioSet, RadioButton, Input
 from textual.app import ComposeResult
 from textual.binding import Binding
-from src.utils.database import Database
-from src.utils.constants import (
+from xnoted.utils.database import Database
+from xnoted.utils.constants import (
     EXPORT_PROJECT_ID,
     IMPORT_PROJECT_ID,
     EXPORT_PROJECT_RADIO_ID,

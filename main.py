@@ -1,4 +1,4 @@
-from app import XNotedApp
+from xnoted.app import XNotedApp
 
 if __name__ == "__main__":
     app = XNotedApp()

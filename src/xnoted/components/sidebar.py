@@ -2,7 +2,7 @@ import uuid
 from textual.containers import Container
 from textual.widgets import Input, TextArea
 from textual.app import ComposeResult
-from src.utils.database import Database
+from xnoted.utils.database import Database
 
 TITLE_ID = "title"
 CONTENT_ID = "content"

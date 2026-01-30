@@ -1,7 +1,7 @@
 from textual.widgets import Static, Input
 from textual.reactive import reactive
-from src.utils.constants import TASKS_ID
-from src.utils.database import Database
+from xnoted.utils.constants import TASKS_ID
+from xnoted.utils.database import Database
 
 class FooterSearch(Static):    
     is_searching = reactive(False)

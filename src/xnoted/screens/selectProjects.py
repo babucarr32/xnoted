@@ -1,10 +1,10 @@
 from textual.screen import ModalScreen
 from collections.abc import Callable
 from textual.widgets import Label, ListView, ListItem
-from src.utils.database import Database
+from xnoted.utils.database import Database
 from textual.binding import Binding
-from src.utils.helpers import slugify
-from src.utils.constants import PROJECTS_ID
+from xnoted.utils.helpers import slugify
+from xnoted.utils.constants import PROJECTS_ID
 
 
 class SelectProject(ListView):

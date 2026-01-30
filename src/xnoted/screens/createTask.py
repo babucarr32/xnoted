@@ -1,7 +1,7 @@
 from textual.containers import Vertical
 from textual.screen import ModalScreen
-from src.components.sidebar import Form
-from src.utils.database import Database
+from xnoted.components.sidebar import Form
+from xnoted.utils.database import Database
 
 
 class CreateTaskModal(ModalScreen):

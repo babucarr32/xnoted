@@ -2,8 +2,8 @@ import uuid
 from textual.containers import Container
 from textual.widgets import Input, TextArea, RadioSet, RadioButton
 from textual.app import ComposeResult
-from src.utils.database import Database
-from src.utils.constants import (
+from xnoted.utils.database import Database
+from xnoted.utils.constants import (
     PROJECT_TITLE_ID,
     PROJECT_DESCRIPTION_ID,
     PROJECT_TASK_TYPE_ID,

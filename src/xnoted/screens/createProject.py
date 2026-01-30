@@ -1,8 +1,8 @@
 from textual.containers import Vertical
 from textual.screen import ModalScreen
-from src.components.createProjectForm import CreateProjectForm
-from src.utils.database import Database
-from src.utils.constants import (
+from xnoted.components.createProjectForm import CreateProjectForm
+from xnoted.utils.database import Database
+from xnoted.utils.constants import (
     PROJECT_TASK_TYPE_ID,
     PROJECT_MODAL_CONTENT,
     CREATE_PROJECTS_ID,

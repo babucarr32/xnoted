@@ -1,12 +1,12 @@
 from textual.screen import ModalScreen
 from collections.abc import Callable
 from textual.widgets import Label, ListView, ListItem
-from src.utils.database import Database
+from xnoted.utils.database import Database
 from textual.binding import Binding
-from src.utils.helpers import slugify
-from src.screens.createProject import CreateProjectModal
-from src.screens.confirm import ConfirmModal
-from src.utils.constants import PROJECTS_ID, TASK_HEADER_ID, TASKS_ID
+from xnoted.utils.helpers import slugify
+from xnoted.screens.createProject import CreateProjectModal
+from xnoted.screens.confirm import ConfirmModal
+from xnoted.utils.constants import PROJECTS_ID, TASK_HEADER_ID, TASKS_ID
 
 
 class Projects(ListView):

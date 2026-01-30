@@ -1,12 +1,12 @@
 from textual.app import App
-from src.screens.createTask import CreateTaskModal
-from src.screens.projects import SelectProjectModal
-from src.screens.createProject import CreateProjectModal
-from src.screens.importExportProject import ImportExportProjectModal
-from src.components.content import ContentWrapper
-from src.components.footer import Footer
-from src.components.body import Body
-from src.utils.database import Database
+from xnoted.screens.createTask import CreateTaskModal
+from xnoted.screens.projects import SelectProjectModal
+from xnoted.screens.createProject import CreateProjectModal
+from xnoted.screens.importExportProject import ImportExportProjectModal
+from xnoted.components.content import ContentWrapper
+from xnoted.components.footer import Footer
+from xnoted.components.body import Body
+from xnoted.utils.database import Database
 
 
 class XNotedApp(App):
@@ -14,7 +14,7 @@ class XNotedApp(App):
         super().__init__()
         self.database = Database()
 
-    CSS_PATH = "src/styles/main.tcss"
+    CSS_PATH = "styles/main.tcss"
     BINDINGS = [
         ("ctrl+n", "create_new_task", "Create new task"),
         ("ctrl+l", "select_project", "Select project"),

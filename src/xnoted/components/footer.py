@@ -1,9 +1,9 @@
 from textual.widgets import Static
-from src.utils.database import Database
+from xnoted.utils.database import Database
 from textual.reactive import reactive
-from src.components.footerLabel import FooterLabel
-from src.components.footerSearch import FooterSearch
-from src.utils.constants import FOOTER_ID
+from xnoted.components.footerLabel import FooterLabel
+from xnoted.components.footerSearch import FooterSearch
+from xnoted.utils.constants import FOOTER_ID
 
 
 class Footer(Static):

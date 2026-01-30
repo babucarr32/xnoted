@@ -1,14 +1,14 @@
 import uuid
 from textual.widgets import ListView, ListItem, Label
-from src.utils.constants import ICONS, FOOTER_ID, TASKS_ID
-from src.components.body import Body
-from src.screens.createTask import CreateTaskModal
-from src.screens.selectProjects import SelectProjectModal
-from src.screens.confirm import ConfirmModal
-from src.utils.database import Database
+from xnoted.utils.constants import ICONS, FOOTER_ID, TASKS_ID
+from xnoted.components.body import Body
+from xnoted.screens.createTask import CreateTaskModal
+from xnoted.screens.selectProjects import SelectProjectModal
+from xnoted.screens.confirm import ConfirmModal
+from xnoted.utils.database import Database
 from textual.binding import Binding
 from textual.reactive import reactive
-from src.components.footerLabel import FooterLabel
+from xnoted.components.footerLabel import FooterLabel
 
 
 class Tasks(ListView):

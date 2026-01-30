@@ -1,6 +1,6 @@
 from pathlib import Path
 from textual.widgets import MarkdownViewer
-from src.utils.database import Database
+from xnoted.utils.database import Database
 from textual.reactive import var
 
 class Body(MarkdownViewer):

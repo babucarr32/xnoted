@@ -1,8 +1,8 @@
-from src.components.tasks import Tasks
+from xnoted.components.tasks import Tasks
 from textual.app import ComposeResult
 from textual.containers import Container
-from src.utils.database import Database
-from src.utils.constants import TASK_CONTAINER_ID
+from xnoted.utils.database import Database
+from xnoted.utils.constants import TASK_CONTAINER_ID
 
 class TaskContainer(Container):
     def __init__(self, database: Database):

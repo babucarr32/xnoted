@@ -1,6 +1,6 @@
 from textual.widgets import Static, Label
-from src.utils.database import Database
-from src.utils.constants import TASK_HEADER_ID
+from xnoted.utils.database import Database
+from xnoted.utils.constants import TASK_HEADER_ID
 
 
 class TaskHeader(Static):
