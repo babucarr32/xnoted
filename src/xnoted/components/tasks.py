@@ -1,6 +1,6 @@
 import uuid
 from textual.widgets import ListView, ListItem, Label
-from xnoted.utils.constants import ICONS, FOOTER_ID, TASKS_ID
+from xnoted.utils.constants import ICONS, FOOTER_ID, TASKS_ID, PROJECT_TASK_TYPE_ID
 from xnoted.components.body import Body
 from xnoted.screens.createTask import CreateTaskModal
 from xnoted.screens.selectProjects import SelectProjectModal
@@ -42,7 +42,14 @@ class Tasks(ListView):
                 title = task.get("title")
                 task_id = task.get("id")
                 status = task.get("status", 0)
-                list_item = ListItem(Label(f"{ICONS[status].get('icon')} {title}"))
+
+                label = ""
+                if self.database.project_type == PROJECT_TASK_TYPE_ID:
+                    label = f"{ICONS[status].get('icon')} {title}"
+                else:
+                    label = title
+
+                list_item = ListItem(Label(label))
                 list_item.task_id = task_id
                 list_item.status = status
                 self.append(list_item)
@@ -119,6 +126,9 @@ class Tasks(ListView):
                     break
 
     def action_change_status(self, direction: str):
+        if self.database.project_type != PROJECT_TASK_TYPE_ID:
+            return
+
         child = self.highlighted_child
         if child is None or not hasattr(child, "task_id"):
             return
@@ -178,7 +188,7 @@ class Tasks(ListView):
                 project_id = event.item.project_id
 
                 if project_id:
-                    self.database.current_project_id = project_id
+                    self.database.set_current_project(project_id)
                     # Save the highlited task to the selected project
                     task = self.database.get_task(task_id)
 
@@ -196,7 +206,7 @@ class Tasks(ListView):
                             # Then delete the task
                             self.database.delete_task(task_id)
                             # Set the project id back
-                            self.database.current_project_id = cached_project_id
+                            self.database.set_current_project(cached_project_id)
                             self.refresh_tasks()
                         except Exception as e:
                             self.log(f"Unable to move task {e}")

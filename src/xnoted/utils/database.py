@@ -76,6 +76,7 @@ class Database:
         self.path = DB_NAME
         self.current_project_id: Optional[str] = None
         self.project_name: str = "Project"
+        self.project_type: str = ""
         self.con = sqlite3.connect(DB_NAME)
         self.cur = self.con.cursor()
         self.cur.execute(CREATE_TASK_TABLE)
@@ -89,6 +90,7 @@ class Database:
         projects = self.load_projects()
         if projects:
             self.current_project_id = projects[0]["id"]
+            self.project_type = projects[0]["type"]
 
     def _ensure_default_project(self):
         """Create a default project if no projects exist"""
@@ -123,6 +125,7 @@ class Database:
         self.current_project_id = project_id
         project = self.get_project(project_id)
         self.project_name = project['title']
+        self.project_type = project['type']
 
     def save(self, data: Dict[str, Any]):
         """Save a task to the current project"""
