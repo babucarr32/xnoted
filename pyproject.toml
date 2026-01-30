@@ -37,3 +37,6 @@ xnoted = "xnoted.entry_points:xnoted"
 
 [tool.hatch.version]
 path = "src/xnoted/__about__.py"
+
+[tool.hatch.build.targets.sdist]
+include = ["README.md"]
