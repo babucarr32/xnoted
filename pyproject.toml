@@ -28,9 +28,9 @@ dependencies = [
 ]
 
 [project.urls]
-Documentation = "https://github.com/unknown/xnoted#readme"
-Issues = "https://github.com/unknown/xnoted/issues"
-Source = "https://github.com/unknown/xnoted"
+Documentation = "https://github.com/babucarr32/xnoted#readme"
+Issues = "https://github.com/babucarr32/xnoted/issues"
+Source = "https://github.com/babucarr32/xnoted"
 
 [project.scripts]
 xnoted = "xnoted.entry_points:xnoted"
