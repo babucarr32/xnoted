@@ -33,7 +33,17 @@ A powerful terminal-based task and note management application built with Python
   - textual-dev >= 1.8.0
 
 ## Installation
+1. Using pip
+```bash
+pip install xnoted
+```
 
+2. Using pipx
+```bash
+pipx install xnoted
+```
+
+## Development
 1. Clone the repository:
 ```bash
 git clone git@github.com:babucarr32/xnoted.git
@@ -88,6 +98,15 @@ hatch build
 3. The output will be in the `dist` folder
 
 For more info see [Package with Hatch](https://textual.textualize.io/how-to/package-with-hatch/#building)
+
+To install the local build
+```bash
+pipx install --force .
+```
+or 
+```bash
+pip install --force .
+```
 
 ### Quick Start Guide
 
