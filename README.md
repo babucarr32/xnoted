@@ -16,7 +16,7 @@ A powerful terminal-based task and note management application built with Python
 - **Project-Based Organization**: Group related tasks and notes into separate projects with custom titles and descriptions
 - **Task Management**: 
   - Create, edit, and delete tasks with titles and markdown content
-  - Track task status with 6 different states: Not started, Completed, In progress, Under review, Done, and Canceled
+  - Track task status with 5 different states: Not started, In progress, Under review, Done, and Canceled
   - Search tasks in real-time as you type
   - Visual status indicators (○, ◐, ◎, ✓, ✗)
 - **Rich Text Support**: Write task content in Markdown with syntax highlighting
@@ -24,13 +24,6 @@ A powerful terminal-based task and note management application built with Python
 - **Keyboard-Driven Interface**: Navigate and manage tasks efficiently without touching the mouse
 - **Persistent Storage**: SQLite database ensures your data is saved automatically
 - **Modern Terminal UI**: Beautiful interface powered by Textual framework
-
-## Requirements
-
-- Python >= 3.11
-- Dependencies:
-  - textual >= 6.6.0
-  - textual-dev >= 1.8.0
 
 ## Installation
 1. Using pip
@@ -42,6 +35,13 @@ pip install xnoted==0.1.5
 ```bash
 pipx install xnoted==0.1.5
 ```
+
+## Requirements
+
+- Python >= 3.11
+- Dependencies:
+  - textual >= 6.6.0
+  - textual-dev >= 1.8.0
 
 ## Development
 1. Clone the repository:
@@ -86,6 +86,20 @@ Or for production use:
 python main.py
 ```
 
+### Running in Development Mode
+
+Textual provides excellent development tools:
+
+```bash
+# Run with live reload and dev console
+textual run --dev main.py
+
+# Open the development console in another terminal
+textual console
+```
+
+The dev console shows real-time logs and application state for debugging.
+
 ## Build
 
 1. Install [hatch](https://hatch.pypa.io/latest/install/)
@@ -111,26 +125,26 @@ pip install --force .
 ### Quick Start Guide
 
 1. **First Launch**: The app creates a default project automatically
-2. **Create a Task**: Press `Ctrl+N` to open the task creation modal
+2. **Create a Task**: Press `Ctrl+n` to open the task creation modal
 3. **Navigate Tasks**: Use `j` and `k` to move up and down the task list
 4. **View Task Content**: Select a task with `Enter` to view its content in the right panel
 5. **Edit a Task**: Highlight a task and press `e` to edit it
 6. **Change Status**: Use arrow keys (`←`/`→`) to cycle through task statuses
-7. **Create Projects**: Press `Ctrl+B` to create new projects
-8. **Switch Projects**: Press `Ctrl+L` to select a different project
+7. **Create Projects**: Press `Ctrl+b` to create new projects
+8. **Switch Projects**: Press `Ctrl+l` to select a different project
 
 ### Keyboard Shortcuts
 
 #### Global Application Shortcuts
 | Shortcut | Action | Description |
 |----------|--------|-------------|
-| `Ctrl+N` | Create new task | Opens modal to create a new task in current project |
-| `Ctrl+B` | Create new project | Opens modal to create a new project |
-| `Ctrl+L` | Select project | Opens project selector to switch between projects |
-| `Ctrl+O` | Import/Export | Opens modal to import or export projects |
-| `Ctrl+R` | Show readme | Displays the README in the content panel |
-| `Ctrl+D` | Scroll down | Scrolls the content panel down |
-| `Ctrl+U` | Scroll up | Scrolls the content panel up |
+| `Ctrl+n` | Create new task | Opens modal to create a new task in current project |
+| `Ctrl+b` | Create new project | Opens modal to create a new project |
+| `Ctrl+l` | Select project | Opens project selector to switch between projects |
+| `Ctrl+o` | Import/Export | Opens modal to import or export projects |
+| `Ctrl+r` | Show readme | Displays the README in the content panel |
+| `Ctrl+d` | Scroll down | Scrolls the content panel down |
+| `Ctrl+u` | Scroll up | Scrolls the content panel up |
 
 #### Task List Navigation
 | Shortcut | Action | Description |
@@ -147,7 +161,7 @@ pip install --force .
 #### Task/Project Editor Shortcuts
 | Shortcut | Action | Description |
 |----------|--------|-------------|
-| `Ctrl+S` | Save | Save the current task or project |
+| `Ctrl+s` | Save | Save the current task or project |
 | `Esc` | Cancel | Close modal without saving |
 
 #### Task Status Indicators
@@ -191,24 +205,24 @@ xNoted is built with [Textual](https://textual.textualize.io/), a modern Python 
 
 #### Core Components
 
-- **XNotedApp** (`app.py`): Main application class that handles:
+- **XNotedApp** (`src/xnoted/app.py`): Main application class that handles:
   - Global keyboard bindings
   - Screen navigation and modal management
   - Database initialization
 
-- **Database** (`src/utils/database.py`): SQLite wrapper providing:
+- **Database** (`src/xnoted/utils/database.py`): SQLite wrapper providing:
   - Project and task CRUD operations
   - Automatic schema initialization
   - Current project context management
   - Default project creation on first run
 
-- **Screens** (`src/screens/`): Modal overlays for user interactions:
+- **Screens** (`src/xnoted/screens/`): Modal overlays for user interactions:
   - Task creation and editing
   - Project creation and selection
   - Import/export functionality
   - Confirmation dialogs
 
-- **Components** (`src/components/`): Reusable UI building blocks:
+- **Components** (`src/xnoted/components/`): Reusable UI building blocks:
   - Task list with search and navigation
   - Markdown content viewer
   - Form inputs for tasks and projects
@@ -221,7 +235,7 @@ The SQLite database contains two main tables:
 - `id` (TEXT, PRIMARY KEY): Unique project identifier
 - `title` (TEXT): Project name
 - `description` (TEXT): Project description
-- `type` (TEXT): Project type (e.g., "task", "note", "general")
+- `type` (TEXT): Project type (e.g., "task", "other")
 - `createdAt` (TEXT): Creation timestamp
 
 **Tasks**:
@@ -236,20 +250,6 @@ The SQLite database contains two main tables:
 - `Linux`: `~/.local/share/xnoted/`
 - `macOS`: `~/Library/Application Support/xnoted/`
 - `Windows`: `C:\Users\YourName\AppData\Roaming\xnoted\`
-
-### Running in Development Mode
-
-Textual provides excellent development tools:
-
-```bash
-# Run with live reload and dev console
-textual run --dev main.py
-
-# Open the development console in another terminal
-textual console
-```
-
-The dev console shows real-time logs and application state for debugging.
 
 ## License
 
