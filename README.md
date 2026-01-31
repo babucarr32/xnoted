@@ -148,7 +148,7 @@ Project data structure sample
     "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "title": "Website Redesign",
     "description": "Complete redesign of company website with modern UI/UX",
-    "type": "development",
+    "type": "tasks",
     "createdAt": "2025-12-15 10:00:00"
   },
   "tasks": [
@@ -212,6 +212,11 @@ The SQLite database contains two main tables:
 - `content` (TEXT): Task content in Markdown
 - `status` (INTEGER): Status index (0-5)
 - `createdAt` (TEXT): Creation timestamp
+
+### Database Path
+- `Linux`: `~/.local/share/xnoted/`
+- `macOS`: `~/Library/Application Support/xnoted/`
+- `Windows`: `C:\Users\YourName\AppData\Roaming\xnoted\`
 
 ### Running in Development Mode
 
