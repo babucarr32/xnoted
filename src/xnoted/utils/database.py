@@ -1,7 +1,17 @@
 import sqlite3
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-DB_NAME = "database.db"
+from platformdirs import user_data_dir
+
+def get_data_dir() -> Path:
+    """Get the appropriate data directory for xnoted."""
+    app_dir = Path(user_data_dir('xnoted'))
+    app_dir.mkdir(parents=True, exist_ok=True)
+    return app_dir
+
+DB_PATH = get_data_dir() / 'database.db'
+DB_NAME = str(DB_PATH)
 
 CREATE_TASK_TABLE = """
 CREATE TABLE IF NOT EXISTS task(
