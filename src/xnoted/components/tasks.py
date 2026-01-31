@@ -54,12 +54,7 @@ class Tasks(ListView):
                 list_item.status = status
                 self.append(list_item)
         else:
-            # Display Readme as Welcome
             if self.database.is_empty():
-                body_widget: Body = self.app.query_one(Body)
-                body_widget.welcome()
-                self.append(ListItem(Label("No tasks yet")))
-            else:
                 self.append(ListItem(Label("No tasks yet")))
 
     def refresh_tasks(self):
