@@ -28,12 +28,12 @@ A powerful terminal-based task and note management application built with Python
 ## Installation
 1. Using pip
 ```bash
-pip install xnoted==0.1.5
+pip install xnoted
 ```
 
 2. Using pipx
 ```bash
-pipx install xnoted==0.1.5
+pipx install xnoted
 ```
 
 ## Requirements
