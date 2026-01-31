@@ -25,6 +25,7 @@ classifiers = [
 ]
 dependencies = [
     "textual>=6.6.0",
+    "platformdirs"
 ]
 
 [project.urls]
@@ -38,5 +39,11 @@ xnoted = "xnoted.entry_points:xnoted"
 [tool.hatch.version]
 path = "src/xnoted/__about__.py"
 
-[tool.hatch.build.targets.sdist]
-include = ["README.md"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/xnoted"]
+artifacts = [
+    "*.md",
+]
+
+[tool.hatch.build.targets.wheel.force-include]
+"README.md" = "xnoted/README.md"

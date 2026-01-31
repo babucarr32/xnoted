@@ -19,6 +19,7 @@ class Body(MarkdownViewer):
         readme_path = Path("README.md")
         
         try:
+            readme_path = Path(__file__).parent.parent / "README.md"
             content = readme_path.read_text(encoding="utf-8")
             self.document.update(content)
         except FileNotFoundError:
