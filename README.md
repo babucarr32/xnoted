@@ -153,6 +153,7 @@ pip install --force .
 | `k` | Move up | Move cursor up in task list (Vim-style) |
 | `Enter` | Select task | View the selected task's content |
 | `e` | Edit task | Edit the highlighted task |
+| `c` | Copy task | Copy the highlighted task |
 | `d` | Delete task | Delete the highlighted task (with confirmation) |
 | `←` | Previous status | Cycle task status backward |
 | `→` | Next status | Cycle task status forward |

@@ -4,6 +4,7 @@ from xnoted.utils.constants import ICONS, FOOTER_ID, TASKS_ID, PROJECT_TASK_TYPE
 from xnoted.components.body import Body
 from xnoted.screens.createTask import CreateTaskModal
 from xnoted.screens.selectProjects import SelectProjectModal
+from xnoted.screens.copyTask import CopyTaskModal
 from xnoted.screens.confirm import ConfirmModal
 from xnoted.utils.database import Database
 from textual.binding import Binding
@@ -24,6 +25,7 @@ class Tasks(ListView):
         Binding("j", "cursor_down", "Cursor down", show=False),
         Binding("/", "search", "Search", show=False),
         Binding("e", "edit_task", "Cursor down", show=False),
+        Binding("c", "copy_task", "Cursor down", show=False),
         Binding("d", "delete_task", "Cursor down", show=False),
         Binding("left", "change_status('left')", "Change status", show=False),
         Binding("right", "change_status('right')", "Change status", show=False),
@@ -172,6 +174,13 @@ class Tasks(ListView):
                 self.refresh_tasks()
 
             self.app.push_screen(ConfirmModal(on_confirm=on_confirm))
+
+    def action_copy_task(self) -> None:
+        child: ListItem = self.highlighted_child
+
+        if child and hasattr(child, "task_id"):
+            task_id = child.task_id
+            self.app.push_screen(CopyTaskModal(database=self.database, item_id=task_id))
 
     def action_search(self) -> None:
         footer: FooterLabel = self.app.query_one(f"#{FOOTER_ID}")

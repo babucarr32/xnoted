@@ -38,6 +38,7 @@ SelectOverlay,
 TextArea,
 TaskContainer,
 Projects,
+CopyTask,
 SelectProject,
 FooterLabel,
 #confirm {
@@ -46,6 +47,7 @@ FooterLabel,
 
 TaskContainer,
 Projects,
+CopyTask,
 SelectProject {
   border-title-align: left;
   border-title-style: bold;
@@ -65,6 +67,7 @@ Input,
 Select,
 RadioSet,
 Projects,
+CopyTask,
 SelectProject,
 #modal-dialog,
 CreateTaskModal Vertical,
@@ -84,6 +87,7 @@ TextArea {
 
 CreateTaskModal,
 SelectProjectModal,
+CopyTaskModal,
 CreateProjectModal,
 ConfirmModal,
 ImportExportProjectModal,
@@ -112,6 +116,11 @@ Projects,
 SelectProject {
   width: 50%;
   height: 50%;
+}
+
+CopyTask {
+  width: 30%;
+  height: 10%;
 }
 
 ImportExportProjectModal Vertical {

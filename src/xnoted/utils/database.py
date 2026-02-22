@@ -10,7 +10,7 @@ def get_data_dir() -> Path:
     app_dir.mkdir(parents=True, exist_ok=True)
     return app_dir
 
-DB_PATH = get_data_dir() / 'database.db'
+DB_PATH = 'database.db'
 DB_NAME = str(DB_PATH)
 
 CREATE_TASK_TABLE = """
@@ -82,7 +82,7 @@ DELETE_TASK = "DELETE FROM task WHERE id = ?"
 
 
 class Database:
-    def __init__(self):
+    def __init__(self) -> None:
         self.path = DB_NAME
         self.current_project_id: Optional[str] = None
         self.project_name: str = "Project"
@@ -102,7 +102,7 @@ class Database:
             self.current_project_id = projects[0]["id"]
             self.project_type = projects[0]["type"]
 
-    def _ensure_default_project(self):
+    def _ensure_default_project(self) -> None:
         """Create a default project if no projects exist"""
         try:
             self.cur.execute("SELECT COUNT(*) FROM project")
@@ -239,7 +239,7 @@ class Database:
             print(f"Error loading data: {e}")
             return []
 
-    def get_task(self, task_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    def get_task(self, task_id: Optional[str] = None) -> Dict[str, Any]:
         if not task_id:
             raise ValueError("No task id specified. Provide task_id.")
 
@@ -362,6 +362,6 @@ class Database:
             return tasks[-1]["id"]
         return "0"
 
-    def __del__(self):
+    def __del__(self) -> None:
         if hasattr(self, "con"):
             self.con.close()

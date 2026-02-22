@@ -9,7 +9,7 @@ class FooterLabel(Static):
     
     def compose(self) -> Iterator[Label]:
         yield Label(
-            "Move down: j | Move up: k | Edit task: e | Delete task: d | "
+            "Move down: j | Move up: k | Edit task: e | Copy task: c | Delete task: d | "
             "Previous status: ← | Next status: → | Body down: Ctrl+d | "
             "Body up: Ctrl+u | Search: /",
             id="help-text"
