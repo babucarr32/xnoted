@@ -1,10 +1,7 @@
 from textual.widgets import Static, Label
-from textual.reactive import reactive
 from xnoted.utils.database import Database
 
-class FooterLabel(Static):    
-    is_searching = reactive(False)
-    
+class FooterLabel(Static):        
     def __init__(self, database: Database):
         super().__init__()
         self.database = database

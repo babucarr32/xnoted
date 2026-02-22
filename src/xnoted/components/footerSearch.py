@@ -1,11 +1,8 @@
 from textual.widgets import Static, Input
-from textual.reactive import reactive
 from xnoted.utils.constants import TASKS_ID
 from xnoted.utils.database import Database
 
-class FooterSearch(Static):    
-    is_searching = reactive(False)
-    
+class FooterSearch(Static):        
     BINDINGS = [
         ("escape", "escape", "Create new task"),
     ]
