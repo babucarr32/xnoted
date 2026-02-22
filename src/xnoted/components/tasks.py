@@ -29,7 +29,7 @@ class Tasks(ListView):
         Binding("right", "change_status('right')", "Change status", show=False),
     ]
 
-    status_index = reactive(2)
+    last_matched_search: str = reactive("")
 
     def on_mount(self):
         self.load_tasks()
@@ -64,8 +64,9 @@ class Tasks(ListView):
     def quick_search(self, text: str) -> None:
         """Public method to quick search the task list"""
         tasks = self.database.load()
+        search_text = text.lower()
 
-        if not text:
+        if not text or self.last_matched_search == search_text:
             self.has_task_result = True
 
         if not self.has_task_result:
@@ -77,7 +78,7 @@ class Tasks(ListView):
             found_any = False
             for task in tasks:
                 title = task.get("title")
-                if text.lower() in title.lower():
+                if search_text in title.lower():
                     task_id = task.get("id")
                     list_item = ListItem(Label(f"● {title}"))
                     list_item.task_id = task_id
@@ -87,6 +88,8 @@ class Tasks(ListView):
             if not found_any:
                 self.has_task_result = False
                 self.append(ListItem(Label("No matching tasks")))
+            else:
+                self.last_matched_search = search_text
         else:
             self.append(ListItem(Label("No tasks yet")))
 
