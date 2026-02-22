@@ -25,7 +25,8 @@ classifiers = [
 ]
 dependencies = [
     "textual>=6.6.0",
-    "platformdirs"
+    "platformdirs",
+    "pyperclip"
 ]
 
 [project.urls]
