@@ -78,9 +78,11 @@ class Tasks(ListView):
             found_any = False
             for task in tasks:
                 title = task.get("title")
+                status = task.get("status")
                 if search_text in title.lower():
                     task_id = task.get("id")
-                    list_item = ListItem(Label(f"● {title}"))
+                    label = f"{ICONS[status].get('icon')} {title}"
+                    list_item = ListItem(Label(label))
                     list_item.task_id = task_id
                     self.append(list_item)
                     found_any = True
