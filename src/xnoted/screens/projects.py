@@ -24,7 +24,7 @@ class Projects(ListView):
         Binding("d", "delete_project", "Cursor down", show=False),
     ]
 
-    def on_mount(self):
+    def on_mount(self) -> None:
         self.load_projects()
 
     def load_projects(self) -> None:
@@ -51,7 +51,7 @@ class Projects(ListView):
         task_header_label_widget.update(self.database.project_name)
         self.close_app()
 
-    def action_edit_project(self):
+    def action_edit_project(self) -> None:
         child: ListItem = self.highlighted_child
 
         if child and hasattr(child, "project_id"):
@@ -68,7 +68,7 @@ class Projects(ListView):
                 )
             )
 
-    def action_delete_project(self):
+    def action_delete_project(self) -> None:
         child: ListItem = self.highlighted_child
 
         if child and hasattr(child, "project_id"):
@@ -94,8 +94,8 @@ class SelectProjectModal(ModalScreen):
         ("escape", "close", "Close modal"),
     ]
 
-    def compose(self):
+    def compose(self) -> None:
         yield Projects(database=self.database, close_app=self.action_close)
 
-    def action_close(self):
+    def action_close(self) -> None:
         self.app.pop_screen()

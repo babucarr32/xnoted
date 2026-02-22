@@ -1,3 +1,4 @@
+from typing import Iterator
 from textual.widgets import Static, Label
 from xnoted.utils.database import Database
 
@@ -6,7 +7,7 @@ class FooterLabel(Static):
         super().__init__()
         self.database = database
     
-    def compose(self):
+    def compose(self) -> Iterator[Label]:
         yield Label(
             "Move down: j | Move up: k | Edit task: e | Delete task: d | "
             "Previous status: ← | Next status: → | Body down: Ctrl+d | "

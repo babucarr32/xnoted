@@ -1,3 +1,4 @@
+from typing import Iterator
 from textual.containers import Vertical
 from textual.screen import ModalScreen
 from xnoted.components.sidebar import Form
@@ -21,7 +22,7 @@ class CreateTaskModal(ModalScreen):
         ("escape", "close", "Close modal"),
     ]
 
-    def compose(self):
+    def compose(self) -> Iterator[Form]:
         yield Vertical(
             Form(
                 database=self.database,
@@ -33,5 +34,5 @@ class CreateTaskModal(ModalScreen):
             id="modal-content",
         )
 
-    def action_close(self):
+    def action_close(self) -> None:
         self.app.pop_screen()

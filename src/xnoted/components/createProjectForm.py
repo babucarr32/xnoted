@@ -18,14 +18,14 @@ from xnoted.utils.constants import (
 class InputContainer(Input):
     BORDER_TITLE = "Project Title"
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(id=PROJECT_TITLE_ID)
 
 
 class ContentContainer(TextArea):
     BORDER_TITLE = "Content"
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             id=PROJECT_DESCRIPTION_ID,
         )
@@ -34,10 +34,10 @@ class ContentContainer(TextArea):
 class ProjectTypeContainer(RadioSet):
     BORDER_TITLE = "Type"
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(id=PROJECT_TYPE_ID)
 
-    def compose(self):
+    def compose(self) -> None:
         yield RadioButton("Task", id=PROJECT_TASK_TYPE_ID)
         yield RadioButton("Other", id=PROJECT_OTHER_TYPE_ID)
 
@@ -64,7 +64,7 @@ class CreateProjectForm(Container):
         ("ctrl+s", "submit", "Save project form"),
     ]
 
-    def on_mount(self):
+    def on_mount(self) -> None:
         input_widget = self.query_one(f"#{PROJECT_TITLE_ID}")
         # project_type_widget = self.query_one(f"#{PROJECT_TYPE_ID}")
         project_descripton_widget = self.query_one(f"#{PROJECT_DESCRIPTION_ID}")

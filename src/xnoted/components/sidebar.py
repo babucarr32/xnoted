@@ -1,4 +1,5 @@
 import uuid
+from typing import Iterator
 from textual.containers import Container
 from textual.widgets import Input, TextArea
 from textual.app import ComposeResult
@@ -11,14 +12,14 @@ CONTENT_ID = "content"
 class InputContainer(Input):
     BORDER_TITLE = "Title"
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(id=TITLE_ID)
 
 
 class ContentContainer(TextArea):
     BORDER_TITLE = "Content"
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             language="markdown",
             id=CONTENT_ID,
@@ -47,14 +48,14 @@ class Form(Container):
         ("ctrl+s", "submit", "Save form"),
     ]
 
-    def on_mount(self):
+    def on_mount(self) -> None:
         input_widget = self.query_one(f"#{TITLE_ID}")
         textarea_widget = self.query_one(f"#{CONTENT_ID}")
 
         input_widget.value = self.title
         textarea_widget.text = self.content
 
-    def compose(self) -> ComposeResult:
+    def compose(self) -> Iterator[ComposeResult]:
         yield InputContainer()
         yield ContentContainer()
 

@@ -1,3 +1,4 @@
+from typing import Iterator
 from textual.screen import ModalScreen
 from collections.abc import Callable
 from textual.widgets import Label, ListView, ListItem
@@ -29,7 +30,7 @@ class SelectProject(ListView):
         Binding("j", "cursor_down", "Cursor down", show=False),
     ]
 
-    def on_mount(self):
+    def on_mount(self) -> None:
         self.load_projects()
 
     def load_projects(self) -> None:
@@ -69,7 +70,7 @@ class SelectProjectModal(ModalScreen):
         ("escape", "close", "Close modal"),
     ]
 
-    def compose(self):
+    def compose(self) -> Iterator[SelectProject]:
         yield SelectProject(
             database=self.database,
             close_app=self.action_close,
@@ -78,5 +79,5 @@ class SelectProjectModal(ModalScreen):
             border_title=self._border_title,
         )
 
-    def action_close(self):
+    def action_close(self) -> None:
         self.app.pop_screen()

@@ -31,7 +31,7 @@ class Tasks(ListView):
 
     last_matched_search: str = reactive("")
 
-    def on_mount(self):
+    def on_mount(self) -> None:
         self.load_tasks()
 
     def load_tasks(self) -> None:
@@ -57,7 +57,7 @@ class Tasks(ListView):
             if self.database.is_empty():
                 self.append(ListItem(Label("No tasks yet")))
 
-    def refresh_tasks(self):
+    def refresh_tasks(self) -> None:
         """Public method to refresh the task list"""
         self.load_tasks()
 
@@ -100,7 +100,7 @@ class Tasks(ListView):
             body_widget = self.app.query_one(Body)
             body_widget.show_task(task_id)
 
-    def action_edit_task(self):
+    def action_edit_task(self) -> None:
         # --------------- Refactor this ------------------
         child = self.highlighted_child
 
@@ -159,7 +159,7 @@ class Tasks(ListView):
 
         self.database.update_task(child.task_id, new_data)
 
-    def action_delete_task(self):
+    def action_delete_task(self) -> None:
         child: ListItem = self.highlighted_child
 
         if child and hasattr(child, "task_id"):
@@ -171,7 +171,7 @@ class Tasks(ListView):
 
             self.app.push_screen(ConfirmModal(on_confirm=on_confirm))
 
-    def action_search(self):
+    def action_search(self) -> None:
         footer: FooterLabel = self.app.query_one(f"#{FOOTER_ID}")
         footer.toggle_search()
 

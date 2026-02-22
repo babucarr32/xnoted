@@ -1,3 +1,4 @@
+from typing import Iterator
 from textual.containers import Vertical
 from textual.screen import ModalScreen
 from xnoted.components.importExportProject import ImportExportProject
@@ -15,12 +16,12 @@ class ImportExportProjectModal(ModalScreen):
         ("escape", "close", "Close modal"),
     ]
 
-    def compose(self):
+    def compose(self) -> Iterator[Vertical]:
         yield Vertical(
             ImportExportProject(
                 database=self.database,
             ),
         )
 
-    def action_close(self):
+    def action_close(self) -> None:
         self.app.pop_screen()

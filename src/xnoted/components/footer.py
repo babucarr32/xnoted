@@ -4,6 +4,7 @@ from textual.reactive import reactive
 from xnoted.components.footerLabel import FooterLabel
 from xnoted.components.footerSearch import FooterSearch
 from xnoted.utils.constants import FOOTER_ID
+from typing import Iterator
 
 
 class Footer(Static):
@@ -13,12 +14,12 @@ class Footer(Static):
         super().__init__(id=FOOTER_ID)
         self.database = database
 
-    def compose(self):
+    def compose(self) -> Iterator[FooterLabel | FooterSearch]:
         if not self.is_searching:
             yield FooterLabel(database=self.database)
         else:
             yield FooterSearch(database=self.database, toggle_search = self.toggle_search)
         
-    def toggle_search(self):
+    def toggle_search(self) -> None:
         """Toggle between help text and search input"""
         self.is_searching = not self.is_searching

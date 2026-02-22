@@ -3,7 +3,7 @@ from xnoted.components.body import Body
 from xnoted.components.taskContainer import TaskContainer
 from textual.containers import Vertical
 from xnoted.utils.database import Database
-
+from typing import Iterator
 from xnoted.components.taskHeader import TaskHeader
 
 
@@ -12,7 +12,7 @@ class Content(Static):
         super().__init__()
         self.database = database
 
-    def compose(self):
+    def compose(self) -> Iterator[TaskHeader | TaskContainer]:
         yield Vertical(
             TaskHeader(database=self.database),
             TaskContainer(database=self.database),
@@ -30,5 +30,5 @@ class ContentWrapper(Static):
         super().__init__()
         self.database = database
 
-    def compose(self):
+    def compose(self) -> Iterator[Content]:
         yield Content(database=self.database)

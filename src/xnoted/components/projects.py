@@ -1,3 +1,4 @@
+from typing import Iterator
 from textual import on
 from textual.app import ComposeResult
 from textual.widgets import Select, Static
@@ -10,10 +11,10 @@ I will permit it to pass over me and through me.""".splitlines()
 
 
 class Projects(Static):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
-    def compose(self) -> ComposeResult:
+    def compose(self) -> Iterator[ComposeResult]:
         yield Select((line, line) for line in LINES)
 
     @on(Select.Changed)

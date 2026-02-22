@@ -1,4 +1,5 @@
 import json
+from typing import Iterator
 from pathlib import Path
 from datetime import datetime
 from textual.containers import Container
@@ -13,11 +14,11 @@ from xnoted.utils.constants import (
 )
 
 class ProjectTypeContainer(RadioSet):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(id=EXPORT_PROJECT_RADIO_ID)
         self.border_title = "Import or Export project"
 
-    def compose(self):
+    def compose(self) -> Iterator[RadioButton]:
         yield RadioButton("Import", id=IMPORT_PROJECT_ID, value=True)
         yield RadioButton("Export", id=EXPORT_PROJECT_ID)
 
@@ -31,7 +32,7 @@ class ImportExportProject(Container):
         Binding("ctrl+s", "import_export", "Export or Import", show=False),
     ]
 
-    def compose(self) -> ComposeResult:
+    def compose(self) -> Iterator[ComposeResult]:
         yield ProjectTypeContainer()
         yield Input(placeholder="File path (e.g., export.json)", id="file_path_input")
 

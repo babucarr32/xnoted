@@ -7,10 +7,11 @@ from xnoted.components.content import ContentWrapper
 from xnoted.components.footer import Footer
 from xnoted.components.body import Body
 from xnoted.utils.database import Database
+from typing import Iterator
 
 
 class XNotedApp(App):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.database = Database()
 
@@ -25,30 +26,30 @@ class XNotedApp(App):
         ("ctrl+r", "show_readme", "Show readme"),
     ]
 
-    def compose(self):
+    def compose(self) -> Iterator[ContentWrapper | Footer]:
         yield ContentWrapper(database=self.database)
         yield Footer(database=self.database)
 
-    def action_create_new_task(self):
+    def action_create_new_task(self) -> None:
         self.app.push_screen(CreateTaskModal(database=self.database))
 
-    def action_create_new_project(self):
+    def action_create_new_project(self) -> None:
         self.app.push_screen(CreateProjectModal(database=self.database))
 
-    def action_import_export_project(self):
+    def action_import_export_project(self) -> None:
         self.app.push_screen(ImportExportProjectModal(database=self.database))
 
-    def action_select_project(self):
+    def action_select_project(self) -> None:
         self.app.push_screen(SelectProjectModal(database=self.database))
 
-    def action_scroll_body_down(self):
+    def action_scroll_body_down(self) -> None:
         body_widget: Body = self.app.query_one(Body)
         body_widget.scroll_down()
 
-    def action_show_readme(self):
+    def action_show_readme(self) -> None:
         body_widget: Body = self.app.query_one(Body)
         body_widget.welcome()
 
-    def action_scroll_body_up(self):
+    def action_scroll_body_up(self) -> None:
         body_widget = self.app.query_one(Body)
         body_widget.scroll_up()

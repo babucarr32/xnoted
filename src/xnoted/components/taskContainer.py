@@ -1,3 +1,4 @@
+from typing import Iterator
 from xnoted.components.tasks import Tasks
 from textual.app import ComposeResult
 from textual.containers import Container
@@ -10,9 +11,9 @@ class TaskContainer(Container):
         self.database = database
         self.border_title = "Tasks"
 
-    def compose(self) -> ComposeResult:
+    def compose(self) -> Iterator[ComposeResult]:
         yield Tasks(database=self.database)
     
-    def on_mount(self):
+    def on_mount(self) -> None:
         """Focus the search input when container is mounted"""
         self.query_one("#tasks").focus()
