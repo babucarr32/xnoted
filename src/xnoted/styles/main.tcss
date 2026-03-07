@@ -38,6 +38,7 @@ SelectOverlay,
 TextArea,
 TaskContainer,
 Projects,
+/* FormContainer, */
 CopyTask,
 SelectProject,
 FooterLabel,
@@ -48,6 +49,7 @@ FooterLabel,
 TaskContainer,
 Projects,
 CopyTask,
+/* CreatePasswordModal, */
 SelectProject {
   border-title-align: left;
   border-title-style: bold;
@@ -91,6 +93,7 @@ CopyTaskModal,
 CreateProjectModal,
 ConfirmModal,
 ImportExportProjectModal,
+CreatePasswordModal,
 Confirm {
   align: center middle;
 }
@@ -116,6 +119,11 @@ Projects,
 SelectProject {
   width: 50%;
   height: 50%;
+}
+
+CreatePasswordModal Form {
+  width: 30%;
+  height: 12%;
 }
 
 CopyTask {

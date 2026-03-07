@@ -24,7 +24,11 @@ TASK_HEADER_ID = "task-header"
 TASKS_ID = "tasks"
 PROJECT_OTHER_TYPE_ID = "other"
 PROJECT_MODAL_CONTENT = "project-modal-content"
+PASSWORD_ID = "password"
+RE_PASSWORD_ID = "re-password"
+CREATE_PASSWORD_FORM_CONTAINER_ID = "create-password-form-container"
 
 # Screens
 CREATE_PROJECT_ID = "create-project-modal"
+CREATE_PASSWORD_ID = "create-password-modal"
 SELECT_PROJECT_MODAL_ID = "select-project"

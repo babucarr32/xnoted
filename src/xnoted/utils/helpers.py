@@ -10,7 +10,6 @@ def debouncer(callback, throttle_time_limit=1000):
     def throttle():
         nonlocal last_millis
         curr_millis = get_current_time_milli()
-        print("Throttle Called.................", curr_millis, last_millis, throttle_time_limit)
         if (curr_millis - last_millis) > throttle_time_limit:
             last_millis = get_current_time_milli()
             callback()
@@ -20,3 +19,6 @@ def debouncer(callback, throttle_time_limit=1000):
 
 def slugify(text: str):
     return text.lower().replace(" ", "_")
+
+def mask(text:str) -> str:
+    return ''.join(['*' for x in range(10)])

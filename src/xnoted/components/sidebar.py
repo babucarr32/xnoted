@@ -69,6 +69,7 @@ class Form(Container):
                 "id": str(uuid.uuid4()),
                 "title": title,
                 "content": content,
+                "is_protected": 0,
             }
             if self.database.is_storage_exist():
                 self.database.append(data)

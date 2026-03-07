@@ -51,6 +51,10 @@ class Body(MarkdownViewer):
         if task is None:
             self.document.update(f"# Task Not Found\n\nNo task found with ID: {task_id}")
             return
+
+        if task.get("is_protected") == 1:
+            self.document.update("# Protected")
+            return
         
         content = task.get("content", "")
         

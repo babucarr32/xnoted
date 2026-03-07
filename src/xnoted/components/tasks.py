@@ -1,11 +1,13 @@
 import uuid
 from textual.widgets import ListView, ListItem, Label
 from xnoted.utils.constants import ICONS, FOOTER_ID, TASKS_ID, PROJECT_TASK_TYPE_ID
+from xnoted.utils.helpers import mask
 from xnoted.components.body import Body
 from xnoted.screens.createTask import CreateTaskModal
 from xnoted.screens.selectProjects import SelectProjectModal
 from xnoted.screens.copyTask import CopyTaskModal
 from xnoted.screens.confirm import ConfirmModal
+from xnoted.screens.createPassword import CreatePasswordModal
 from xnoted.utils.database import Database
 from textual.binding import Binding
 from textual.reactive import reactive
@@ -25,8 +27,9 @@ class Tasks(ListView):
         Binding("j", "cursor_down", "Cursor down", show=False),
         Binding("/", "search", "Search", show=False),
         Binding("e", "edit_task", "Cursor down", show=False),
-        Binding("c", "copy_task", "Cursor down", show=False),
-        Binding("d", "delete_task", "Cursor down", show=False),
+        Binding("l", "lock_task", "Lock down", show=False),
+        Binding("c", "copy_task", "Copy down", show=False),
+        Binding("d", "delete_task", "Delete down", show=False),
         Binding("left", "change_status('left')", "Change status", show=False),
         Binding("right", "change_status('right')", "Change status", show=False),
     ]
@@ -36,6 +39,11 @@ class Tasks(ListView):
     def on_mount(self) -> None:
         self.load_tasks()
 
+    def _handle_mask(self, text: str, is_protected: bool) -> bool:
+        if is_protected:
+            return mask(text)
+        return text
+
     def load_tasks(self) -> None:
         tasks = self.database.load()
         self.clear()
@@ -43,13 +51,14 @@ class Tasks(ListView):
             for task in tasks:
                 title = task.get("title")
                 task_id = task.get("id")
+                is_protected = task.get("is_protected")
                 status = task.get("status", 0)
 
                 label = ""
                 if self.database.project_type == PROJECT_TASK_TYPE_ID:
-                    label = f"{ICONS[status].get('icon')} {title}"
+                    label = f"{ICONS[status].get('icon')} {self._handle_mask(title, is_protected)}"
                 else:
-                    label = title
+                    label = self._handle_mask(title, is_protected)
 
                 list_item = ListItem(Label(label))
                 list_item.task_id = task_id
@@ -174,6 +183,33 @@ class Tasks(ListView):
                 self.refresh_tasks()
 
             self.app.push_screen(ConfirmModal(on_confirm=on_confirm))
+
+    def action_lock_task(self) -> None:
+        child: ListItem = self.highlighted_child
+
+        if child and hasattr(child, "task_id"):
+            task_id = child.task_id
+
+            task = self.database.get_task(task_id)
+
+            new_data = {
+                "title": task["title"],
+                "content": task["content"],
+                "status": task["status"],
+                "is_protected": 1,
+            }
+
+            def on_password_created(self):
+                self.database.update_task(child.task_id, new_data)
+
+            if not self.database.has_password:
+                self.app.push_screen(
+                    CreatePasswordModal(
+                        database=self.database, on_password_created=on_password_created
+                    )
+                )
+            else:
+                self.database.update_task(child.task_id, new_data)
 
     def action_copy_task(self) -> None:
         child: ListItem = self.highlighted_child

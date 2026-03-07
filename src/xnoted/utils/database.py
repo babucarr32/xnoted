@@ -1,16 +1,19 @@
+import bcrypt
 import sqlite3
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from platformdirs import user_data_dir
 
+
 def get_data_dir() -> Path:
     """Get the appropriate data directory for xnoted."""
-    app_dir = Path(user_data_dir('xnoted'))
+    app_dir = Path(user_data_dir("xnoted"))
     app_dir.mkdir(parents=True, exist_ok=True)
     return app_dir
 
-DB_PATH = get_data_dir() / 'database.db'
+
+DB_PATH = get_data_dir() / "database.db"
 DB_NAME = str(DB_PATH)
 
 CREATE_TASK_TABLE = """
@@ -19,27 +22,45 @@ CREATE TABLE IF NOT EXISTS task(
     project_id TEXT NOT NULL,
     title TEXT,
     content TEXT,
+    is_protected INTEGER DEFAULT 0,
     status INTEGER DEFAULT 0,
     createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (project_id) REFERENCES project(id)
 )
 """
 
-INSERT_TASK_DATA = (
-    "INSERT INTO task(id, project_id, title, content, status) VALUES(?, ?, ?, ?, ?)"
+CREATE_ACCOUNT_TABLE = """
+CREATE TABLE IF NOT EXISTS account(
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    password TEXT NOT NULL,
+    createdAt TEXT DEFAULT CURRENT_TIMESTAMP
+)
+"""
+
+INSERT_TASK_DATA = "INSERT INTO task(id, project_id, title, content, is_protected, status) VALUES(?, ?, ?, ?, ?, ?)"
+
+INSERT_ACCOUNT_DATA = """
+INSERT INTO account(id, password)
+VALUES(1, ?)
+ON CONFLICT(id)
+DO UPDATE SET password=excluded.password
+"""
+
+GET_PASSWORD = "SELECT password FROM account WHERE id = 1"
+
+UPDATE_TASK_DATA = (
+    "UPDATE task SET title = ?, content = ?, is_protected = ?, status = ? WHERE id = ?"
 )
 
-UPDATE_TASK_DATA = "UPDATE task SET title = ?, content = ?, status = ? WHERE id = ?"
-
 QUERY_TASKS_BY_PROJECT = """
-SELECT id, title, content, status, createdAt 
+SELECT id, title, content, is_protected, status, createdAt 
 FROM task 
 WHERE project_id = ? 
 ORDER BY createdAt
 """
 
 QUERY_ONE_TASKS_BY_ID = """
-SELECT id, title, content, status, createdAt 
+SELECT id, title, content, is_protected, status, createdAt 
 FROM task 
 WHERE id = ? 
 """
@@ -68,6 +89,8 @@ FROM project
 ORDER BY createdAt
 """
 
+UPDATE_TASK_COLUMN = "ALTER TABLE task ADD COLUMN is_protected INTEGER DEFAULT 0"
+
 QUERY_ONE_PROJECT_DATA = """
 SELECT id, title, description, type, createdAt 
 FROM project 
@@ -90,6 +113,7 @@ class Database:
         self.con = sqlite3.connect(DB_NAME)
         self.cur = self.con.cursor()
         self.cur.execute(CREATE_TASK_TABLE)
+        self.cur.execute(CREATE_ACCOUNT_TABLE)
         self.cur.execute(CREATE_PROJECT_TABLE)
         self.con.commit()
 
@@ -101,6 +125,11 @@ class Database:
         if projects:
             self.current_project_id = projects[0]["id"]
             self.project_type = projects[0]["type"]
+
+        # Update database with missing column
+        if not self._column_exists("task", "is_protected"):
+            self.cur.execute(UPDATE_TASK_COLUMN)
+            self.con.commit()
 
     def _ensure_default_project(self) -> None:
         """Create a default project if no projects exist"""
@@ -130,12 +159,17 @@ class Database:
         except Exception as e:
             print(f"Error creating default project: {e}")
 
+    def _column_exists(self, table, column):
+        self.cur.execute(f"PRAGMA table_info({table})")
+        columns = [row[1] for row in self.cur.fetchall()]
+        return column in columns
+
     def set_current_project(self, project_id: str):
         """Set the current project context"""
         self.current_project_id = project_id
         project = self.get_project(project_id)
-        self.project_name = project['title']
-        self.project_type = project['type']
+        self.project_name = project["title"]
+        self.project_type = project["type"]
 
     def save(self, data: Dict[str, Any]):
         """Save a task to the current project"""
@@ -143,6 +177,7 @@ class Database:
             raise ValueError("No project selected. Call set_current_project() first.")
 
         try:
+            status = 0
             self.cur.execute(
                 INSERT_TASK_DATA,
                 (
@@ -150,12 +185,47 @@ class Database:
                     self.current_project_id,
                     data["title"],
                     data["content"],
-                    0,
+                    data["is_protected"],
+                    status,
                 ),
             )
             self.con.commit()
         except Exception as e:
             print(f"Error saving data: {e}")
+            raise
+
+    def save_password(self, password: str):
+        """Save password"""
+        try:
+            hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+
+            self.cur.execute(
+                INSERT_ACCOUNT_DATA,
+                (hashed.decode("utf-8"),),
+            )
+            self.con.commit()
+        except Exception as e:
+            print(f"Error saving data: {e}")
+            raise
+
+    def verify_password(self, input_password: str) -> bool:
+        self.cur.execute(GET_PASSWORD)
+        row = self.cur.fetchone()
+
+        if not row:
+            return False
+
+        stored_hash = row[0].encode("utf-8")
+
+        return bcrypt.checkpw(input_password.encode("utf-8"), stored_hash)
+
+    def has_password(self) -> bool:
+        """Return True if a password has been set."""
+        try:
+            self.cur.execute(GET_PASSWORD)
+            return self.cur.fetchone() is not None
+        except Exception as e:
+            print(f"Error checking password existence: {e}")
             raise
 
     def save_project(self, data: Dict[str, Any]):
@@ -175,7 +245,13 @@ class Database:
         try:
             self.cur.execute(
                 UPDATE_TASK_DATA,
-                (data["title"], data["content"], data.get("status", 0), task_id),
+                (
+                    data["title"],
+                    data["content"],
+                    data["is_protected"],
+                    data.get("status", 0),
+                    task_id,
+                ),
             )
             self.con.commit()
         except Exception as e:
@@ -224,14 +300,14 @@ class Database:
         try:
             res = self.cur.execute(QUERY_TASKS_BY_PROJECT, (pid,))
             rows = res.fetchall()
-            print(rows, "----------")
             return [
                 {
                     "id": row[0],
                     "title": row[1],
                     "content": row[2],
-                    "status": row[3],
-                    "createdAt": row[4],
+                    "is_protected": row[3],
+                    "status": row[4],
+                    "createdAt": row[5],
                 }
                 for row in rows
             ]
@@ -250,8 +326,9 @@ class Database:
                 "id": row[0],
                 "title": row[1],
                 "content": row[2],
-                "status": row[3],
-                "createdAt": row[4],
+                "is_protected": row[3],
+                "status": row[4],
+                "createdAt": row[5],
             }
         except Exception as e:
             print(f"Error loading data: {e}")
