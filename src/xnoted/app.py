@@ -7,13 +7,16 @@ from xnoted.components.content import ContentWrapper
 from xnoted.components.footer import Footer
 from xnoted.components.body import Body
 from xnoted.utils.database import Database
+from xnoted.database.dataProvider import DataProvider
+from xnoted.database.sqlDataHandler import SqlDataHandler
 from typing import Iterator
 
 
 class XNotedApp(App):
     def __init__(self) -> None:
         super().__init__()
-        self.database = Database()
+        self.sqlDataHandler = SqlDataHandler()
+        self.database = DataProvider(self.sqlDataHandler)
 
     CSS_PATH = "styles/main.tcss"
     BINDINGS = [

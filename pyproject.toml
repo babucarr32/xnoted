@@ -48,3 +48,12 @@ artifacts = [
 
 [tool.hatch.build.targets.wheel.force-include]
 "README.md" = "xnoted/README.md"
+
+[tool.pylsp-mypy]
+enabled = true
+live_mode = true
+strict = false
+
+[tool.mypy]
+mypy_path = "src"
+explicit_package_bases = true
