@@ -2,7 +2,7 @@ from typing import Iterator
 from textual.containers import Vertical
 from textual.screen import ModalScreen
 from xnoted.components.createProjectForm import CreateProjectForm
-from xnoted.utils.database import Database
+from xnoted.database.dataProvider import DataProvider
 from xnoted.utils.constants import (
     PROJECT_TASK_TYPE_ID,
     PROJECT_MODAL_CONTENT,
@@ -13,7 +13,7 @@ from xnoted.utils.constants import (
 class CreateProjectModal(ModalScreen):
     def __init__(
         self,
-        database: Database,
+        data_provider: DataProvider,
         title="",
         description="",
         project_id="",
@@ -21,7 +21,7 @@ class CreateProjectModal(ModalScreen):
         editing=False,
     ):
         super().__init__(id=CREATE_PROJECTS_ID)
-        self.database = database
+        self.data_provider = data_provider
         self.title = title
         self.project_id = project_id
         self.description = description
@@ -35,7 +35,7 @@ class CreateProjectModal(ModalScreen):
     def compose(self) -> Iterator[Vertical]:
         yield Vertical(
             CreateProjectForm(
-                database=self.database,
+                data_provider=self.data_provider,
                 title=self.title,
                 project_id=self.project_id,
                 description=self.description,

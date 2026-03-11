@@ -1,18 +1,17 @@
-from typing import Iterator
 from xnoted.components.tasks import Tasks
 from textual.app import ComposeResult
 from textual.containers import Container
-from xnoted.utils.database import Database
+from xnoted.database.dataProvider import DataProvider
 from xnoted.utils.constants import TASK_CONTAINER_ID
 
 class TaskContainer(Container):
-    def __init__(self, database: Database):
+    def __init__(self, data_provider: DataProvider):
         super().__init__(id=TASK_CONTAINER_ID)
-        self.database = database
+        self.data_provider = data_provider
         self.border_title = "Tasks"
 
-    def compose(self) -> Iterator[ComposeResult]:
-        yield Tasks(database=self.database)
+    def compose(self) -> ComposeResult:
+        yield Tasks(data_provider=self.data_provider)
     
     def on_mount(self) -> None:
         """Focus the search input when container is mounted"""

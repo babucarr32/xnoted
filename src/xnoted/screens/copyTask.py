@@ -4,9 +4,11 @@ import pyperclip
 from textual.screen import ModalScreen
 from collections.abc import Callable
 from textual.widgets import Label, ListView, ListItem
-from xnoted.utils.database import Database
+from xnoted.database.dataProvider import DataProvider
 from textual.binding import Binding
 from xnoted.utils.constants import COPY_TASK
+from typing import cast
+from textual.app import ComposeResult
 
 
 class OptionIDS(Enum):
@@ -15,11 +17,19 @@ class OptionIDS(Enum):
     COPY_CONTENT = "copy-content"
 
 
+class CopyItem(ListItem):
+    def __init__(self, *args, item_id: str, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.item_id = item_id
+
+
 class CopyTask(ListView):
-    def __init__(self, database: Database, close_app: Callable[[], None], item_id: str):
+    def __init__(
+        self, data_provider: DataProvider, close_app: Callable[[], None], item_id: str
+    ):
         super().__init__(id=COPY_TASK)
         self.has_task_result = True
-        self.database = database
+        self.data_provider = data_provider
         self.close_app = close_app
         self.item_id = item_id
 
@@ -30,9 +40,9 @@ class CopyTask(ListView):
     ]
 
     OPTIONS: list[dict[str, str]] = [
-        {"id": OptionIDS.COPY_TITLE, "title": "Copy title"},
-        {"id": OptionIDS.COPY_CONTENT, "title": "Copy content"},
-        {"id": OptionIDS.COPY_ALL, "title": "Copy all"},
+        {"id": cast(str, OptionIDS.COPY_TITLE), "title": "Copy title"},
+        {"id": cast(str, OptionIDS.COPY_CONTENT), "title": "Copy content"},
+        {"id": cast(str, OptionIDS.COPY_ALL), "title": "Copy all"},
     ]
 
     def on_mount(self) -> None:
@@ -44,18 +54,19 @@ class CopyTask(ListView):
         for opt in self.OPTIONS:
             title = opt.get("title")
             opt_id = opt.get("id")
-            list_item = ListItem(Label(f"{title}"))
-            list_item.item_id = opt_id
-            self.append(list_item)
+
+            if opt_id and title:
+                list_item = CopyItem(Label(f"{title}"), item_id=opt_id)
+                self.append(list_item)
 
     def on_list_view_selected(self, event: ListView.Highlighted) -> None:
-        opt_id = event.item.item_id
+        opt_id = cast(CopyItem, event.item).item_id
         try:
             selected_item_id = OptionIDS(opt_id)
         except ValueError:
             return
 
-        item_data = self.database.get_task(self.item_id)
+        item_data = self.data_provider.get_task(self.item_id)
         if not item_data:
             raise RuntimeError(f"Task not found for id {opt_id}")
 
@@ -63,16 +74,16 @@ class CopyTask(ListView):
             case OptionIDS.COPY_ALL:
                 pyperclip.copy(json.dumps(item_data, indent=2))
             case OptionIDS.COPY_CONTENT:
-                pyperclip.copy(item_data.get("content"))
+                pyperclip.copy(item_data.content)
             case OptionIDS.COPY_TITLE:
-                pyperclip.copy(item_data.get("title"))
+                pyperclip.copy(item_data.title)
 
         self.close_app()
 
 
 class CopyTaskModal(ModalScreen):
-    def __init__(self, database: Database, item_id: str):
-        self.database = database
+    def __init__(self, data_provider: DataProvider, item_id: str):
+        self.data_provider = data_provider
         self.item_id = item_id
         super().__init__()
 
@@ -80,9 +91,11 @@ class CopyTaskModal(ModalScreen):
         ("escape", "close", "Close modal"),
     ]
 
-    def compose(self) -> None:
+    def compose(self) -> ComposeResult:
         yield CopyTask(
-            database=self.database, close_app=self.action_close, item_id=self.item_id
+            data_provider=self.data_provider,
+            close_app=self.action_close,
+            item_id=self.item_id,
         )
 
     def action_close(self) -> None:

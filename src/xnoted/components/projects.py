@@ -1,4 +1,3 @@
-from typing import Iterator
 from textual import on
 from textual.app import ComposeResult
 from textual.widgets import Select, Static
@@ -14,7 +13,7 @@ class Projects(Static):
     def __init__(self) -> None:
         super().__init__()
 
-    def compose(self) -> Iterator[ComposeResult]:
+    def compose(self) -> ComposeResult:
         yield Select((line, line) for line in LINES)
 
     @on(Select.Changed)

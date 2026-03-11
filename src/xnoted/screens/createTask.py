@@ -1,20 +1,25 @@
-from typing import Iterator
+from textual.app import ComposeResult
 from textual.containers import Vertical
 from textual.screen import ModalScreen
 from xnoted.components.sidebar import Form
-from xnoted.utils.database import Database
+from xnoted.database.dataProvider import DataProvider
 
 
 class CreateTaskModal(ModalScreen):
     def __init__(
-        self, database: Database, title="", content="", editing=False, task_id=""
+        self,
+        data_provider: DataProvider,
+        title="",
+        content="",
+        editing=False,
+        task_id="",
     ):
         super().__init__(id="createTaskModal")
         self.title = title
         self.content = content
         self.editing = editing
         self.task_id = task_id
-        self.database = database
+        self.data_provider = data_provider
 
     TITLE = "Modal Title"
     SUB_TITLE = "Modal Title"
@@ -22,10 +27,10 @@ class CreateTaskModal(ModalScreen):
         ("escape", "close", "Close modal"),
     ]
 
-    def compose(self) -> Iterator[Form]:
+    def compose(self) -> ComposeResult:
         yield Vertical(
             Form(
-                database=self.database,
+                data_provider=self.data_provider,
                 title=self.title,
                 content=self.content,
                 editing=self.editing,

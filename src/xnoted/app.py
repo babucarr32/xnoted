@@ -6,7 +6,6 @@ from xnoted.screens.importExportProject import ImportExportProjectModal
 from xnoted.components.content import ContentWrapper
 from xnoted.components.footer import Footer
 from xnoted.components.body import Body
-from xnoted.utils.database import Database
 from xnoted.database.dataProvider import DataProvider
 from xnoted.database.sqlDataHandler import SqlDataHandler
 from typing import Iterator
@@ -16,7 +15,7 @@ class XNotedApp(App):
     def __init__(self) -> None:
         super().__init__()
         self.sqlDataHandler = SqlDataHandler()
-        self.database = DataProvider(self.sqlDataHandler)
+        self.data_provider = DataProvider(self.sqlDataHandler)
 
     CSS_PATH = "styles/main.tcss"
     BINDINGS = [
@@ -30,20 +29,20 @@ class XNotedApp(App):
     ]
 
     def compose(self) -> Iterator[ContentWrapper | Footer]:
-        yield ContentWrapper(database=self.database)
-        yield Footer(database=self.database)
+        yield ContentWrapper(data_provider=self.data_provider)
+        yield Footer(data_provider=self.data_provider)
 
     def action_create_new_task(self) -> None:
-        self.app.push_screen(CreateTaskModal(database=self.database))
+        self.app.push_screen(CreateTaskModal(data_provider=self.data_provider))
 
     def action_create_new_project(self) -> None:
-        self.app.push_screen(CreateProjectModal(database=self.database))
+        self.app.push_screen(CreateProjectModal(data_provider=self.data_provider))
 
     def action_import_export_project(self) -> None:
-        self.app.push_screen(ImportExportProjectModal(database=self.database))
+        self.app.push_screen(ImportExportProjectModal(data_provider=self.data_provider))
 
     def action_select_project(self) -> None:
-        self.app.push_screen(SelectProjectModal(database=self.database))
+        self.app.push_screen(SelectProjectModal(data_provider=self.data_provider))
 
     def action_scroll_body_down(self) -> None:
         body_widget: Body = self.app.query_one(Body)

@@ -29,6 +29,15 @@ class Project:
 
 
 class DataHandler(Protocol):
+    @property
+    def project_name(self) -> str: ...
+
+    @property
+    def project_type(self) -> str: ...
+
+    @property
+    def current_project_id(self) -> str | None: ...
+
     def set_current_project(self, project_id: str) -> None: ...
 
     def save_task(self, data: Task) -> None: ...
@@ -49,9 +58,9 @@ class DataHandler(Protocol):
 
     def delete_task(self, task_id: str) -> None: ...
 
-    def get_tasks(self, project_id: Optional[str] = None) -> List[Task]: ...
+    def get_tasks(self, project_id: str) -> List[Task]: ...
 
-    def get_task(self, task_id: Optional[str] = None) -> Task | None: ...
+    def get_task(self, task_id: str) -> Task | None: ...
 
     def load_projects(self) -> List[Project]: ...
 
@@ -67,18 +76,30 @@ class DataHandler(Protocol):
 
     def is_empty(self) -> bool: ...
 
-    def get_last_id(self, project_id: Optional[str] = None) -> str: ...
+    def get_last_id(self, project_id: str) -> str: ...
 
 
 class DataProvider:
     def __init__(self, provider: DataHandler):
         self.provider = provider
 
+    @property
+    def project_name(self) -> str:
+        return self.provider.project_name
+
+    @property
+    def project_type(self) -> str:
+        return self.provider.project_type
+
+    @property
+    def current_project_id(self) -> str | None:
+        return self.provider.current_project_id
+
     def set_current_project(self, project_id: str) -> None:
         self.provider.set_current_project(project_id)
 
-    def save_task(self, data: Project) -> None:
-        self.provider.save_project(data)
+    def save_task(self, data: Task) -> None:
+        self.provider.save_task(data)
 
     def save_password(self, password: str) -> None:
         self.provider.save_password(password)
@@ -110,11 +131,11 @@ class DataProvider:
         """Delete a task"""
         self.provider.delete_task(task_id)
 
-    def load_tasks(self, project_id: Optional[str] = None) -> List[Task]:
+    def load_tasks(self, project_id: str) -> List[Task]:
         """Load all tasks for a specific project"""
         return self.provider.get_tasks(project_id)
 
-    def get_task(self, task_id: Optional[str] = None) -> Task | None:
+    def get_task(self, task_id: str) -> Task | None:
         return self.provider.get_task(task_id)
 
     def load_projects(self) -> List[Project]:
@@ -149,6 +170,6 @@ class DataProvider:
         """
         return self.provider.is_empty()
 
-    def get_last_id(self, project_id: Optional[str] = None) -> str:
+    def get_last_id(self, project_id: str) -> str:
         """Get the last task ID for a project"""
         return self.provider.get_last_id(project_id)

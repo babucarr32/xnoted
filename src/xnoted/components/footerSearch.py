@@ -1,18 +1,21 @@
 from textual.widgets import Static, Input
 from xnoted.utils.constants import TASKS_ID
-from xnoted.utils.database import Database
+from xnoted.database.dataProvider import DataProvider
 from typing import Iterator
+from xnoted.components.tasks import Tasks
+from typing import cast
 
-class FooterSearch(Static):        
+
+class FooterSearch(Static):
     BINDINGS = [
         ("escape", "escape", "Create new task"),
     ]
 
-    def __init__(self, database: Database, toggle_search):
+    def __init__(self, data_provider: DataProvider, toggle_search):
         super().__init__()
-        self.database = database
+        self.data_provider = data_provider
         self.toggle_search = toggle_search
-    
+
     def compose(self) -> Iterator[Input]:
         yield Input(
             placeholder="Search tasks...",
@@ -20,7 +23,7 @@ class FooterSearch(Static):
         )
 
     def on_input_changed(self, event: Input.Changed) -> None:
-        tasks_widget = self.app.query_one(f"#{TASKS_ID}")
+        tasks_widget = cast(Tasks, self.app.query_one(f"#{TASKS_ID}"))
         tasks_widget.quick_search(event.value)
 
     def on_mount(self) -> None:

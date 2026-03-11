@@ -1,10 +1,11 @@
 import bcrypt
 import sqlite3
 from pathlib import Path
-from typing import Any, Dict, List, Optional, cast, TypeAlias
+from typing import List, Optional, cast
 from platformdirs import user_data_dir
 from xnoted.utils.logger import get_logger
 from xnoted.database.dataProvider import Project, Task
+from xnoted.database.dataHelper import DataHelper
 from xnoted.queries.sqlQueries import (
     CREATE_TASK_TABLE,
     CREATE_ACCOUNT_TABLE,
@@ -25,10 +26,8 @@ from xnoted.queries.sqlQueries import (
     DELETE_TASK,
 )
 
-TaskRow: TypeAlias = tuple[str, str, str, str, int, int, str]
-ProjectRow: TypeAlias = tuple[str, str, str, str, str, str]
-
 logger = get_logger(__name__)
+data_helper = DataHelper()
 
 
 def get_data_dir() -> Path:
@@ -101,46 +100,6 @@ class SqlDataHandler:
         self.cur.execute(f"PRAGMA table_info({table})")
         columns = [row[1] for row in self.cur.fetchall()]
         return column in columns
-
-    def _dict_to_task(self, data: Dict[str, Any]) -> Task:
-        return Task(
-            id=data["id"],
-            project_id=data["project_id"],
-            title=data["title"],
-            content=data["content"],
-            is_protected=data["is_protected"],
-            status=data["status"],
-            createdAt=data["createdAt"],
-        )
-
-    def _dict_to_project(self, data: Dict[str, Any]) -> Project:
-        return Project(
-            id=data["id"],
-            title=data["title"],
-            description=data["description"],
-            type=data["type"],
-            createdAt=data["createdAt"],
-        )
-
-    def _tuple_to_task(self, data: TaskRow) -> Task:
-        return Task(
-            id=data[0],
-            project_id=data[1],
-            title=data[2],
-            content=data[3],
-            is_protected=data[4],
-            status=data[5],
-            createdAt=data[6],
-        )
-
-    def _tuple_to_project(self, data: ProjectRow) -> Project:
-        return Project(
-            id=data[0],
-            title=data[1],
-            description=data[2],
-            type=data[3],
-            createdAt=data[4],
-        )
 
     def set_current_project(self, project_id: str) -> None:
         """Set the current project context"""
@@ -282,23 +241,16 @@ class SqlDataHandler:
             logger.error(f"Error deleting task: {e}")
             raise
 
-    def get_tasks(self, project_id: Optional[str] = None) -> List[Task]:
+    def get_tasks(self, project_id: str) -> List[Task]:
         """Load all tasks for a specific project"""
-        pid = project_id or self.current_project_id
-        if not pid:
-            logger.error(
-                "No project specified. Provide project_id or call set_current_project() first."
-            )
-            return []
-
         try:
-            res = self.cur.execute(QUERY_TASKS_BY_PROJECT, (pid,))
+            res = self.cur.execute(QUERY_TASKS_BY_PROJECT, (project_id,))
             rows = res.fetchall()
             return [
                 Task(
                     id=row[0],
                     title=row[1],
-                    project_id=pid,
+                    project_id=project_id,
                     content=row[2],
                     is_protected=row[3],
                     status=row[4],
@@ -310,7 +262,7 @@ class SqlDataHandler:
             logger.error(f"Error loading data: {e}")
             return []
 
-    def get_task(self, task_id: Optional[str] = None) -> Task | None:
+    def get_task(self, task_id: str) -> Task | None:
         if not task_id:
             logger.error("No task id specified. Provide task_id.")
             return None
@@ -427,7 +379,7 @@ class SqlDataHandler:
         except Exception:
             return True
 
-    def get_last_id(self, project_id: Optional[str] = None) -> str:
+    def get_last_id(self, project_id: str) -> str:
         """Get the last task ID for a project"""
         tasks = self.get_tasks(project_id)
         if tasks:

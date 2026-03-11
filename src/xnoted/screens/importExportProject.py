@@ -2,15 +2,16 @@ from typing import Iterator
 from textual.containers import Vertical
 from textual.screen import ModalScreen
 from xnoted.components.importExportProject import ImportExportProject
-from xnoted.utils.database import Database
+from xnoted.database.dataProvider import DataProvider
+
 
 class ImportExportProjectModal(ModalScreen):
     def __init__(
         self,
-        database: Database,
+        data_provider: DataProvider,
     ):
         super().__init__()
-        self.database = database
+        self.data_provider = data_provider
 
     BINDINGS = [
         ("escape", "close", "Close modal"),
@@ -19,7 +20,7 @@ class ImportExportProjectModal(ModalScreen):
     def compose(self) -> Iterator[Vertical]:
         yield Vertical(
             ImportExportProject(
-                database=self.database,
+                data_provider=self.data_provider,
             ),
         )
 

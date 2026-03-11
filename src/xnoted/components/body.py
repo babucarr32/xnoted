@@ -1,6 +1,7 @@
 from pathlib import Path
 from textual.widgets import MarkdownViewer
-from xnoted.utils.database import Database
+from textual.app import Timer
+from xnoted.database.dataProvider import DataProvider
 from textual.reactive import var
 
 class Body(MarkdownViewer):
@@ -8,11 +9,11 @@ class Body(MarkdownViewer):
     
     _pending_task_id: var[str | None] = var(None)
     
-    def __init__(self, database: Database):
+    def __init__(self, data_provider: DataProvider):
         super().__init__(show_table_of_contents=False)
         self.code_indent_guides = False
-        self.storage = database
-        self._debounce_timer = None
+        self.data_provider = data_provider
+        self._debounce_timer: Timer | None = None
 
     def welcome(self) -> None:
         """Load and display README content on mount."""
@@ -46,17 +47,17 @@ class Body(MarkdownViewer):
     
     def _update_task(self, task_id: str) -> None:
         """Internal method to actually update the task display."""
-        task = self.storage.get_task(task_id)
+        task = self.data_provider.get_task(task_id)
         
         if task is None:
             self.document.update(f"# Task Not Found\n\nNo task found with ID: {task_id}")
             return
 
-        if task.get("is_protected") == 1:
+        if task.is_protected == 1:
             self.document.update("# Protected")
             return
         
-        content = task.get("content", "")
+        content = task.content or ''
         
         if not content:
             self.document.update("# Empty Task")
