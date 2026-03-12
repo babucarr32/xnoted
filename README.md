@@ -60,6 +60,11 @@ Or using pip:
 pip install -e .
 ```
 
+Or using requirements.txt:
+```bash
+pip install -r requirements.txt
+```
+
 ## Usage
 
 ### Starting the Application
@@ -145,6 +150,7 @@ pip install --force .
 | `Ctrl+r` | Show readme | Displays the README in the content panel |
 | `Ctrl+d` | Scroll down | Scrolls the content panel down |
 | `Ctrl+u` | Scroll up | Scrolls the content panel up |
+| `u` | Unlock tasks | Unlock all locked tasks |
 
 #### Task List Navigation
 | Shortcut | Action | Description |
@@ -154,6 +160,7 @@ pip install --force .
 | `Enter` | Select task | View the selected task's content |
 | `e` | Edit task | Edit the highlighted task |
 | `c` | Copy task | Copy the highlighted task |
+| `l` | Lock task | Lock the highlighted task |
 | `d` | Delete task | Delete the highlighted task (with confirmation) |
 | `←` | Previous status | Cycle task status backward |
 | `→` | Next status | Cycle task status forward |
