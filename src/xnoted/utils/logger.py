@@ -1,7 +1,8 @@
 import logging
 from pathlib import Path
+from xnoted.utils.dataDir import get_data_dir
 
-DEFAULT_PATH = Path("log.txt")
+DEFAULT_PATH = get_data_dir() / 'log.txt'
 
 def get_logger(name: str, file_path: Path = DEFAULT_PATH) -> logging.Logger:
     logger = logging.getLogger(name)

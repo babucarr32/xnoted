@@ -9,5 +9,5 @@ def get_data_dir() -> Path:
     return app_dir
 
 
-DB_PATH = get_data_dir() / "database.db"
-DB_NAME = str(DB_PATH)
+XNOTED_PATH = get_data_dir() / "database.db"
+DB_NAME = str(XNOTED_PATH)
