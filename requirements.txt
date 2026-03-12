@@ -1,0 +1,5 @@
+textual>=6.6.0
+textual-dev
+platformdirs
+pyperclip
+bcrypt
