@@ -1,3 +1,4 @@
+from pathlib import Path
 import time
 
 
@@ -24,3 +25,11 @@ def slugify(text: str):
 
 def mask(text: str) -> str:
     return "".join(["*" for x in range(10)])
+
+def find_readme() -> Path:
+    p = Path(__file__).resolve()
+    for parent in p.parents:
+        readme = parent / "README.md"
+        if readme.exists():
+            return readme
+    raise FileNotFoundError("README.md not found")

@@ -6,7 +6,7 @@ ProjectRow: TypeAlias = tuple[str, str, str, str, str, str]
 
 
 class DataHelper:
-    def _dict_to_task(self, data: Dict[str, Any]) -> Task:
+    def dict_to_task(self, data: Dict[str, Any]) -> Task:
         return Task(
             id=data["id"],
             project_id=data["project_id"],
@@ -17,7 +17,7 @@ class DataHelper:
             createdAt=data["createdAt"],
         )
 
-    def _dict_to_project(self, data: Dict[str, Any]) -> Project:
+    def dict_to_project(self, data: Dict[str, Any]) -> Project:
         return Project(
             id=data["id"],
             title=data["title"],
@@ -26,7 +26,7 @@ class DataHelper:
             createdAt=data["createdAt"],
         )
 
-    def _tuple_to_task(self, data: TaskRow) -> Task:
+    def tuple_to_task(self, data: TaskRow) -> Task:
         return Task(
             id=data[0],
             project_id=data[1],
@@ -37,7 +37,7 @@ class DataHelper:
             createdAt=data[6],
         )
 
-    def _tuple_to_project(self, data: ProjectRow) -> Project:
+    def tuple_to_project(self, data: ProjectRow) -> Project:
         return Project(
             id=data[0],
             title=data[1],

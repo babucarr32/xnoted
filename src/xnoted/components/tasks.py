@@ -1,9 +1,14 @@
 import uuid
 from textual.widgets import ListView, ListItem, Label
-from xnoted.utils.constants import ICONS, FOOTER_ID, TASKS_ID, PROJECT_TASK_TYPE_ID
+from xnoted.utils.constants import (
+    ICONS,
+    FOOTER_ID,
+    TASKS_ID,
+    PROJECT_TASK_TYPE_ID,
+    TASK_LABEL_ID,
+)
 from xnoted.utils.helpers import mask
 from xnoted.components.body import Body
-from xnoted.screens.createTask import CreateTaskModal
 from xnoted.screens.selectProjects import SelectProjectModal
 from xnoted.screens.copyTask import CopyTaskModal
 from xnoted.screens.confirm import ConfirmModal
@@ -28,7 +33,7 @@ class GetLabelArg:
 
 class TaskLabel(Label):
     def __init__(self, *args, task_id: str = "", status: int = 0, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs, id=TASK_LABEL_ID)
         self.task_id = task_id
         self.status = status
 
@@ -74,7 +79,7 @@ class Tasks(ListView):
         return f"{ICONS[arg.status].get('icon')} {self._handle_mask(arg.title, arg.is_protected)}"
 
     def load_tasks(self) -> None:
-        tasks = self.data_provider.load_tasks()
+        tasks = self.data_provider.load_tasks(self.data_provider.current_project_id)
         self.clear()
         if tasks:
             for task in tasks:
@@ -89,7 +94,7 @@ class Tasks(ListView):
                     label = self._handle_mask(task.title, task.is_protected)
 
                 list_item = TaskItem(
-                    TaskLabel(label), task_id=task.task_id, status=task.status
+                    TaskLabel(label), task_id=task.id, status=task.status
                 )
                 self.append(list_item)
         else:
@@ -102,7 +107,7 @@ class Tasks(ListView):
 
     def quick_search(self, text: str) -> None:
         """Public method to quick search the task list"""
-        tasks = self.data_provider.load_tasks()
+        tasks = self.data_provider.load_tasks(self.data_provider.current_project_id)
         search_text = text.lower()
 
         if not text or self.last_matched_search == search_text:
@@ -145,6 +150,8 @@ class Tasks(ListView):
             body_widget.show_task(task_id)
 
     def action_edit_task(self) -> None:
+        from xnoted.screens.createTask import CreateTaskModal
+
         child = self.highlighted_child
 
         if child and hasattr(child, "task_id"):
@@ -155,12 +162,14 @@ class Tasks(ListView):
                 logger.error(f"Task with id {task_id} not found")
                 return None
 
-            CreateTaskModal(
-                data_provider=self.data_provider,
-                title=task.title,
-                content=task.content,
-                editing=True,
-                task_id=task.id,
+            self.app.push_screen(
+                CreateTaskModal(
+                    data_provider=self.data_provider,
+                    title=task.title,
+                    content=task.content,
+                    editing=True,
+                    task_id=task.id,
+                )
             )
 
     def action_change_status(self, direction: str) -> None:
@@ -188,7 +197,7 @@ class Tasks(ListView):
             new_status = 0
 
         # Update only the highlighted item's label
-        label = child.query_one(TaskLabel)
+        label = cast(TaskLabel, child.query_one(f"#$TASK_LABEL_ID"))
 
         label_arg = GetLabelArg(
             status=new_status,
@@ -235,7 +244,7 @@ class Tasks(ListView):
                 content=task.content,
                 status=task.status,
                 is_protected=task.is_protected,
-                project_id=1,
+                project_id=task.project_id,
             )
 
             def on_password_created() -> None:

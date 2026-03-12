@@ -93,7 +93,7 @@ class Projects(ListView):
             def on_confirm():
                 self.data_provider.delete_project(project_id)
                 first_project = self.data_provider.get_first_project()
-                self.data_provider.set_current_project(first_project["id"])
+                self.data_provider.set_current_project(first_project.id)
                 self.load_projects()
                 tasks_widget = self.app.query_one("#tasks")
                 tasks_widget.refresh_tasks()

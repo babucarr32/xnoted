@@ -86,8 +86,8 @@ class ImportExportProject(Container):
             export_data = {
                 "version": "1.0",
                 "exported_at": datetime.now().isoformat(),
-                "project": project,
-                "tasks": tasks,
+                "project": project.to_dict(),
+                "tasks": [task.to_dict() for task in tasks],
                 "task_count": len(tasks),
             }
 
@@ -125,7 +125,7 @@ class ImportExportProject(Container):
                 self._update_status("Invalid JSON format", "error")
                 return
 
-            project_data = data_helper._dict_to_project(import_data["project"])
+            project_data = data_helper.dict_to_project(import_data["project"])
             tasks_data = import_data["tasks"]
 
             # Generate new IDs to avoid conflicts
@@ -148,7 +148,7 @@ class ImportExportProject(Container):
             imported_count = 0
 
             for t in tasks_data:
-                task = data_helper._dict_to_task(t)
+                task = data_helper.dict_to_task(t)
 
                 old_task_id = task.id
                 new_task_id = str(uuid.uuid4())

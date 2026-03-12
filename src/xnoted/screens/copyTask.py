@@ -9,6 +9,9 @@ from textual.binding import Binding
 from xnoted.utils.constants import COPY_TASK
 from typing import cast
 from textual.app import ComposeResult
+from xnoted.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class OptionIDS(Enum):
@@ -68,11 +71,12 @@ class CopyTask(ListView):
 
         item_data = self.data_provider.get_task(self.item_id)
         if not item_data:
-            raise RuntimeError(f"Task not found for id {opt_id}")
+            logger.error(f"Task not found for id {opt_id}")
+            return None
 
         match selected_item_id:
             case OptionIDS.COPY_ALL:
-                pyperclip.copy(json.dumps(item_data, indent=2))
+                pyperclip.copy(json.dumps(item_data.to_dict(), indent=2))
             case OptionIDS.COPY_CONTENT:
                 pyperclip.copy(item_data.content)
             case OptionIDS.COPY_TITLE:

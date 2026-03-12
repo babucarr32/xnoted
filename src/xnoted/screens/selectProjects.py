@@ -60,7 +60,7 @@ class SelectProject(ListView):
         else:
             self.append(ListItem(Label("No projects yet")))
 
-    def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
+    def on_list_view_selected(self, event: ListView.Highlighted) -> None:
         item = cast(ProjectItem, event.item)
         if item:
             self.on_select(item.project_id)

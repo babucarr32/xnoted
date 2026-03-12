@@ -1,9 +1,8 @@
 import bcrypt
 import sqlite3
-from pathlib import Path
 from typing import List, Optional, cast
-from platformdirs import user_data_dir
 from xnoted.utils.logger import get_logger
+from xnoted.utils.dataDir import DB_NAME
 from xnoted.database.dataProvider import Project, Task
 from xnoted.database.dataHelper import DataHelper
 from xnoted.queries.sqlQueries import (
@@ -30,17 +29,6 @@ logger = get_logger(__name__)
 data_helper = DataHelper()
 
 
-def get_data_dir() -> Path:
-    """Get the appropriate data directory for xnoted."""
-    app_dir = Path(user_data_dir("xnoted"))
-    app_dir.mkdir(parents=True, exist_ok=True)
-    return app_dir
-
-
-DB_PATH = get_data_dir() / "database.db"
-DB_NAME = str(DB_PATH)
-
-
 class SqlDataHandler:
     def __init__(self) -> None:
         self.path = DB_NAME
@@ -56,9 +44,8 @@ class SqlDataHandler:
 
         # Ensure a default project exists
         self._ensure_default_project()
-        # Set current project to the first project
-
         projects = self.load_projects()
+
         if projects:
             self.current_project_id = projects[0].id
             self.project_type = projects[0].type
@@ -288,16 +275,7 @@ class SqlDataHandler:
         try:
             res = self.cur.execute(QUERY_ALL_PROJECT_DATA)
             rows = res.fetchall()
-            return [
-                Project(
-                    id=row[0],
-                    title=row[1],
-                    description=row[2],
-                    type=row[3],
-                    createdAt=row[4],
-                )
-                for row in rows
-            ]
+            return [data_helper.tuple_to_project(row) for row in rows]
         except Exception as e:
             logger.error(f"Error loading projects: {e}")
             return []
@@ -307,13 +285,7 @@ class SqlDataHandler:
         try:
             res = self.cur.execute(QUERY_ALL_PROJECT_DATA)
             row = res.fetchone()
-            return Project(
-                id=row[0],
-                title=row[1],
-                description=row[2],
-                type=row[3],
-                createdAt=row[4],
-            )
+            return data_helper.tuple_to_project(row)
         except Exception as e:
             logger.error(f"Error loading project: {e}")
             return None
@@ -324,20 +296,14 @@ class SqlDataHandler:
             self.cur.execute(QUERY_ONE_PROJECT_DATA, (project_id,))
             row = self.cur.fetchone()
             if row:
-                return Project(
-                    id=row[0],
-                    title=row[1],
-                    description=row[2],
-                    type=row[3],
-                    createdAt=row[4],
-                )
+                return data_helper.tuple_to_project(row)
             return None
         except Exception as e:
             logger.error(f"Error loading project: {e}")
             return None
 
     def add_task(self, data: Task) -> None:
-        """Alias for save()"""
+        """Add new task"""
         self.save_task(data)
 
     def update_tasks(self, data: List[Task]) -> None:

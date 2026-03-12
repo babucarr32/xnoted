@@ -1,8 +1,11 @@
-from pathlib import Path
 from textual.widgets import MarkdownViewer
 from textual.app import Timer
 from xnoted.database.dataProvider import DataProvider
 from textual.reactive import var
+from xnoted.utils.logger import get_logger
+from xnoted.utils.helpers import find_readme
+
+logger = get_logger(__name__)
 
 class Body(MarkdownViewer):
     """Main content area for displaying README and task details."""
@@ -16,17 +19,18 @@ class Body(MarkdownViewer):
         self._debounce_timer: Timer | None = None
 
     def welcome(self) -> None:
-        """Load and display README content on mount."""
-        readme_path = Path("README.md")
-        
+        """Load and display README content on mount."""        
         try:
-            readme_path = Path(__file__).parent.parent / "README.md"
+            readme_path = find_readme()
+            logger.error(readme_path)
             content = readme_path.read_text(encoding="utf-8")
             self.document.update(content)
         except FileNotFoundError:
             self.document.update("# Welcome\n\nREADME.md not found.")
+            logger.error(f"Welcome README.md not found. Path: {readme_path}")
         except Exception as e:
             self.document.update(f"# Error\n\nFailed to load README: {e}")
+            logger.error(f"Error failed to load README: {readme_path}")
     
     def show_task(self, task_id: str, debounce_ms: int = 150) -> None:
         """Display the content of a specific task by its ID with debouncing.

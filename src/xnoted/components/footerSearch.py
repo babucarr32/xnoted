@@ -1,9 +1,8 @@
+from __future__ import annotations
 from textual.widgets import Static, Input
 from xnoted.utils.constants import TASKS_ID
 from xnoted.database.dataProvider import DataProvider
-from typing import Iterator
-from xnoted.components.tasks import Tasks
-from typing import cast
+from typing import Iterator, cast
 
 
 class FooterSearch(Static):
@@ -23,6 +22,7 @@ class FooterSearch(Static):
         )
 
     def on_input_changed(self, event: Input.Changed) -> None:
+        from xnoted.components.tasks import Tasks
         tasks_widget = cast(Tasks, self.app.query_one(f"#{TASKS_ID}"))
         tasks_widget.quick_search(event.value)
 
