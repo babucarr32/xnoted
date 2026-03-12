@@ -36,6 +36,12 @@ class DataHandler(Protocol):
     def project_type(self) -> str: ...
 
     @property
+    def is_data_unprotected(self) -> bool: ...
+
+    @is_data_unprotected.setter
+    def is_data_unprotected(self, value: bool) -> None: ...
+
+    @property
     def current_project_id(self) -> str | None: ...
 
     def set_current_project(self, project_id: str) -> None: ...
@@ -90,6 +96,14 @@ class DataProvider:
     @property
     def project_type(self) -> str:
         return self.provider.project_type
+
+    @property
+    def is_data_unprotected(self) -> bool:
+        return self.provider.is_data_unprotected
+
+    @is_data_unprotected.setter
+    def is_data_unprotected(self, value: bool) -> None:
+        self.provider.is_data_unprotected = value
 
     @property
     def current_project_id(self) -> str | None:

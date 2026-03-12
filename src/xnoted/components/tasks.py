@@ -142,12 +142,15 @@ class Tasks(ListView):
         else:
             self.append(ListItem(Label("No tasks yet")))
 
+    def _display_task(self, task_id: str) -> None:
+        body_widget = self.app.query_one(Body)
+        body_widget.show_task(task_id)
+
     def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
         if event.item and hasattr(event.item, "task_id"):
             # Display the highlighted task
             task_id = event.item.task_id
-            body_widget = self.app.query_one(Body)
-            body_widget.show_task(task_id)
+            self._display_task(task_id)
 
     def action_edit_task(self) -> None:
         from xnoted.screens.createTask import CreateTaskModal
@@ -235,6 +238,8 @@ class Tasks(ListView):
         child: TaskItem | None = cast(TaskItem | None, self.highlighted_child)
 
         if child and hasattr(child, "task_id"):
+            label_widget = cast(TaskLabel, child.get_child_by_id(TASK_LABEL_ID))
+
             task_id = child.task_id
             task = self.data_provider.get_task(task_id)
 
@@ -243,7 +248,7 @@ class Tasks(ListView):
                 title=task.title,
                 content=task.content,
                 status=task.status,
-                is_protected=task.is_protected,
+                is_protected=1,
                 project_id=task.project_id,
             )
 
@@ -259,6 +264,9 @@ class Tasks(ListView):
                 )
             else:
                 self.data_provider.update_task(child.task_id, new_data)
+                label = self._handle_mask(new_data.title, new_data.is_protected == 1)
+                label_widget.update(label)
+                self._display_task(new_data.id)
 
     def action_copy_task(self) -> None:
         child: TaskItem | None = cast(TaskItem | None, self.highlighted_child)

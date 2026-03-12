@@ -5,10 +5,11 @@ from xnoted.screens.createProject import CreateProjectModal
 from xnoted.screens.importExportProject import ImportExportProjectModal
 from xnoted.components.content import ContentWrapper
 from xnoted.components.footer import Footer
+from xnoted.screens.enterPassword import EnterPasswordModal
 from xnoted.components.body import Body
 from xnoted.database.dataProvider import DataProvider
 from xnoted.database.sqlDataHandler import SqlDataHandler
-from typing import Iterator
+from typing import Iterator, cast
 
 
 class XNotedApp(App):
@@ -25,6 +26,7 @@ class XNotedApp(App):
         ("ctrl+b", "create_new_project", "Create project"),
         ("ctrl+d", "scroll_body_down", "Scroll body down"),
         ("ctrl+u", "scroll_body_up", "Scroll body up"),
+        ("u", "unlock_password", "Unlock password"),
         ("ctrl+r", "show_readme", "Show readme"),
     ]
 
@@ -43,6 +45,26 @@ class XNotedApp(App):
 
     def action_select_project(self) -> None:
         self.app.push_screen(SelectProjectModal(data_provider=self.data_provider))
+
+    def action_unlock_password(self) -> None:
+        def refresh_tasks():
+            from xnoted.components.tasks import Tasks
+            from xnoted.utils.constants import TASKS_ID
+
+            tasks_widget = cast(Tasks, self.query_one(f"#{TASKS_ID}"))
+            tasks_widget.load_tasks()
+
+        if self.data_provider.is_data_unprotected:
+            self.data_provider.is_data_unprotected = False
+            refresh_tasks()
+            return
+
+        self.data_provider.is_data_unprotected = True
+        self.app.push_screen(
+            EnterPasswordModal(
+                data_provider=self.data_provider, on_password_valid=refresh_tasks
+            )
+        )
 
     def action_scroll_body_down(self) -> None:
         body_widget: Body = self.app.query_one(Body)

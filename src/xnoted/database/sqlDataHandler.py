@@ -41,6 +41,7 @@ class SqlDataHandler:
         self.cur.execute(CREATE_ACCOUNT_TABLE)
         self.cur.execute(CREATE_PROJECT_TABLE)
         self.con.commit()
+        self.is_data_unprotected = False
 
         # Ensure a default project exists
         self._ensure_default_project()
@@ -239,7 +240,7 @@ class SqlDataHandler:
                     title=row[1],
                     project_id=project_id,
                     content=row[2],
-                    is_protected=row[3],
+                    is_protected=False if self.is_data_unprotected else row[3],
                     status=row[4],
                     createdAt=row[5],
                 )
@@ -262,7 +263,7 @@ class SqlDataHandler:
                 title=row[1],
                 project_id=cast(str, self.current_project_id),
                 content=row[2],
-                is_protected=row[3],
+                is_protected=False if self.is_data_unprotected else row[3],
                 status=row[4],
                 createdAt=row[5],
             )
