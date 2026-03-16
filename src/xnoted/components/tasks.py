@@ -87,7 +87,7 @@ class Tasks(ListView):
                     label_arg = GetLabelArg(
                         status=task.status,
                         title=task.title,
-                        is_protected=task.is_protected,
+                        is_protected=task.is_protected == 1,
                     )
                     label = self._get_label(label_arg)
                 else:
@@ -129,7 +129,7 @@ class Tasks(ListView):
                     )
                     label = self._get_label(label_arg)
                     list_item = TaskItem(
-                        Label(label), task_id=task.id, status=task.status
+                        TaskLabel(label), task_id=task.id, status=task.status
                     )
                     self.append(list_item)
                     found_any = True
@@ -264,7 +264,12 @@ class Tasks(ListView):
                 )
             else:
                 self.data_provider.update_task(child.task_id, new_data)
-                label = self._handle_mask(new_data.title, new_data.is_protected == 1)
+                label_arg = GetLabelArg(
+                    status=new_data.status,
+                    title=new_data.title,
+                    is_protected=new_data.is_protected == 1,
+                )
+                label = self._get_label(label_arg)
                 label_widget.update(label)
                 self._display_task(new_data.id)
 
