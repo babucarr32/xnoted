@@ -23,6 +23,7 @@ class Project:
     description: str
     type: str
     createdAt: str | None = ""
+    sync_status: Optional[str] = None
 
     def to_dict(self) -> dict:
         return asdict(self)

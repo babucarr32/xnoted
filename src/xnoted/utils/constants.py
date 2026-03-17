@@ -35,3 +35,6 @@ CREATE_PROJECT_ID = "create-project-modal"
 CREATE_PASSWORD_ID = "create-password-modal"
 ENTER_PASSWORD_ID = "enter-password-modal"
 SELECT_PROJECT_MODAL_ID = "select-project"
+
+MONGO_URI = "mongodb://localhost:27017"
+DATABASE_NAME = "xnoted"

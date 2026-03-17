@@ -3,3 +3,4 @@ textual-dev
 platformdirs
 pyperclip
 bcrypt
+pymongo
