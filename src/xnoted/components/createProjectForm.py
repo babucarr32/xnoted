@@ -1,4 +1,5 @@
 import uuid
+from xnoted.sync.syncProvider import SyncStatus
 from textual.containers import Container
 from textual.widgets import Input, TextArea, RadioSet, RadioButton, Label
 from textual.app import ComposeResult
@@ -115,6 +116,7 @@ class CreateProjectForm(Container):
                     if project_type.pressed_button
                     else PROJECT_TASK_TYPE_ID,
                 ),
+                sync_status=SyncStatus.PENDING.value,
             )
             self.data_provider.save_project(data)
 
@@ -133,6 +135,7 @@ class CreateProjectForm(Container):
                 if project_type.pressed_button
                 else PROJECT_TASK_TYPE_ID,
             ),
+            sync_status=SyncStatus.PENDING_EDIT.value,
         )
 
         self.data_provider.update_project(self.project_id, data)

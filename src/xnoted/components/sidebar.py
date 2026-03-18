@@ -1,4 +1,5 @@
 import uuid
+from xnoted.sync.syncProvider import SyncStatus
 from textual.containers import Container
 from textual.widgets import Input, TextArea
 from textual.app import ComposeResult
@@ -75,13 +76,14 @@ class Form(Container):
         content = self._get_content_widget().text
 
         # Only title is required
-        if title:
+        if title and self.data_provider.current_project_id:
             data = Task(
                 id=str(uuid.uuid4()),
                 title=title,
                 content=content,
                 is_protected=0,
-                project_id="",
+                project_id=self.data_provider.current_project_id,
+                sync_status=SyncStatus.PENDING.value,
                 status=0,
             )
             if self.data_provider.is_storage_exist():
@@ -108,6 +110,7 @@ class Form(Container):
             is_protected=task.is_protected,
             project_id=task.project_id,
             status=task.status,
+            sync_status=SyncStatus.PENDING_EDIT.value,
         )
         self.data_provider.update_task(self.task_id, new_data)
 

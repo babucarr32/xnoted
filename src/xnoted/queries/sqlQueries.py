@@ -1,3 +1,4 @@
+from xnoted.sync.syncProvider import SyncStatus
 CREATE_TASK_TABLE = """
 CREATE TABLE IF NOT EXISTS task(
     id TEXT PRIMARY KEY,
@@ -6,6 +7,7 @@ CREATE TABLE IF NOT EXISTS task(
     content TEXT,
     is_protected INTEGER DEFAULT 0,
     status INTEGER DEFAULT 0,
+    sync_status TEXT,
     createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (project_id) REFERENCES project(id)
 )
@@ -19,7 +21,7 @@ CREATE TABLE IF NOT EXISTS account(
 )
 """
 
-INSERT_TASK_DATA = "INSERT INTO task(id, project_id, title, content, is_protected, status) VALUES(?, ?, ?, ?, ?, ?)"
+INSERT_TASK_DATA = "INSERT INTO task(id, project_id, title, content, is_protected, status, sync_status) VALUES(?, ?, ?, ?, ?, ?, ?)"
 
 INSERT_ACCOUNT_DATA = """
 INSERT INTO account(id, password)
@@ -31,18 +33,18 @@ DO UPDATE SET password=excluded.password
 GET_PASSWORD = "SELECT password FROM account WHERE id = 1"
 
 UPDATE_TASK_DATA = (
-    "UPDATE task SET title = ?, content = ?, is_protected = ?, status = ? WHERE id = ?"
+    "UPDATE task SET title = ?, content = ?, is_protected = ?, status = ?, sync_status = ? WHERE id = ?"
 )
 
 QUERY_TASKS_BY_PROJECT = """
-SELECT id, title, content, is_protected, status, createdAt 
+SELECT id, title, content, is_protected, status, sync_status, createdAt 
 FROM task 
 WHERE project_id = ? 
 ORDER BY createdAt
 """
 
 QUERY_ONE_TASKS_BY_ID = """
-SELECT id, title, content, is_protected, status, createdAt 
+SELECT id, title, content, is_protected, status, sync_status, createdAt 
 FROM task 
 WHERE id = ? 
 """
@@ -53,28 +55,31 @@ CREATE TABLE IF NOT EXISTS project(
     title TEXT,
     description TEXT,
     type TEXT,
+    sync_status TEXT,
     createdAt TEXT DEFAULT CURRENT_TIMESTAMP
 )
 """
 
 INSERT_PROJECT_DATA = (
-    "INSERT INTO project(id, title, description, type) VALUES(?, ?, ?, ?)"
+    "INSERT INTO project(id, title, description, type, sync_status) VALUES(?, ?, ?, ?, ?)"
 )
 
 UPDATE_PROJECT_DATA = (
-    "UPDATE project SET title = ?, description = ?, type = ? WHERE id = ?"
+    "UPDATE project SET title = ?, description = ?, type = ?, sync_status = ? WHERE id = ?"
 )
 
 QUERY_ALL_PROJECT_DATA = """
-SELECT id, title, description, type, createdAt 
+SELECT id, title, description, type, sync_status, createdAt 
 FROM project 
 ORDER BY createdAt
 """
 
 UPDATE_TASK_COLUMN = "ALTER TABLE task ADD COLUMN is_protected INTEGER DEFAULT 0"
+UPDATE_TASK_SYNC_COLUMN = f"ALTER TABLE task ADD COLUMN sync_status TEXT DEFAULT {SyncStatus.SYNCED.value}"
+UPDATE_PROJECT_SYNC_COLUMN = f"ALTER TABLE project ADD COLUMN sync_status TEXT DEFAULT {SyncStatus.SYNCED.value}"
 
 QUERY_ONE_PROJECT_DATA = """
-SELECT id, title, description, type, createdAt 
+SELECT id, title, description, type, sync_status, createdAt 
 FROM project 
 WHERE id = ?
 """

@@ -3,8 +3,8 @@ from xnoted.database.dataProvider import Project, Task
 from xnoted.sync.syncProvider import Project as SyncProject
 from xnoted.sync.syncProvider import Task as SyncTask
 
-TaskRow: TypeAlias = tuple[str, str, str, str, int, int, str]
-ProjectRow: TypeAlias = tuple[str, str, str, str, str, str]
+TaskRow: TypeAlias = tuple[str, str, str, str, int, int, str, str]
+ProjectRow: TypeAlias = tuple[str, str, str, str, str, str, str]
 
 
 class DataHelper:
@@ -16,6 +16,7 @@ class DataHelper:
             content=data["content"],
             is_protected=data["is_protected"],
             status=data["status"],
+            sync_status=data["sync_status"],
             createdAt=data["createdAt"],
         )
 
@@ -37,6 +38,7 @@ class DataHelper:
             title=data["title"],
             description=data["description"],
             type=data["type"],
+            sync_status=data["sync_status"],
             createdAt=data["createdAt"],
         )
 
@@ -58,7 +60,8 @@ class DataHelper:
             content=data[3],
             is_protected=data[4],
             status=data[5],
-            createdAt=data[6],
+            sync_status=data[6],
+            createdAt=data[7],
         )
 
     def tuple_to_project(self, data: ProjectRow) -> Project:
@@ -67,5 +70,6 @@ class DataHelper:
             title=data[1],
             description=data[2],
             type=data[3],
-            createdAt=data[4],
+            sync_status=data[4],
+            createdAt=data[5],
         )

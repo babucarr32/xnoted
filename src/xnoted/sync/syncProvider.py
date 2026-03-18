@@ -6,6 +6,7 @@ from dataclasses import dataclass, asdict
 class SyncStatus(Enum):
     PENDING = "pending"
     SYNCED = "synced"
+    PENDING_EDIT = "pending-edit"
 
 
 @dataclass(frozen=True)
@@ -35,10 +36,15 @@ class Project:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class PullResult:
+    projects: list[Project]
+    tasks: list[Task]
+
 class Sync(Protocol):
     async def initialize(self) -> None: ...
 
-    async def pull(self) -> None: ...
+    async def pull(self) -> PullResult: ...
 
     async def push(self, projects: list[Project]) -> None: ...
 
@@ -49,14 +55,14 @@ class SyncProvider:
     def __init__(self, sync: Sync):
         self.sync = sync
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         await self.sync.initialize()
 
-    async def pull(self):
-        await self.sync.pull()
+    async def pull(self) -> PullResult:
+        return await self.sync.pull()
 
-    async def push(self, projects: list[Project]):
+    async def push(self, projects: list[Project]) -> None:
         await self.sync.push(projects)
 
-    async def push_tasks(self, tasks: list[Task]):
+    async def push_tasks(self, tasks: list[Task]) -> None:
         await self.sync.push_tasks(tasks)

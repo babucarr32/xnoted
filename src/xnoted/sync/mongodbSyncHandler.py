@@ -1,7 +1,7 @@
 from pymongo import AsyncMongoClient
 from pymongo.asynchronous.database import AsyncDatabase
 from typing import TypedDict, Callable, Dict, Any, TypeVar, Generic, Awaitable
-from xnoted.sync.syncProvider import Project, Task
+from xnoted.sync.syncProvider import Project, Task, PullResult
 from xnoted.utils.constants import MONGO_URI, DATABASE_NAME
 from xnoted.sync.syncProvider import SyncStatus
 from xnoted.database.dataHelper import DataHelper
@@ -232,8 +232,14 @@ class MongoDBSyncHandler:
         await self._handle_delete_tasks(filtered_task.removed)
         await self._handle_insert_tasks(filtered_task.added)
 
-    async def pull(self) -> None:
-        "TODO"
+    async def pull(self) -> PullResult:
+        projects = await self._get_projects()
+        tasks = await self._get_tasks()
+
+        return PullResult(
+            projects=projects or [],
+            tasks=tasks or [],
+        )
 
     async def close(self) -> None:
         if self.client:

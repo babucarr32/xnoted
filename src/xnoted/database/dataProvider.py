@@ -11,6 +11,7 @@ class Task:
     is_protected: int
     status: int
     createdAt: Optional[str] = ""
+    sync_status: Optional[str] = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -77,13 +78,13 @@ class DataHandler(Protocol):
 
     def add_task(self, data: Task) -> None: ...
 
-    def update_tasks(self, data: List[Task]) -> None: ...
-
     def is_storage_exist(self) -> bool: ...
 
     def is_empty(self) -> bool: ...
 
     def get_last_id(self, project_id: str) -> str: ...
+
+    def sync(self, incoming_tasks: list[Task], incoming_projects: list[Project]) -> None: ...
 
 
 class DataProvider:
@@ -169,10 +170,6 @@ class DataProvider:
         """Alias for save()"""
         self.provider.add_task(data)
 
-    def update_tasks(self, data: List[Task]) -> None:
-        """Batch update/insert tasks for the current project"""
-        self.provider.update_tasks(data)
-
     def is_storage_exist(self) -> bool:
         """Check if storage is accessible"""
         return self.provider.is_storage_exist()
@@ -188,3 +185,7 @@ class DataProvider:
     def get_last_id(self, project_id: str) -> str:
         """Get the last task ID for a project"""
         return self.provider.get_last_id(project_id)
+
+    def sync(self, incoming_tasks: list[Task], incoming_projects: list[Project]) -> None:
+        """Sync data from remote db to local db"""
+        return self.provider.sync(incoming_tasks, incoming_projects)

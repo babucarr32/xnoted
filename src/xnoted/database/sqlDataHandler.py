@@ -1,10 +1,12 @@
 import bcrypt
 import sqlite3
-from typing import List, Optional, cast
+from typing import List, Optional, cast, Callable, TypeVar, Generic
 from xnoted.utils.logger import get_logger
 from xnoted.utils.dataDir import DB_NAME
 from xnoted.database.dataProvider import Project, Task
+from xnoted.sync.syncProvider import SyncStatus
 from xnoted.database.dataHelper import DataHelper
+from dataclasses import dataclass
 from xnoted.queries.sqlQueries import (
     CREATE_TASK_TABLE,
     CREATE_ACCOUNT_TABLE,
@@ -12,6 +14,8 @@ from xnoted.queries.sqlQueries import (
     INSERT_ACCOUNT_DATA,
     GET_PASSWORD,
     UPDATE_TASK_DATA,
+    UPDATE_PROJECT_SYNC_COLUMN,
+    UPDATE_TASK_SYNC_COLUMN,
     QUERY_TASKS_BY_PROJECT,
     QUERY_ONE_TASKS_BY_ID,
     CREATE_PROJECT_TABLE,
@@ -25,8 +29,15 @@ from xnoted.queries.sqlQueries import (
     DELETE_TASK,
 )
 
+T = TypeVar("T")
 logger = get_logger(__name__)
 data_helper = DataHelper()
+
+
+@dataclass(frozen=True)
+class DataFilter(Generic[T]):
+    added: list[T]
+    removed: list[T]
 
 
 class SqlDataHandler:
@@ -43,6 +54,19 @@ class SqlDataHandler:
         self.con.commit()
         self.is_data_unprotected = False
 
+        # Update database with missing column
+        if not self._column_exists("task", "is_protected"):
+            self.cur.execute(UPDATE_TASK_COLUMN)
+            self.con.commit()
+
+        if not self._column_exists("task", "sync_status"):
+            self.cur.execute(UPDATE_TASK_SYNC_COLUMN)
+            self.con.commit()
+
+        if not self._column_exists("project", "sync_status"):
+            self.cur.execute(UPDATE_PROJECT_SYNC_COLUMN)
+            self.con.commit()
+
         # Ensure a default project exists
         self._ensure_default_project()
         projects = self.load_projects()
@@ -50,11 +74,6 @@ class SqlDataHandler:
         if projects:
             self.current_project_id = projects[0].id
             self.project_type = projects[0].type
-
-        # Update database with missing column
-        if not self._column_exists("task", "is_protected"):
-            self.cur.execute(UPDATE_TASK_COLUMN)
-            self.con.commit()
 
     def _ensure_default_project(self) -> None:
         """Create a default project if no projects exist"""
@@ -70,6 +89,7 @@ class SqlDataHandler:
                     title="Default",
                     description="Default project",
                     type="general",
+                    sync_status=SyncStatus.PENDING.value,
                 )
                 self.cur.execute(
                     INSERT_PROJECT_DATA,
@@ -78,6 +98,7 @@ class SqlDataHandler:
                         default_project.title,
                         default_project.description,
                         default_project.type,
+                        default_project.sync_status,
                     ),
                 )
                 self.con.commit()
@@ -111,11 +132,12 @@ class SqlDataHandler:
             status = 0
             new_data = Task(
                 id=data.id,
-                project_id=self.current_project_id,
+                project_id=data.project_id,
                 title=data.title,
                 content=data.content,
                 status=status,
                 is_protected=data.is_protected,
+                sync_status=data.sync_status,
             )
 
             self.cur.execute(
@@ -127,6 +149,7 @@ class SqlDataHandler:
                     new_data.content,
                     new_data.is_protected,
                     new_data.status,
+                    new_data.sync_status,
                 ),
             )
             self.con.commit()
@@ -173,7 +196,7 @@ class SqlDataHandler:
         try:
             self.cur.execute(
                 INSERT_PROJECT_DATA,
-                (data.id, data.title, data.description, data.type),
+                (data.id, data.title, data.description, data.type, data.sync_status),
             )
             self.con.commit()
         except Exception as e:
@@ -190,6 +213,7 @@ class SqlDataHandler:
                     data.content,
                     data.is_protected,
                     data.status,
+                    data.sync_status,
                     task_id,
                 ),
             )
@@ -203,7 +227,7 @@ class SqlDataHandler:
         try:
             self.cur.execute(
                 UPDATE_PROJECT_DATA,
-                (data.title, data.description, data.type, project_id),
+                (data.title, data.description, data.type, data.sync_status, project_id),
             )
             self.con.commit()
         except Exception as e:
@@ -242,7 +266,8 @@ class SqlDataHandler:
                     content=row[2],
                     is_protected=False if self.is_data_unprotected else row[3],
                     status=row[4],
-                    createdAt=row[5],
+                    sync_status=row[5],
+                    createdAt=row[6],
                 )
                 for row in rows
             ]
@@ -265,7 +290,8 @@ class SqlDataHandler:
                 content=row[2],
                 is_protected=False if self.is_data_unprotected else row[3],
                 status=row[4],
-                createdAt=row[5],
+                sync_status=row[5],
+                createdAt=row[6],
             )
         except Exception as e:
             logger.error(f"Error loading data: {e}")
@@ -307,20 +333,6 @@ class SqlDataHandler:
         """Add new task"""
         self.save_task(data)
 
-    def update_tasks(self, data: List[Task]) -> None:
-        """Batch update/insert tasks for the current project"""
-        if not self.current_project_id:
-            raise ValueError("No project selected. Call set_current_project() first.")
-
-        try:
-            values = [
-                (d.id, self.current_project_id, d.title, d.content, 0) for d in data
-            ]
-            self.cur.executemany(INSERT_TASK_DATA, values)
-            self.con.commit()
-        except Exception as e:
-            logger.error(f"Error updating data: {e}")
-
     def is_storage_exist(self) -> bool:
         """Check if storage is accessible"""
         try:
@@ -352,6 +364,84 @@ class SqlDataHandler:
         if tasks:
             return tasks[-1].id
         return "0"
+
+    def _handle_filter_data(
+        self,
+        incoming_data: list[T],
+        existing_data: list[T],
+        get_id: Callable[[T], str],
+        get_sync_status: Callable[[T], str],
+    ) -> DataFilter[T] | None:
+        existing_data
+        if not existing_data:
+            return DataFilter(added=incoming_data, removed=[])
+
+        existing_by_id = {get_id(p): p for p in existing_data}
+        incoming_by_id = {get_id(p): p for p in incoming_data}
+
+        added: list[T] = []
+        removed: list[T] = []
+
+        # removed
+        for d_id, d in existing_by_id.items():
+            if (
+                d_id not in incoming_by_id
+                and get_sync_status(d) == SyncStatus.SYNCED.value
+            ):
+                removed.append(d)
+
+        # added
+        for d_id, d in incoming_by_id.items():
+            if (
+                d_id not in existing_by_id
+                and get_sync_status(d) == SyncStatus.SYNCED.value
+            ):
+                added.append(d)
+
+        return DataFilter(added=added, removed=removed)
+
+    def sync(
+        self, incoming_tasks: list[Task], incoming_projects: list[Project]
+    ) -> None:
+        projects = self.load_projects()
+        tasks: list[Task] = []
+
+        self.load_projects()
+
+        for p in projects:
+            tasks = [*tasks, *self.get_tasks(p.id)]
+
+        filtered_project: DataFilter[Project] | None = self._handle_filter_data(
+            incoming_data=incoming_projects,
+            existing_data=projects,
+            get_id=lambda p: p.id,
+            get_sync_status=lambda p: p.sync_status or "",
+        )
+
+        filtered_task: DataFilter[Task] | None = self._handle_filter_data(
+            incoming_data=incoming_tasks,
+            existing_data=tasks,
+            get_id=lambda t: t.id,
+            get_sync_status=lambda t: t.sync_status or "",
+        )
+
+        if filtered_project:
+            # Add project
+            for project in filtered_project.added:
+                self.save_project(project)
+
+            # Delete project
+            for project in filtered_project.removed:
+                self.delete_project(project.id)
+
+        if filtered_task:
+            # Add Task
+            for task in filtered_task.added:
+                self.add_task(task)
+
+            # Delete task
+            for task in filtered_task.removed:
+                self.delete_task(task.id)
 
     def __del__(self) -> None:
         if hasattr(self, "con"):

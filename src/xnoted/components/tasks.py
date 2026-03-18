@@ -10,6 +10,7 @@ from xnoted.utils.constants import (
 from xnoted.utils.helpers import mask
 from xnoted.components.body import Body
 from xnoted.screens.selectProjects import SelectProjectModal
+from xnoted.sync.syncProvider import SyncStatus
 from xnoted.screens.copyTask import CopyTaskModal
 from xnoted.screens.confirm import ConfirmModal
 from xnoted.screens.createPassword import CreatePasswordModal
@@ -200,7 +201,7 @@ class Tasks(ListView):
             new_status = 0
 
         # Update only the highlighted item's label
-        label = cast(TaskLabel, child.query_one(f"#$TASK_LABEL_ID"))
+        label = cast(TaskLabel, child.query_one(f"#{TASK_LABEL_ID}"))
 
         label_arg = GetLabelArg(
             status=new_status,
@@ -218,6 +219,7 @@ class Tasks(ListView):
             status=new_status,
             is_protected=task.is_protected,
             project_id=task.project_id,
+            sync_status=SyncStatus.PENDING_EDIT.value,
         )
 
         self.data_provider.update_task(task.id, new_data)
