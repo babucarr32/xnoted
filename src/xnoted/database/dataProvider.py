@@ -1,5 +1,19 @@
 from typing import List, Optional, Protocol
 from dataclasses import dataclass, asdict
+from enum import Enum
+
+
+class ProtectionStatus(Enum):
+    PROTECTED = 1
+    NOT_PROTECTED = 0
+
+
+class Status(Enum):
+    NOT_STARTED = 0
+    IN_PROGRESS = 1
+    UNDER_REVIEW = 2
+    DONE = 3
+    CANCELED = 4
 
 
 @dataclass(frozen=True)
@@ -84,7 +98,9 @@ class DataHandler(Protocol):
 
     def get_last_id(self, project_id: str) -> str: ...
 
-    def sync(self, incoming_tasks: list[Task], incoming_projects: list[Project]) -> None: ...
+    def sync(
+        self, incoming_tasks: list[Task], incoming_projects: list[Project]
+    ) -> None: ...
 
 
 class DataProvider:
@@ -186,6 +202,8 @@ class DataProvider:
         """Get the last task ID for a project"""
         return self.provider.get_last_id(project_id)
 
-    def sync(self, incoming_tasks: list[Task], incoming_projects: list[Project]) -> None:
+    def sync(
+        self, incoming_tasks: list[Task], incoming_projects: list[Project]
+    ) -> None:
         """Sync data from remote db to local db"""
         return self.provider.sync(incoming_tasks, incoming_projects)

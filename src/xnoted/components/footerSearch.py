@@ -31,5 +31,5 @@ class FooterSearch(Static):
 
     def action_escape(self) -> None:
         self.toggle_search()
-        task_widget = self.app.query_one("#tasks")
+        task_widget = self.app.query_one(f"#{TASKS_ID}")
         task_widget.focus()

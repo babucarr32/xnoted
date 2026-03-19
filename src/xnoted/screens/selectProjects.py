@@ -57,15 +57,18 @@ class SelectProject(ListView):
                     project_name=slugify(title),
                 )
                 self.append(list_item)
-        else:
-            self.append(ListItem(Label("No projects yet")))
+            return
+
+        self.append(ListItem(Label("No projects yet")))
 
     def on_list_view_selected(self, event: ListView.Highlighted) -> None:
         item = cast(ProjectItem, event.item)
-        if item:
-            self.on_select(item.project_id)
-            if self.close_on_select:
-                self.close_app()
+        if not item:
+            return
+
+        self.on_select(item.project_id)
+        if self.close_on_select:
+            self.close_app()
 
 
 class SelectProjectModal(ModalScreen):

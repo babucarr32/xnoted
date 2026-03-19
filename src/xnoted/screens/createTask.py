@@ -9,14 +9,10 @@ class CreateTaskModal(ModalScreen):
     def __init__(
         self,
         data_provider: DataProvider,
-        title="",
-        content="",
         editing=False,
         task_id="",
     ):
         super().__init__(id="createTaskModal")
-        self.title = title
-        self.content = content
         self.editing = editing
         self.task_id = task_id
         self.data_provider = data_provider
@@ -31,8 +27,6 @@ class CreateTaskModal(ModalScreen):
         yield Vertical(
             Form(
                 data_provider=self.data_provider,
-                title=self.title,
-                content=self.content,
                 editing=self.editing,
                 task_id=self.task_id,
             ),

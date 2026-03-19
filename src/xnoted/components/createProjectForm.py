@@ -49,18 +49,14 @@ class CreateProjectForm(Container):
     def __init__(
         self,
         data_provider: DataProvider,
-        title="",
-        description="",
         project_id="",
         project_type=PROJECT_TASK_TYPE_ID,
         editing=False,
     ):
         super().__init__()
         self.data_provider = data_provider
-        self.title = title
-        self.description = description
         self.project_type = project_type
-        self.editing = title
+        self.editing = editing
         self.project_id = project_id
 
     BINDINGS = [
@@ -79,11 +75,11 @@ class CreateProjectForm(Container):
     def _get_description_widget(self) -> ContentContainer:
         return cast(ContentContainer, self.query_one(f"#{PROJECT_DESCRIPTION_ID}"))
 
-    def on_mount(self) -> None:
+    def _set_values(self, data: Project):
         input_widget = self._get_title_widget()
         project_description_widget = self._get_description_widget()
-        input_widget.value = self.title
-        project_description_widget.text = self.description
+        input_widget.value = data.title
+        project_description_widget.text = data.description
 
         match self.project_type:
             case "task":
@@ -94,6 +90,15 @@ class CreateProjectForm(Container):
                 radio_button_widget = self._get_task_type_widget(PROJECT_OTHER_TYPE_ID)
                 radio_button_widget.value = True
                 return
+
+    def on_mount(self) -> None:
+        if self.editing:
+            project = self.data_provider.get_project(self.project_id)
+
+            if not project:
+                return
+
+            self._set_values(project)
 
     def compose(self) -> ComposeResult:
         yield InputContainer()

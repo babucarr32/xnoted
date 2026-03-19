@@ -4,10 +4,11 @@ from textual.containers import Container
 from textual.widgets import Input, TextArea
 from textual.app import ComposeResult
 from xnoted.utils.logger import get_logger
-from xnoted.database.dataProvider import DataProvider, Task
+from xnoted.database.dataProvider import DataProvider, Task, ProtectionStatus, Status
 from xnoted.components.tasks import Tasks
 from textual.app import Timer
 from typing import cast
+from xnoted.utils.constants import TASKS_ID
 
 logger = get_logger(__name__)
 
@@ -37,14 +38,10 @@ class Form(Container):
     def __init__(
         self,
         data_provider: DataProvider,
-        title="",
-        content="",
         editing=False,
         task_id="",
     ):
         super().__init__()
-        self.title = title
-        self.content = content
         self.editing = editing
         self.task_id = task_id
         self.data_provider = data_provider
@@ -60,12 +57,21 @@ class Form(Container):
     def _get_content_widget(self) -> ContentContainer:
         return cast(ContentContainer, self.query_one(f"#{CONTENT_ID}"))
 
-    def on_mount(self) -> None:
+    def _set_values(self, data: Task) -> None:
         input_widget = cast(InputContainer, self.query_one(f"#{TITLE_ID}"))
         textarea_widget = cast(ContentContainer, self.query_one(f"#{CONTENT_ID}"))
 
-        input_widget.value = self.title
-        textarea_widget.text = self.content
+        input_widget.value = data.title
+        textarea_widget.text = data.content
+
+    def on_mount(self) -> None:
+        if self.editing:
+            task = self.data_provider.get_task(self.task_id)
+
+            if not task:
+                return None
+
+            self._set_values(task)
 
     def compose(self) -> ComposeResult:
         yield InputContainer()
@@ -81,17 +87,18 @@ class Form(Container):
                 id=str(uuid.uuid4()),
                 title=title,
                 content=content,
-                is_protected=0,
+                is_protected=ProtectionStatus.NOT_PROTECTED.value,
                 project_id=self.data_provider.current_project_id,
                 sync_status=SyncStatus.PENDING.value,
-                status=0,
+                status=Status.NOT_STARTED.value,
             )
+
             if self.data_provider.is_storage_exist():
                 self.data_provider.add_task(data)
             else:
                 self.data_provider.save_task(data)
 
-            tasks_widget = cast(Tasks, self.app.query_one("#tasks"))
+            tasks_widget = cast(Tasks, self.app.query_one(f"#{TASKS_ID}"))
             tasks_widget.refresh_tasks()
 
     def handle_edit(self) -> None:

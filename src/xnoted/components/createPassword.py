@@ -44,10 +44,6 @@ class Form(Container):
         ("ctrl+s", "submit", "Save form"),
     ]
 
-    @property
-    def is_password_created(self):
-        return self.is_password_set
-
     def compose(self) -> ComposeResult:
         yield FormContainer()
 

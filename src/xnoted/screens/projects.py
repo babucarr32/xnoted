@@ -51,8 +51,9 @@ class Projects(ListView):
                 list_item.project_id = project_id
                 list_item.project_name = slugify(title)
                 self.append(list_item)
-        else:
-            self.append(ListItem(Label("No projects yet")))
+            return
+
+        self.append(ListItem(Label("No projects yet")))
 
     def on_list_view_selected(self, event: ListView.Highlighted) -> None:
         project_id = cast(ProjectItem, event.item).project_id
@@ -66,39 +67,41 @@ class Projects(ListView):
     def action_edit_project(self) -> None:
         child = cast(ProjectItem | None, self.highlighted_child)
 
-        if child and hasattr(child, "project_id"):
-            project_id = child.project_id
-            project = self.data_provider.get_project(project_id)
+        if not child or not hasattr(child, "project_id"):
+            return
 
-            if not project:
-                return None
+        project_id = child.project_id
+        project = self.data_provider.get_project(project_id)
 
-            self.app.push_screen(
-                CreateProjectModal(
-                    data_provider=self.data_provider,
-                    title=project.title,
-                    description=project.description,
-                    editing=True,
-                    project_id=project_id,
-                    project_type=project.type,
-                )
+        if not project:
+            return None
+
+        self.app.push_screen(
+            CreateProjectModal(
+                data_provider=self.data_provider,
+                editing=True,
+                project_id=project_id,
+                project_type=project.type,
             )
+        )
 
     def action_delete_project(self) -> None:
         child = cast(ProjectItem | None, self.highlighted_child)
 
-        if child and hasattr(child, "project_id"):
-            project_id = child.project_id
+        if not child or not hasattr(child, "project_id"):
+            return
 
-            def on_confirm():
-                self.data_provider.delete_project(project_id)
-                first_project = self.data_provider.get_first_project()
-                self.data_provider.set_current_project(first_project.id)
-                self.load_projects()
-                tasks_widget = self.app.query_one("#tasks")
-                tasks_widget.refresh_tasks()
+        project_id = child.project_id
 
-            self.app.push_screen(ConfirmModal(on_confirm=on_confirm))
+        def on_confirm():
+            self.data_provider.delete_project(project_id)
+            first_project = self.data_provider.get_first_project()
+            self.data_provider.set_current_project(first_project.id)
+            self.load_projects()
+            tasks_widget = self.app.query_one(f"#{TASKS_ID}")
+            tasks_widget.refresh_tasks()
+
+        self.app.push_screen(ConfirmModal(on_confirm=on_confirm))
 
 
 class SelectProjectModal(ModalScreen):

@@ -5,6 +5,7 @@ from xnoted.utils.constants import (
     FOOTER_ID,
     TASKS_ID,
     PROJECT_TASK_TYPE_ID,
+    PROJECT_OTHER_TYPE_ID,
     TASK_LABEL_ID,
 )
 from xnoted.utils.helpers import mask
@@ -16,7 +17,7 @@ from xnoted.screens.confirm import ConfirmModal
 from xnoted.screens.createPassword import CreatePasswordModal
 from typing import cast
 from dataclasses import dataclass
-from xnoted.database.dataProvider import DataProvider, Task
+from xnoted.database.dataProvider import DataProvider, Task, ProtectionStatus
 from textual.binding import Binding
 from textual.reactive import reactive
 from xnoted.utils.logger import get_logger
@@ -30,6 +31,7 @@ class GetLabelArg:
     status: int
     title: str
     is_protected: bool
+    project_type: str
 
 
 class TaskLabel(Label):
@@ -47,10 +49,11 @@ class TaskItem(ListItem):
 
 
 class Tasks(ListView):
-    def __init__(self, data_provider=DataProvider):
+    def __init__(self, data_provider=DataProvider) -> None:
         super().__init__(id=TASKS_ID)
         self.has_task_result = True
         self.data_provider = data_provider
+        self.loaded_tasks: list[Task] = []
 
     BINDINGS = [
         Binding("m", "move", "Move task"),
@@ -72,35 +75,40 @@ class Tasks(ListView):
         self.load_tasks()
 
     def _handle_mask(self, text: str, is_protected: bool) -> str:
-        if is_protected:
-            return mask(text)
-        return text
+        return mask(text) if is_protected else text
 
     def _get_label(self, arg: GetLabelArg) -> str:
+        if arg.project_type == PROJECT_OTHER_TYPE_ID:
+            return self._handle_mask(arg.title, arg.is_protected)
+
         return f"{ICONS[arg.status].get('icon')} {self._handle_mask(arg.title, arg.is_protected)}"
 
     def load_tasks(self) -> None:
-        tasks = self.data_provider.load_tasks(self.data_provider.current_project_id)
+        self.loaded_tasks = self.data_provider.load_tasks(
+            self.data_provider.current_project_id
+        )
         self.clear()
-        if tasks:
-            for task in tasks:
-                if self.data_provider.project_type == PROJECT_TASK_TYPE_ID:
-                    label_arg = GetLabelArg(
-                        status=task.status,
-                        title=task.title,
-                        is_protected=task.is_protected == 1,
-                    )
-                    label = self._get_label(label_arg)
-                else:
-                    label = self._handle_mask(task.title, task.is_protected)
+        project = self.data_provider.get_project(self.data_provider.current_project_id)
 
-                list_item = TaskItem(
-                    TaskLabel(label), task_id=task.id, status=task.status
+        for task in self.loaded_tasks:
+            if self.data_provider.project_type == PROJECT_TASK_TYPE_ID:
+                label_arg = GetLabelArg(
+                    status=task.status,
+                    title=task.title,
+                    is_protected=task.is_protected == ProtectionStatus.PROTECTED.value,
+                    project_type=project.type
                 )
-                self.append(list_item)
-        else:
-            if self.data_provider.is_empty():
-                self.append(ListItem(Label("No tasks yet")))
+                label = self._get_label(label_arg)
+            else:
+                label = self._handle_mask(
+                    task.title, task.is_protected == ProtectionStatus.PROTECTED.value
+                )
+
+            list_item = TaskItem(TaskLabel(label), task_id=task.id, status=task.status)
+            self.append(list_item)
+
+        if self.data_provider.is_empty():
+            self.append(ListItem(Label("No tasks yet")))
 
     def refresh_tasks(self) -> None:
         """Public method to refresh the task list"""
@@ -108,7 +116,6 @@ class Tasks(ListView):
 
     def quick_search(self, text: str) -> None:
         """Public method to quick search the task list"""
-        tasks = self.data_provider.load_tasks(self.data_provider.current_project_id)
         search_text = text.lower()
 
         if not text or self.last_matched_search == search_text:
@@ -117,16 +124,24 @@ class Tasks(ListView):
         if not self.has_task_result:
             return
 
+        if not search_text:
+            self.load_tasks()
+            return
+
         self.clear()
 
-        if tasks and self.has_task_result:
+        if len(self.loaded_tasks) and self.has_task_result:
             found_any = False
-            for task in tasks:
-                if search_text in task.title.lower():
+            project = self.data_provider.get_project(self.data_provider.current_project_id)
+
+            for task in self.loaded_tasks:
+                if search_text in task.title.lower() and not task.is_protected:
                     label_arg = GetLabelArg(
                         status=task.status,
                         title=task.title,
-                        is_protected=task.is_protected,
+                        is_protected=task.is_protected
+                        == ProtectionStatus.PROTECTED.value,
+                        project_type=project.type
                     )
                     label = self._get_label(label_arg)
                     list_item = TaskItem(
@@ -140,8 +155,9 @@ class Tasks(ListView):
                 self.append(ListItem(Label("No matching tasks")))
             else:
                 self.last_matched_search = search_text
-        else:
-            self.append(ListItem(Label("No tasks yet")))
+            return
+
+        self.append(ListItem(Label("No tasks yet")))
 
     def _display_task(self, task_id: str) -> None:
         body_widget = self.app.query_one(Body)
@@ -169,8 +185,6 @@ class Tasks(ListView):
             self.app.push_screen(
                 CreateTaskModal(
                     data_provider=self.data_provider,
-                    title=task.title,
-                    content=task.content,
                     editing=True,
                     task_id=task.id,
                 )
@@ -207,6 +221,7 @@ class Tasks(ListView):
             status=new_status,
             title=task.title,
             is_protected=task.is_protected,
+            project_type=PROJECT_OTHER_TYPE_ID
         )
 
         label.update(self._get_label(label_arg))
@@ -227,53 +242,61 @@ class Tasks(ListView):
     def action_delete_task(self) -> None:
         child: TaskItem | None = cast(TaskItem | None, self.highlighted_child)
 
-        if child and hasattr(child, "task_id"):
-            task_id = child.task_id
+        if not child or not hasattr(child, "task_id"):
+            return
 
-            def on_confirm():
-                self.data_provider.delete_task(task_id)
-                self.refresh_tasks()
+        task_id = child.task_id
 
-            self.app.push_screen(ConfirmModal(on_confirm=on_confirm))
+        def on_confirm():
+            self.data_provider.delete_task(task_id)
+            self.refresh_tasks()
+
+        self.app.push_screen(ConfirmModal(on_confirm=on_confirm))
 
     def action_lock_task(self) -> None:
         child: TaskItem | None = cast(TaskItem | None, self.highlighted_child)
 
-        if child and hasattr(child, "task_id"):
-            label_widget = cast(TaskLabel, child.get_child_by_id(TASK_LABEL_ID))
+        if not child or not hasattr(child, "task_id"):
+            return
 
-            task_id = child.task_id
-            task = self.data_provider.get_task(task_id)
+        label_widget = cast(TaskLabel, child.get_child_by_id(TASK_LABEL_ID))
 
-            new_data = Task(
-                id=task.id,
-                title=task.title,
-                content=task.content,
-                status=task.status,
-                is_protected=1,
-                project_id=task.project_id,
+        task_id = child.task_id
+        task = self.data_provider.get_task(task_id)
+
+        new_data = Task(
+            id=task.id,
+            title=task.title,
+            content=task.content,
+            status=task.status,
+            is_protected=ProtectionStatus.PROTECTED.value,
+            project_id=task.project_id,
+        )
+
+        def on_password_created() -> None:
+            self.data_provider.update_task(child.task_id, new_data)
+
+        if not self.data_provider.has_password:
+            self.app.push_screen(
+                CreatePasswordModal(
+                    data_provider=self.data_provider,
+                    on_password_created=on_password_created,
+                )
             )
+            return
 
-            def on_password_created() -> None:
-                self.data_provider.update_task(child.task_id, new_data)
+        self.data_provider.update_task(child.task_id, new_data)
+        project = self.data_provider.get_project(self.data_provider.current_project_id)
+        label_arg = GetLabelArg(
+            status=new_data.status,
+            title=new_data.title,
+            project_type=project.type,
+            is_protected=new_data.is_protected == ProtectionStatus.PROTECTED.value,
+        )
+        label = self._get_label(label_arg)
 
-            if not self.data_provider.has_password:
-                self.app.push_screen(
-                    CreatePasswordModal(
-                        data_provider=self.data_provider,
-                        on_password_created=on_password_created,
-                    )
-                )
-            else:
-                self.data_provider.update_task(child.task_id, new_data)
-                label_arg = GetLabelArg(
-                    status=new_data.status,
-                    title=new_data.title,
-                    is_protected=new_data.is_protected == 1,
-                )
-                label = self._get_label(label_arg)
-                label_widget.update(label)
-                self._display_task(new_data.id)
+        label_widget.update(label)
+        self._display_task(new_data.id)
 
     def action_copy_task(self) -> None:
         child: TaskItem | None = cast(TaskItem | None, self.highlighted_child)
@@ -291,40 +314,46 @@ class Tasks(ListView):
     def action_move(self) -> None:
         child: TaskItem | None = cast(TaskItem | None, self.highlighted_child)
 
-        if child and hasattr(child, "task_id"):
-            task_id = child.task_id
-            cached_project_id = self.data_provider.current_project_id
+        if not child or not hasattr(child, "task_id"):
+            return
 
-            def on_select(project_id: str):
-                if project_id:
-                    self.data_provider.set_current_project(project_id)
-                    # Save the highlighted task to the selected project
-                    task = self.data_provider.get_task(task_id)
+        task_id = child.task_id
+        cached_project_id = self.data_provider.current_project_id
 
-                    if task:
-                        data = Task(
-                            id=str(uuid.uuid4()),
-                            title=task.title,
-                            content=task.content,
-                            project_id=task.project_id,
-                            is_protected=task.is_protected,
-                            status=task.status,
-                        )
+        def on_select(project_id: str):
+            if not project_id:
+                return
 
-                        try:
-                            self.data_provider.save_task(data)
-                            # Then delete the task
-                            self.data_provider.delete_task(task_id)
-                            # Set the project id back
-                            self.data_provider.set_current_project(cached_project_id)
-                            self.refresh_tasks()
-                        except Exception as e:
-                            logger.error(f"Unable to move task {e}")
+            self.data_provider.set_current_project(project_id)
+            # Save the highlighted task to the selected project
+            task = self.data_provider.get_task(task_id)
 
-            self.app.push_screen(
-                SelectProjectModal(
-                    data_provider=self.data_provider,
-                    on_select=on_select,
-                    _border_title="Move to",
-                )
+            if not task:
+                return
+
+            data = Task(
+                id=str(uuid.uuid4()),
+                title=task.title,
+                content=task.content,
+                project_id=task.project_id,
+                is_protected=task.is_protected,
+                status=task.status,
             )
+
+            try:
+                self.data_provider.save_task(data)
+                # Then delete the task
+                self.data_provider.delete_task(task_id)
+                # Set the project id back
+                self.data_provider.set_current_project(cached_project_id)
+                self.refresh_tasks()
+            except Exception as e:
+                logger.error(f"Unable to move task {e}")
+
+        self.app.push_screen(
+            SelectProjectModal(
+                data_provider=self.data_provider,
+                on_select=on_select,
+                _border_title="Move to",
+            )
+        )

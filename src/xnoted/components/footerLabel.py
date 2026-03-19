@@ -1,5 +1,6 @@
 from typing import Iterator
 from textual.widgets import Static, Label
+from xnoted.utils.constants import FOOTER_LABEL_ID
 
 
 class FooterLabel(Static):
@@ -11,5 +12,5 @@ class FooterLabel(Static):
             "Move down: j | Move up: k | Edit task: e | Copy task: c | Delete task: d | "
             "Previous status: ← | Next status: → | Body down: Ctrl+d | "
             "Body up: Ctrl+u | Search: /",
-            id="help-text",
+            id=FOOTER_LABEL_ID,
         )
