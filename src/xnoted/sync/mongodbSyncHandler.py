@@ -16,6 +16,7 @@ T = TypeVar("T")
 class DataFilter(Generic[T]):
     added: list[T]
     removed: list[T]
+    pending_edit: list[T]
 
 
 class DeleteProject(TypedDict):
@@ -132,6 +133,48 @@ class MongoDBSyncHandler:
 
             await projects_collection.insert_many(updated_data)
 
+    async def _handle_update_projects(self, data: list[Project]) -> None:
+        if self.database is None:
+            return
+
+        if len(data):
+            for p in data:
+                await self._handle_update_project(p)
+
+    async def _handle_update_tasks(self, data: list[Task]) -> None:
+        if self.database is None:
+            return
+
+        if len(data):
+            for p in data:
+                await self._handle_update_task(p)
+
+    async def _handle_update_project(self, data: Project) -> None:
+        if self.database is None:
+            return
+
+        projects_collection = self.database[PROJECTS_DOCUMENT]
+
+        p_dict = data.to_dict()
+        p_dict["sync_status"] = SyncStatus.SYNCED.value
+
+        await projects_collection.find_one_and_update(
+            {"project_id": data.project_id}, {"$set": p_dict}
+        )
+
+    async def _handle_update_task(self, data: Task) -> None:
+        if self.database is None:
+            return
+
+        tasks_collection = self.database[TASK_DOCUMENT]
+
+        t_dict = data.to_dict()
+        t_dict["sync_status"] = SyncStatus.SYNCED.value
+
+        await tasks_collection.find_one_and_update(
+            {"task_id": data.task_id}, {"$set": t_dict}
+        )
+
     async def _handle_insert_tasks(self, data: list[Task]) -> None:
         if self.database is None:
             return
@@ -148,56 +191,62 @@ class MongoDBSyncHandler:
 
     async def _handle_filter_data(
         self,
-        data: list[T],
-        get_data_handler: Callable[[], Awaitable[list[T] | None]],
+        local_data: list[T],
+        get_remote_data_handler: Callable[[], Awaitable[list[T] | None]],
         get_id: Callable[[T], str],
         get_sync_status: Callable[[T], str],
     ) -> DataFilter[T] | None:
         if self.database is None:
             return None
 
-        existing = await get_data_handler()
-        if not existing:
-            return DataFilter(added=data, removed=[])
+        remote_data = await get_remote_data_handler()
+        if not remote_data:
+            return DataFilter(added=local_data, removed=[], pending_edit=[])
 
-        existing_by_id = {get_id(p): p for p in existing}
-        incoming_by_id = {get_id(p): p for p in data}
+        remote_by_id = {get_id(p): p for p in remote_data}
+        local_by_id = {get_id(p): p for p in local_data}
 
         added: list[T] = []
         removed: list[T] = []
+        pending_edit: list[T] = []
 
-        # removed
-        for d_id, d in existing_by_id.items():
+        # Pending edit
+        for d_id, d in local_by_id.items():
+            if get_sync_status(d) == SyncStatus.PENDING_EDIT.value:
+                pending_edit.append(d)
+
+        # Removed
+        for d_id, d in remote_by_id.items():
             if (
-                d_id not in incoming_by_id
+                d_id not in local_by_id
                 and get_sync_status(d) == SyncStatus.SYNCED.value
             ):
                 removed.append(d)
 
-        # added
-        for d_id, d in incoming_by_id.items():
+        # Added
+        for d_id, d in local_by_id.items():
             if (
-                d_id not in existing_by_id
+                d_id not in remote_by_id
                 and get_sync_status(d) == SyncStatus.PENDING.value
             ):
                 added.append(d)
 
-        return DataFilter(added=added, removed=removed)
+        return DataFilter(added=added, removed=removed, pending_edit=pending_edit)
 
     async def _handle_filter_projects(
         self, data: list[Project]
     ) -> DataFilter[Project] | None:
         return await self._handle_filter_data(
-            data=data,
-            get_data_handler=self._get_projects,
+            local_data=data,
+            get_remote_data_handler=self._get_projects,
             get_id=lambda d: d.project_id,
             get_sync_status=lambda d: d.sync_status or "",
         )
 
     async def _handle_filter_tasks(self, data: list[Task]) -> DataFilter[Task] | None:
         return await self._handle_filter_data(
-            data=data,
-            get_data_handler=self._get_tasks,
+            local_data=data,
+            get_remote_data_handler=self._get_tasks,
             get_id=lambda d: d.task_id,
             get_sync_status=lambda d: d.sync_status or "",
         )
@@ -216,6 +265,7 @@ class MongoDBSyncHandler:
 
         await self._handle_delete_projects(filtered_project.removed)
         await self._handle_insert_projects(filtered_project.added)
+        await self._handle_update_projects(filtered_project.pending_edit)
 
     async def push_tasks(self, tasks: list[Task]) -> None:
         if self.database is None:
@@ -231,6 +281,7 @@ class MongoDBSyncHandler:
 
         await self._handle_delete_tasks(filtered_task.removed)
         await self._handle_insert_tasks(filtered_task.added)
+        await self._handle_update_tasks(filtered_task.pending_edit)
 
     async def pull(self) -> PullResult:
         projects = await self._get_projects()

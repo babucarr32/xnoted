@@ -129,13 +129,12 @@ class SqlDataHandler:
             return
 
         try:
-            status = 0
             new_data = Task(
                 id=data.id,
                 project_id=data.project_id,
                 title=data.title,
                 content=data.content,
-                status=status,
+                status=data.status,
                 is_protected=data.is_protected,
                 sync_status=data.sync_status,
             )

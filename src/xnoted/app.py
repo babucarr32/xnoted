@@ -93,7 +93,7 @@ class XNotedApp(App):
                     description=p.description,
                     type=p.type,
                     createdAt=p.createdAt,
-                    sync_status=SyncStatus.PENDING.value,
+                    sync_status=p.sync_status,
                     project_id=p.id,
                 )
                 for p in projects
@@ -130,7 +130,7 @@ class XNotedApp(App):
                     is_protected=p.is_protected,
                     status=p.status,
                     createdAt=p.createdAt,
-                    sync_status=SyncStatus.PENDING.value,
+                    sync_status=p.sync_status,
                 )
                 for p in tasks
             ]
