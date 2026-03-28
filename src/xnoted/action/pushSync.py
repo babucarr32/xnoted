@@ -4,6 +4,7 @@ from xnoted.sync.syncProvider import Task as SyncTask
 from xnoted.sync.syncProvider import SyncProvider
 from xnoted.database.dataProvider import DataProvider, Task, Project
 
+
 async def push_sync(sync: SyncProvider, data_provider: DataProvider) -> None:
     await sync.initialize()
     projects = data_provider.load_projects()
@@ -25,7 +26,10 @@ async def push_sync(sync: SyncProvider, data_provider: DataProvider) -> None:
 
     # Update status on sync success
     for project in projects:
-        if project.sync_status == SyncStatus.PENDING.value:
+        if (
+            project.sync_status == SyncStatus.PENDING.value
+            or project.sync_status == SyncStatus.PENDING_EDIT.value
+        ):
             data_provider.update_project(
                 project.id,
                 Project(
@@ -61,7 +65,10 @@ async def push_sync(sync: SyncProvider, data_provider: DataProvider) -> None:
 
     # Update status on sync success
     for task in tasks:
-        if task.sync_status == SyncStatus.PENDING.value:
+        if (
+            task.sync_status == SyncStatus.PENDING.value
+            or task.sync_status == SyncStatus.PENDING_EDIT.value
+        ):
             data_provider.update_task(
                 task.id,
                 Task(
@@ -75,4 +82,3 @@ async def push_sync(sync: SyncProvider, data_provider: DataProvider) -> None:
                     sync_status=SyncStatus.SYNCED.value,
                 ),
             )
-
