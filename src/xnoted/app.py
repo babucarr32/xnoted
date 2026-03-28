@@ -1,4 +1,5 @@
 from textual.app import App
+from textual import work
 from xnoted.screens.createTask import CreateTaskModal
 from xnoted.screens.projects import SelectProjectModal
 from xnoted.screens.createProject import CreateProjectModal
@@ -51,13 +52,15 @@ class XNotedApp(App):
     def action_create_new_task(self) -> None:
         self.app.push_screen(CreateTaskModal(data_provider=self.data_provider))
 
+    @work(exclusive=True)
     async def action_pull_sync(self) -> None:
         spinner = cast(Spinner, self.app.query_one(Spinner))
-        await spinner.wrap(pull_sync(sync=self.sync, data_provider=self.data_provider))
+        await spinner.wrap(pull_sync(sync=self.sync, data_provider=self.data_provider), 'Pulling...')
 
+    @work(exclusive=True)
     async def action_push_sync(self) -> None:
         spinner = cast(Spinner, self.app.query_one(Spinner))
-        await spinner.wrap(push_sync(sync=self.sync, data_provider=self.data_provider))
+        await spinner.wrap(push_sync(sync=self.sync, data_provider=self.data_provider), 'Pushing...')
 
     def action_create_new_project(self) -> None:
         self.app.push_screen(CreateProjectModal(data_provider=self.data_provider))
