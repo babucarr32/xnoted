@@ -190,6 +190,7 @@ class SqlDataHandler:
             logger.error(f"Error checking password existence: {e}")
             raise
 
+    
     def save_project(self, data: Project) -> None:
         """Create a new project"""
         try:
@@ -405,10 +406,8 @@ class SqlDataHandler:
         projects = self.load_projects()
         tasks: list[Task] = []
 
-        self.load_projects()
-
         for p in projects:
-            tasks = [*tasks, *self.get_tasks(p.id)]
+            tasks.extend(self.get_tasks(p.id))
 
         filtered_project: DataFilter[Project] | None = self._handle_filter_data(
             incoming_data=incoming_projects,

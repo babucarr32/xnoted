@@ -1,10 +1,10 @@
 from pymongo import AsyncMongoClient
 from pymongo.asynchronous.database import AsyncDatabase
-from typing import TypedDict, Callable, Dict, Any, TypeVar, Generic, Awaitable
+from typing import TypedDict, Callable, Dict, Any, TypeVar, Generic, Awaitable, Optional
 from xnoted.sync.syncProvider import Project, Task, PullResult
-from xnoted.utils.constants import MONGO_URI, DATABASE_NAME
 from xnoted.sync.syncProvider import SyncStatus
 from xnoted.database.dataHelper import DataHelper
+from xnoted.utils.keyringService import Credentials
 from dataclasses import dataclass
 
 PROJECTS_DOCUMENT = "projects"
@@ -31,16 +31,21 @@ dataHelper = DataHelper()
 
 
 class MongoDBSyncHandler:
-    def __init__(self) -> None:
-        self.uri = MONGO_URI
+    def __init__(self, credentials: Optional[Credentials]) -> None:
+        self.uri = credentials.url if credentials else ""
         self.client: AsyncMongoClient | None = None
+        self.db_name: str = credentials.db_name or "" if credentials else ""
         self.database: AsyncDatabase | None = None
+
+    @property
+    def is_credentials_set(self):
+        return bool(self.uri)
 
     async def initialize(self) -> None:
         print("Connecting to database...")
 
         self.client = AsyncMongoClient(self.uri)
-        self.database = self.client[DATABASE_NAME]
+        self.database = self.client[self.db_name]
 
         print("Connected successfully")
 

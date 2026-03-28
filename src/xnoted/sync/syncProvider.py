@@ -23,6 +23,7 @@ class Task:
     def to_dict(self) -> dict:
         return asdict(self)
 
+
 @dataclass(frozen=True)
 class Project:
     project_id: str
@@ -41,7 +42,11 @@ class PullResult:
     projects: list[Project]
     tasks: list[Task]
 
+
 class Sync(Protocol):
+    @property
+    def is_credentials_set(self) -> bool: ...
+
     async def initialize(self) -> None: ...
 
     async def pull(self) -> PullResult: ...
@@ -55,14 +60,22 @@ class SyncProvider:
     def __init__(self, sync: Sync):
         self.sync = sync
 
+    def _require_credentials(self):
+        if not self.sync.is_credentials_set:
+            raise ValueError("DB Credentials not provided")
+
     async def initialize(self) -> None:
+        self._require_credentials()
         await self.sync.initialize()
 
     async def pull(self) -> PullResult:
+        self._require_credentials()
         return await self.sync.pull()
 
     async def push(self, projects: list[Project]) -> None:
+        self._require_credentials()
         await self.sync.push(projects)
 
     async def push_tasks(self, tasks: list[Task]) -> None:
+        self._require_credentials()
         await self.sync.push_tasks(tasks)

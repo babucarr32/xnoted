@@ -59,6 +59,22 @@ SelectProject {
   border: solid $primary;
 }
 
+FooterLabel {
+  layout: horizontal;
+  width: 100%;
+}
+
+FooterLabel>*:first-child {
+  width: 1fr;
+  content-align: left middle;
+}
+
+FooterLabel>*:last-child {
+  width: auto;
+  content-align: right middle;
+  padding-right: 1;
+}
+
 /* ===================
    Backgrounds
    =================== */
@@ -72,6 +88,7 @@ CopyTask,
 SelectProject,
 #modal-dialog,
 CreateTaskModal Vertical,
+SyncConfigModal Vertical,
 ImportExportProjectModal Vertical,
 CreateProjectModal Vertical {
   background: transparent;
@@ -87,6 +104,7 @@ TextArea {
    =================== */
 
 CreateTaskModal,
+SyncConfigModal,
 SelectProjectModal,
 CopyTaskModal,
 CreateProjectModal,
@@ -112,6 +130,16 @@ Confirm {
 CreateTaskModal Vertical {
   width: 70%;
   height: 50%;
+}
+
+LoadingIndicator {
+  width: 3%;
+  height: 1%;
+}
+
+SyncConfigModal Vertical {
+  width: 50%;
+  height: 10%;
 }
 
 CreateProjectModal Vertical,

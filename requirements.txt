@@ -4,3 +4,4 @@ platformdirs
 pyperclip
 bcrypt
 pymongo
+keyring

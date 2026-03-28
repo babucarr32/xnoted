@@ -6,22 +6,27 @@ from xnoted.screens.importExportProject import ImportExportProjectModal
 from xnoted.components.content import ContentWrapper
 from xnoted.components.footer import Footer
 from xnoted.screens.enterPassword import EnterPasswordModal
+from xnoted.screens.syncConfig import SyncConfigModal
 from xnoted.components.body import Body
 from xnoted.database.dataProvider import DataProvider
 from xnoted.database.sqlDataHandler import SqlDataHandler
+from xnoted.components.spinner import Spinner
 from typing import Iterator, cast
 from xnoted.action.pullSync import pull_sync
 from xnoted.action.pushSync import push_sync
 from xnoted.sync.syncProvider import SyncProvider
+from xnoted.utils.keyringService import DBKeyring
 from xnoted.sync.mongodbSyncHandler import MongoDBSyncHandler
 
 
 class XNotedApp(App):
     def __init__(self) -> None:
         super().__init__()
+        self.db_keyring = DBKeyring()
+        self.credentials = self.db_keyring.get_credentials()
         self.sqlDataHandler = SqlDataHandler()
         self.data_provider = DataProvider(self.sqlDataHandler)
-        mongoDBSyncHandler = MongoDBSyncHandler()
+        mongoDBSyncHandler = MongoDBSyncHandler(credentials=self.credentials)
         self.sync = SyncProvider(sync=mongoDBSyncHandler)
 
     CSS_PATH = "styles/main.tcss"
@@ -33,6 +38,7 @@ class XNotedApp(App):
         ("ctrl+d", "scroll_body_down", "Scroll body down"),
         ("ctrl+u", "scroll_body_up", "Scroll body up"),
         ("p", "pull_sync", "Pull sync data"),
+        ("s", "config_sync", "Config sync data"),
         ("P", "push_sync", "Push sync data"),
         ("u", "unlock_password", "Unlock password"),
         ("ctrl+r", "show_readme", "Show readme"),
@@ -46,13 +52,18 @@ class XNotedApp(App):
         self.app.push_screen(CreateTaskModal(data_provider=self.data_provider))
 
     async def action_pull_sync(self) -> None:
-        await pull_sync(sync=self.sync, data_provider=self.data_provider)
+        spinner = cast(Spinner, self.app.query_one(Spinner))
+        await spinner.wrap(pull_sync(sync=self.sync, data_provider=self.data_provider))
 
     async def action_push_sync(self) -> None:
-        await push_sync(sync=self.sync, data_provider=self.data_provider)
+        spinner = cast(Spinner, self.app.query_one(Spinner))
+        await spinner.wrap(push_sync(sync=self.sync, data_provider=self.data_provider))
 
     def action_create_new_project(self) -> None:
         self.app.push_screen(CreateProjectModal(data_provider=self.data_provider))
+
+    def action_config_sync(self) -> None:
+        self.app.push_screen(SyncConfigModal(data_provider=self.data_provider))
 
     def action_import_export_project(self) -> None:
         self.app.push_screen(ImportExportProjectModal(data_provider=self.data_provider))
