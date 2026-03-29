@@ -32,6 +32,17 @@ class Task:
 
 
 @dataclass(frozen=True)
+class Account:
+    id: str
+    password: str
+    sync_status: Optional[str] = None
+    createdAt: Optional[str] = ""
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
 class Project:
     id: str
     title: str
@@ -82,6 +93,10 @@ class DataHandler(Protocol):
 
     def get_tasks(self, project_id: str) -> List[Task]: ...
 
+    def get_accounts(self) -> List[Account]: ...
+
+    def get_account(self) -> Account | None: ...
+
     def get_task(self, task_id: str) -> Task | None: ...
 
     def load_projects(self) -> List[Project]: ...
@@ -99,7 +114,11 @@ class DataHandler(Protocol):
     def get_last_id(self, project_id: str) -> str: ...
 
     def sync(
-        self, incoming_tasks: list[Task], incoming_projects: list[Project]
+        self,
+        *,
+        incoming_tasks: list[Task],
+        incoming_projects: list[Project],
+        incoming_accounts: list[Account],
     ) -> None: ...
 
 
@@ -167,6 +186,14 @@ class DataProvider:
         """Load all tasks for a specific project"""
         return self.provider.get_tasks(project_id)
 
+    def get_accounts(self) -> List[Account]:
+        """Load all accounts"""
+        return self.provider.get_accounts()
+
+    def get_account(self) -> Account | None:
+        """Load account"""
+        return self.provider.get_account()
+
     def get_task(self, task_id: str) -> Task | None:
         return self.provider.get_task(task_id)
 
@@ -203,7 +230,15 @@ class DataProvider:
         return self.provider.get_last_id(project_id)
 
     def sync(
-        self, incoming_tasks: list[Task], incoming_projects: list[Project]
+        self,
+        *,
+        incoming_tasks: list[Task],
+        incoming_projects: list[Project],
+        incoming_accounts: list[Account],
     ) -> None:
         """Sync data from remote db to local db"""
-        return self.provider.sync(incoming_tasks, incoming_projects)
+        return self.provider.sync(
+            incoming_tasks=incoming_tasks,
+            incoming_projects=incoming_projects,
+            incoming_accounts=incoming_accounts,
+        )

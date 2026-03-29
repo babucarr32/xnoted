@@ -1,7 +1,17 @@
 from pymongo import AsyncMongoClient
 from pymongo.asynchronous.database import AsyncDatabase
-from typing import TypedDict, Callable, Dict, Any, TypeVar, Generic, Awaitable, Optional
-from xnoted.sync.syncProvider import Project, Task, PullResult
+from typing import (
+    TypedDict,
+    Callable,
+    Dict,
+    Any,
+    TypeVar,
+    Generic,
+    Awaitable,
+    Optional,
+    cast,
+)
+from xnoted.sync.syncProvider import Project, Task, PullResult, Account
 from xnoted.sync.syncProvider import SyncStatus
 from xnoted.database.dataHelper import DataHelper
 from xnoted.utils.keyringService import Credentials
@@ -9,6 +19,7 @@ from dataclasses import dataclass
 
 PROJECTS_DOCUMENT = "projects"
 TASK_DOCUMENT = "tasks"
+ACCOUNT_DOCUMENT = "account"
 T = TypeVar("T")
 
 
@@ -75,6 +86,12 @@ class MongoDBSyncHandler:
 
         return await self._handle_find_all(TASK_DOCUMENT, helper=get_data)
 
+    async def _get_accounts(self) -> list[Account] | None:
+        def get_data(data: Dict[str, Any]):
+            return dataHelper.dict_to_sync_account(data, account_id_key="account_id")
+
+        return await self._handle_find_all(ACCOUNT_DOCUMENT, helper=get_data)
+
     async def _handle_insert_task(self, data: Task) -> None:
         if self.database is None:
             return
@@ -139,20 +156,16 @@ class MongoDBSyncHandler:
             await projects_collection.insert_many(updated_data)
 
     async def _handle_update_projects(self, data: list[Project]) -> None:
-        if self.database is None:
-            return
-
-        if len(data):
-            for p in data:
-                await self._handle_update_project(p)
+        for p in data:
+            await self._handle_update_project(p)
 
     async def _handle_update_tasks(self, data: list[Task]) -> None:
-        if self.database is None:
-            return
+        for p in data:
+            await self._handle_update_task(p)
 
-        if len(data):
-            for p in data:
-                await self._handle_update_task(p)
+    async def _handle_update_accounts(self, data: list[Account]) -> None:
+        for a in data:
+            await self._handle_update_account(a)
 
     async def _handle_update_project(self, data: Project) -> None:
         if self.database is None:
@@ -167,32 +180,50 @@ class MongoDBSyncHandler:
             {"project_id": data.project_id}, {"$set": p_dict}
         )
 
-    async def _handle_update_task(self, data: Task) -> None:
+    async def _handle_update(
+        self, *, document_name: str, filter: dict, data: T
+    ) -> None:
         if self.database is None:
             return
 
-        tasks_collection = self.database[TASK_DOCUMENT]
+        t_collection = self.database[document_name]
 
-        t_dict = data.to_dict()
+        t_dict = cast(Any, data).to_dict()
         t_dict["sync_status"] = SyncStatus.SYNCED.value
 
-        await tasks_collection.find_one_and_update(
-            {"task_id": data.task_id}, {"$set": t_dict}
+        await t_collection.find_one_and_update(filter, {"$set": t_dict})
+
+    async def _handle_update_task(self, data: Task) -> None:
+        await self._handle_update(
+            document_name=TASK_DOCUMENT, filter={"task_id": data.task_id}, data=data
         )
 
-    async def _handle_insert_tasks(self, data: list[Task]) -> None:
+    async def _handle_update_account(self, data: Account) -> None:
+        await self._handle_update(
+            document_name=ACCOUNT_DOCUMENT,
+            filter={"account_id": data.account_id},
+            data=data,
+        )
+
+    async def _handle_insert(self, *, document_name: str, data: list[T]) -> None:
         if self.database is None:
             return
 
-        tasks_collection = self.database[TASK_DOCUMENT]
-        if len(data):
-            updated_data: list[dict] = []
-            for t in data:
-                t_dict = t.to_dict()
-                t_dict["sync_status"] = SyncStatus.SYNCED.value
-                updated_data.append(t_dict)
+        i_collection = self.database[document_name]
+        updated_data: list[dict] = []
 
-            await tasks_collection.insert_many(updated_data)
+        for i in data:
+            i_dict = cast(Any, i).to_dict()
+            i_dict["sync_status"] = SyncStatus.SYNCED.value
+            updated_data.append(i_dict)
+
+        await i_collection.insert_many(updated_data)
+
+    async def _handle_insert_tasks(self, data: list[Task]) -> None:
+        await self._handle_insert(document_name=TASK_DOCUMENT, data=data)
+
+    async def _handle_insert_accounts(self, data: list[Account]) -> None:
+        await self._handle_insert(document_name=ACCOUNT_DOCUMENT, data=data)
 
     async def _handle_filter_data(
         self,
@@ -256,11 +287,18 @@ class MongoDBSyncHandler:
             get_sync_status=lambda d: d.sync_status or "",
         )
 
+    async def _handle_filter_accounts(
+        self, data: list[Account]
+    ) -> DataFilter[Account] | None:
+        return await self._handle_filter_data(
+            local_data=data,
+            get_remote_data_handler=self._get_accounts,
+            get_id=lambda d: d.account_id,
+            get_sync_status=lambda d: d.sync_status or "",
+        )
+
     async def push(self, projects: list[Project]) -> None:
         if self.database is None:
-            return
-
-        if not projects:
             return
 
         filtered_project = await self._handle_filter_projects(projects)
@@ -268,33 +306,54 @@ class MongoDBSyncHandler:
         if not filtered_project:
             return None
 
-        await self._handle_delete_projects(filtered_project.removed)
-        await self._handle_insert_projects(filtered_project.added)
-        await self._handle_update_projects(filtered_project.pending_edit)
+        if len(filtered_project.removed):
+            await self._handle_delete_projects(filtered_project.removed)
+        if len(filtered_project.added):
+            await self._handle_insert_projects(filtered_project.added)
+        if len(filtered_project.pending_edit):
+            await self._handle_update_projects(filtered_project.pending_edit)
 
     async def push_tasks(self, tasks: list[Task]) -> None:
         if self.database is None:
             return
 
-        if not tasks:
-            return
-
-        filtered_task = await self._handle_filter_tasks(tasks)
+        if len((tasks)):
+            filtered_task = await self._handle_filter_tasks(tasks)
 
         if not filtered_task:
             return None
 
-        await self._handle_delete_tasks(filtered_task.removed)
-        await self._handle_insert_tasks(filtered_task.added)
-        await self._handle_update_tasks(filtered_task.pending_edit)
+        if len(filtered_task.removed):
+            await self._handle_delete_tasks(filtered_task.removed)
+        if len(filtered_task.added):
+            await self._handle_insert_tasks(filtered_task.added)
+        if len(filtered_task.pending_edit):
+            await self._handle_update_tasks(filtered_task.pending_edit)
+
+    async def push_accounts(self, accounts: list[Account]) -> None:
+        if self.database is None:
+            return
+
+        filtered_account = await self._handle_filter_accounts(accounts)
+
+        if not filtered_account:
+            return None
+
+        # Delete account
+        # Will be implemented later
+
+        if len(filtered_account.added):
+            await self._handle_insert_accounts(filtered_account.added)
+        if len(filtered_account.pending_edit):
+            await self._handle_update_accounts(filtered_account.pending_edit)
 
     async def pull(self) -> PullResult:
         projects = await self._get_projects()
         tasks = await self._get_tasks()
+        accounts = await self._get_accounts()
 
         return PullResult(
-            projects=projects or [],
-            tasks=tasks or [],
+            projects=projects or [], tasks=tasks or [], accounts=accounts or []
         )
 
     async def close(self) -> None:

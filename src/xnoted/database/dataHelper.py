@@ -1,8 +1,10 @@
 from typing import Any, Dict, TypeAlias
-from xnoted.database.dataProvider import Project, Task
+from xnoted.database.dataProvider import Project, Task, Account
 from xnoted.sync.syncProvider import Project as SyncProject
 from xnoted.sync.syncProvider import Task as SyncTask
+from xnoted.sync.syncProvider import Account as SyncAccount
 
+AccountRow: TypeAlias = tuple[str, str, str, str]
 TaskRow: TypeAlias = tuple[str, str, str, str, int, int, str, str]
 ProjectRow: TypeAlias = tuple[str, str, str, str, str, str, str]
 
@@ -16,6 +18,14 @@ class DataHelper:
             content=data["content"],
             is_protected=data["is_protected"],
             status=data["status"],
+            sync_status=data["sync_status"],
+            createdAt=data["createdAt"],
+        )
+
+    def dict_to_sync_account(self, data: Dict[str, Any], account_id_key = 'id') -> SyncAccount:
+        return SyncAccount(
+            account_id=data[account_id_key],
+            password=data["password"],
             sync_status=data["sync_status"],
             createdAt=data["createdAt"],
         )
@@ -62,6 +72,14 @@ class DataHelper:
             status=data[5],
             sync_status=data[6],
             createdAt=data[7],
+        )
+
+    def tuple_to_account(self, data: AccountRow) -> Account:
+        return Account(
+            id=data[0],
+            password=data[1],
+            sync_status=data[2],
+            createdAt=data[3],
         )
 
     def tuple_to_project(self, data: ProjectRow) -> Project:

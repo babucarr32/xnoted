@@ -23,6 +23,16 @@ class Task:
     def to_dict(self) -> dict:
         return asdict(self)
 
+@dataclass(frozen=True)
+class Account:
+    account_id: str
+    password: str
+    createdAt: Optional[str] = ""
+    sync_status: Optional[str] = None
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
 
 @dataclass(frozen=True)
 class Project:
@@ -41,6 +51,7 @@ class Project:
 class PullResult:
     projects: list[Project]
     tasks: list[Task]
+    accounts: list[Account]
 
 
 class Sync(Protocol):
@@ -52,6 +63,8 @@ class Sync(Protocol):
     async def pull(self) -> PullResult: ...
 
     async def push(self, projects: list[Project]) -> None: ...
+
+    async def push_accounts(self, accounts: list[Account]) -> None: ...
 
     async def push_tasks(self, tasks: list[Task]) -> None: ...
 
@@ -75,6 +88,10 @@ class SyncProvider:
     async def push(self, projects: list[Project]) -> None:
         self._require_credentials()
         await self.sync.push(projects)
+
+    async def push_accounts(self, accounts: list[Account]) -> None:
+        self._require_credentials()
+        await self.sync.push_accounts(accounts)
 
     async def push_tasks(self, tasks: list[Task]) -> None:
         self._require_credentials()

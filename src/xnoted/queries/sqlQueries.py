@@ -1,4 +1,5 @@
 from xnoted.sync.syncProvider import SyncStatus
+
 CREATE_TASK_TABLE = """
 CREATE TABLE IF NOT EXISTS task(
     id TEXT PRIMARY KEY,
@@ -17,6 +18,7 @@ CREATE_ACCOUNT_TABLE = """
 CREATE TABLE IF NOT EXISTS account(
     id INTEGER PRIMARY KEY CHECK (id = 1),
     password TEXT NOT NULL,
+    sync_status TEXT,
     createdAt TEXT DEFAULT CURRENT_TIMESTAMP
 )
 """
@@ -24,17 +26,17 @@ CREATE TABLE IF NOT EXISTS account(
 INSERT_TASK_DATA = "INSERT INTO task(id, project_id, title, content, is_protected, status, sync_status) VALUES(?, ?, ?, ?, ?, ?, ?)"
 
 INSERT_ACCOUNT_DATA = """
-INSERT INTO account(id, password)
-VALUES(1, ?)
+INSERT INTO account(id, password, sync_status)
+VALUES(1, ?, ?)
 ON CONFLICT(id)
-DO UPDATE SET password=excluded.password
+DO UPDATE SET 
+    password = excluded.password,
+    sync_status = excluded.sync_status
 """
 
 GET_PASSWORD = "SELECT password FROM account WHERE id = 1"
 
-UPDATE_TASK_DATA = (
-    "UPDATE task SET title = ?, content = ?, is_protected = ?, status = ?, sync_status = ? WHERE id = ?"
-)
+UPDATE_TASK_DATA = "UPDATE task SET title = ?, content = ?, is_protected = ?, status = ?, sync_status = ? WHERE id = ?"
 
 QUERY_TASKS_BY_PROJECT = """
 SELECT id, title, content, is_protected, status, sync_status, createdAt 
@@ -60,13 +62,9 @@ CREATE TABLE IF NOT EXISTS project(
 )
 """
 
-INSERT_PROJECT_DATA = (
-    "INSERT INTO project(id, title, description, type, sync_status) VALUES(?, ?, ?, ?, ?)"
-)
+INSERT_PROJECT_DATA = "INSERT INTO project(id, title, description, type, sync_status) VALUES(?, ?, ?, ?, ?)"
 
-UPDATE_PROJECT_DATA = (
-    "UPDATE project SET title = ?, description = ?, type = ?, sync_status = ? WHERE id = ?"
-)
+UPDATE_PROJECT_DATA = "UPDATE project SET title = ?, description = ?, type = ?, sync_status = ? WHERE id = ?"
 
 QUERY_ALL_PROJECT_DATA = """
 SELECT id, title, description, type, sync_status, createdAt 
@@ -74,9 +72,24 @@ FROM project
 ORDER BY createdAt
 """
 
+QUERY_ALL_ACCOUNT_DATA = """
+SELECT id, password, sync_status, createdAt 
+FROM account 
+ORDER BY createdAt
+"""
+
+QUERY_ONE_ACCOUNT_DATA = """
+SELECT id, password, sync_status, createdAt 
+FROM account 
+where id = 1
+"""
+
 UPDATE_TASK_COLUMN = "ALTER TABLE task ADD COLUMN is_protected INTEGER DEFAULT 0"
-UPDATE_TASK_SYNC_COLUMN = f"ALTER TABLE task ADD COLUMN sync_status TEXT DEFAULT {SyncStatus.SYNCED.value}"
-UPDATE_PROJECT_SYNC_COLUMN = f"ALTER TABLE project ADD COLUMN sync_status TEXT DEFAULT {SyncStatus.SYNCED.value}"
+UPDATE_TASK_SYNC_COLUMN = (
+    f"ALTER TABLE task ADD COLUMN sync_status TEXT DEFAULT {SyncStatus.PENDING.value}"
+)
+UPDATE_PROJECT_SYNC_COLUMN = f"ALTER TABLE project ADD COLUMN sync_status TEXT DEFAULT {SyncStatus.PENDING.value}"
+UPDATE_ACCOUNT_SYNC_COLUMN = f"ALTER TABLE account ADD COLUMN sync_status TEXT DEFAULT {SyncStatus.PENDING.value}"
 
 QUERY_ONE_PROJECT_DATA = """
 SELECT id, title, description, type, sync_status, createdAt 
@@ -89,4 +102,3 @@ DELETE_PROJECT_DATA = "DELETE FROM project WHERE id = ?"
 DELETE_PROJECT_TASKS = "DELETE FROM task WHERE project_id = ?"
 
 DELETE_TASK = "DELETE FROM task WHERE id = ?"
-

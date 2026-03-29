@@ -3,7 +3,7 @@ import sqlite3
 from typing import List, Optional, cast, Callable, TypeVar, Generic
 from xnoted.utils.logger import get_logger
 from xnoted.utils.dataDir import DB_NAME
-from xnoted.database.dataProvider import Project, Task
+from xnoted.database.dataProvider import Project, Task, Account
 from xnoted.sync.syncProvider import SyncStatus
 from xnoted.database.dataHelper import DataHelper
 from dataclasses import dataclass
@@ -13,7 +13,10 @@ from xnoted.queries.sqlQueries import (
     INSERT_TASK_DATA,
     INSERT_ACCOUNT_DATA,
     GET_PASSWORD,
+    QUERY_ALL_ACCOUNT_DATA,
+    QUERY_ONE_ACCOUNT_DATA,
     UPDATE_TASK_DATA,
+    UPDATE_ACCOUNT_SYNC_COLUMN,
     UPDATE_PROJECT_SYNC_COLUMN,
     UPDATE_TASK_SYNC_COLUMN,
     QUERY_TASKS_BY_PROJECT,
@@ -65,6 +68,10 @@ class SqlDataHandler:
 
         if not self._column_exists("project", "sync_status"):
             self.cur.execute(UPDATE_PROJECT_SYNC_COLUMN)
+            self.con.commit()
+
+        if not self._column_exists("account", "sync_status"):
+            self.cur.execute(UPDATE_ACCOUNT_SYNC_COLUMN)
             self.con.commit()
 
         # Ensure a default project exists
@@ -156,16 +163,36 @@ class SqlDataHandler:
             logger.error(f"Error saving data: {e}")
             raise
 
+    def save_account(self, data: Account) -> None:
+        """Save account"""
+        try:
+            self.cur.execute(
+                INSERT_ACCOUNT_DATA,
+                (data.password, data.sync_status),
+            )
+            self.con.commit()
+
+        except Exception as e:
+            logger.error(f"Error saving data: {e}")
+            raise
+
     def save_password(self, password: str) -> None:
         """Save password"""
         try:
             hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+            account = self.get_account()
+            account_id = "1"
 
-            self.cur.execute(
-                INSERT_ACCOUNT_DATA,
-                (hashed.decode("utf-8"),),
+            if account and account.sync_status == SyncStatus.SYNCED.value:
+                account_id = account.id
+                sync_status = SyncStatus.PENDING_EDIT.value
+            else:
+                sync_status = SyncStatus.PENDING.value
+
+            account_data = Account(
+                id=account_id, password=hashed.decode("utf-8"), sync_status=sync_status
             )
-            self.con.commit()
+            self.save_account(account_data)
         except Exception as e:
             logger.error(f"Error saving data: {e}")
             raise
@@ -190,7 +217,6 @@ class SqlDataHandler:
             logger.error(f"Error checking password existence: {e}")
             raise
 
-    
     def save_project(self, data: Project) -> None:
         """Create a new project"""
         try:
@@ -274,6 +300,24 @@ class SqlDataHandler:
         except Exception as e:
             logger.error(f"Error loading data: {e}")
             return []
+
+    def get_accounts(self) -> list[Account]:
+        """Load all tasks for a specific project"""
+        try:
+            res = self.cur.execute(QUERY_ALL_ACCOUNT_DATA)
+            rows = res.fetchall()
+            return [data_helper.tuple_to_account(row) for row in rows]
+        except Exception as e:
+            logger.error(f"Error loading data: {e}")
+            return []
+
+    def get_account(self) -> Account | None:
+        self.cur.execute(QUERY_ONE_ACCOUNT_DATA)
+        row = self.cur.fetchone()
+
+        if not row:
+            return None
+        return data_helper.tuple_to_account(row)
 
     def get_task(self, task_id: str) -> Task | None:
         if not task_id:
@@ -401,13 +445,25 @@ class SqlDataHandler:
         return DataFilter(added=added, removed=removed)
 
     def sync(
-        self, incoming_tasks: list[Task], incoming_projects: list[Project]
+        self,
+        *,
+        incoming_tasks: list[Task],
+        incoming_projects: list[Project],
+        incoming_accounts: list[Account],
     ) -> None:
         projects = self.load_projects()
         tasks: list[Task] = []
+        accounts: list[Account] = self.get_accounts()
 
         for p in projects:
             tasks.extend(self.get_tasks(p.id))
+
+        filtered_account: DataFilter[Account] | None = self._handle_filter_data(
+            incoming_data=incoming_accounts,
+            existing_data=accounts,
+            get_id=lambda p: p.id,
+            get_sync_status=lambda p: p.sync_status or "",
+        )
 
         filtered_project: DataFilter[Project] | None = self._handle_filter_data(
             incoming_data=incoming_projects,
@@ -422,6 +478,14 @@ class SqlDataHandler:
             get_id=lambda t: t.id,
             get_sync_status=lambda t: t.sync_status or "",
         )
+
+        if filtered_account:
+            # Add account
+            for account in filtered_account.added:
+                self.save_account(account)
+
+            # Delete account
+            # Will be implemented later
 
         if filtered_project:
             # Add project

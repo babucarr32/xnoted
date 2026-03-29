@@ -1,5 +1,5 @@
 from xnoted.sync.syncProvider import SyncProvider
-from xnoted.database.dataProvider import DataProvider, Task, Project
+from xnoted.database.dataProvider import DataProvider, Task, Project, Account
 
 async def pull_sync(sync: SyncProvider, data_provider: DataProvider) -> None:
     await sync.initialize()
@@ -31,8 +31,19 @@ async def pull_sync(sync: SyncProvider, data_provider: DataProvider) -> None:
         for p in pull_result.projects
     ]
 
+    incoming_accounts = [
+        Account(
+            id=p.account_id,
+            password=p.password,
+            createdAt=p.createdAt,
+            sync_status=p.sync_status,
+        )
+        for p in pull_result.accounts
+    ]
+
     data_provider.sync(
-        incoming_tasks,
-        incoming_projects,
+        incoming_tasks=incoming_tasks,
+        incoming_projects=incoming_projects,
+        incoming_accounts=incoming_accounts
     )
 

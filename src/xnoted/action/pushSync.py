@@ -1,8 +1,9 @@
 from xnoted.sync.syncProvider import SyncStatus
 from xnoted.sync.syncProvider import Project as SyncProject
 from xnoted.sync.syncProvider import Task as SyncTask
+from xnoted.sync.syncProvider import Account as SyncAccount
 from xnoted.sync.syncProvider import SyncProvider
-from xnoted.database.dataProvider import DataProvider, Task, Project
+from xnoted.database.dataProvider import DataProvider, Task, Project, Account
 
 
 async def push_sync(sync: SyncProvider, data_provider: DataProvider) -> None:
@@ -44,8 +45,8 @@ async def push_sync(sync: SyncProvider, data_provider: DataProvider) -> None:
 
     # Push tasks
     tasks: list[Task] = []
-    for p in projects:
-        tasks = [*tasks, *data_provider.load_tasks(p.id)]
+    for a in projects:
+        tasks.extend(data_provider.load_tasks(a.id))
 
     await sync.push_tasks(
         [
@@ -82,3 +83,16 @@ async def push_sync(sync: SyncProvider, data_provider: DataProvider) -> None:
                     sync_status=SyncStatus.SYNCED.value,
                 ),
             )
+    # Push accounts
+    accounts: list[Account] = data_provider.get_accounts()
+    await sync.push_accounts(
+        [
+            SyncAccount(
+                account_id=p.id,
+                password=p.password,
+                createdAt=p.createdAt,
+                sync_status=p.sync_status,
+            )
+            for p in accounts
+        ]
+    )
