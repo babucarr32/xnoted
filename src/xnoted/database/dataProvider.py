@@ -99,6 +99,10 @@ class DataHandler(Protocol):
 
     def get_task(self, task_id: str) -> Task | None: ...
 
+    def decrypt_task(self, task_id: str) -> Task | None: ...
+
+    def encrypt_task(self, task_id: str) -> Task | None: ...
+
     def load_projects(self) -> List[Project]: ...
 
     def get_first_project(self) -> Project | None: ...
@@ -196,6 +200,12 @@ class DataProvider:
 
     def get_task(self, task_id: str) -> Task | None:
         return self.provider.get_task(task_id)
+
+    def encrypt_task(self, task_id: str) -> Task | None:
+        return self.provider.encrypt_task(task_id)
+
+    def decrypt_task(self, task_id: str) -> Task | None:
+        return self.provider.decrypt_task(task_id)
 
     def load_projects(self) -> List[Project]:
         """Load all projects"""

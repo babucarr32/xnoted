@@ -96,7 +96,7 @@ class Tasks(ListView):
                     status=task.status,
                     title=task.title,
                     is_protected=task.is_protected == ProtectionStatus.PROTECTED.value,
-                    project_type=project.type
+                    project_type=project.type,
                 )
                 label = self._get_label(label_arg)
             else:
@@ -132,7 +132,9 @@ class Tasks(ListView):
 
         if len(self.loaded_tasks) and self.has_task_result:
             found_any = False
-            project = self.data_provider.get_project(self.data_provider.current_project_id)
+            project = self.data_provider.get_project(
+                self.data_provider.current_project_id
+            )
 
             for task in self.loaded_tasks:
                 if search_text in task.title.lower() and not task.is_protected:
@@ -141,7 +143,7 @@ class Tasks(ListView):
                         title=task.title,
                         is_protected=task.is_protected
                         == ProtectionStatus.PROTECTED.value,
-                        project_type=project.type
+                        project_type=project.type,
                     )
                     label = self._get_label(label_arg)
                     list_item = TaskItem(
@@ -221,7 +223,7 @@ class Tasks(ListView):
             status=new_status,
             title=task.title,
             is_protected=task.is_protected,
-            project_type=PROJECT_OTHER_TYPE_ID
+            project_type=PROJECT_OTHER_TYPE_ID,
         )
 
         label.update(self._get_label(label_arg))
@@ -262,15 +264,16 @@ class Tasks(ListView):
         label_widget = cast(TaskLabel, child.get_child_by_id(TASK_LABEL_ID))
 
         task_id = child.task_id
-        task = self.data_provider.get_task(task_id)
+        encrypted_task = self.data_provider.encrypt_task(task_id)
 
         new_data = Task(
-            id=task.id,
-            title=task.title,
-            content=task.content,
-            status=task.status,
+            id=encrypted_task.id,
+            title=encrypted_task.title,
+            content=encrypted_task.content,
+            status=encrypted_task.status,
+            sync_status=SyncStatus.PENDING_EDIT.value,
             is_protected=ProtectionStatus.PROTECTED.value,
-            project_id=task.project_id,
+            project_id=encrypted_task.project_id,
         )
 
         def on_password_created() -> None:
@@ -285,7 +288,7 @@ class Tasks(ListView):
             )
             return
 
-        self.data_provider.update_task(child.task_id, new_data)
+        self.data_provider.update_task(encrypted_task.id, new_data)
         project = self.data_provider.get_project(self.data_provider.current_project_id)
         label_arg = GetLabelArg(
             status=new_data.status,

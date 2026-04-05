@@ -23,7 +23,19 @@ CREATE TABLE IF NOT EXISTS account(
 )
 """
 
-INSERT_TASK_DATA = "INSERT INTO task(id, project_id, title, content, is_protected, status, sync_status) VALUES(?, ?, ?, ?, ?, ?, ?)"
+INSERT_TASK_DATA = """
+INSERT INTO task (
+    id, project_id, title, content, is_protected, status, createdAt, sync_status
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+ON CONFLICT(id)
+DO UPDATE SET
+    title = excluded.title,
+    content = excluded.content,
+    is_protected = excluded.is_protected,
+    status = excluded.status,
+    sync_status = excluded.sync_status
+"""
 
 INSERT_ACCOUNT_DATA = """
 INSERT INTO account(id, password, sync_status)
@@ -39,14 +51,14 @@ GET_PASSWORD = "SELECT password FROM account WHERE id = 1"
 UPDATE_TASK_DATA = "UPDATE task SET title = ?, content = ?, is_protected = ?, status = ?, sync_status = ? WHERE id = ?"
 
 QUERY_TASKS_BY_PROJECT = """
-SELECT id, title, content, is_protected, status, sync_status, createdAt 
+SELECT id, project_id, title, content, is_protected, status, sync_status, createdAt 
 FROM task 
 WHERE project_id = ? 
 ORDER BY createdAt
 """
 
 QUERY_ONE_TASKS_BY_ID = """
-SELECT id, title, content, is_protected, status, sync_status, createdAt 
+SELECT id, project_id, title, content, is_protected, status, sync_status, createdAt 
 FROM task 
 WHERE id = ? 
 """
@@ -102,3 +114,5 @@ DELETE_PROJECT_DATA = "DELETE FROM project WHERE id = ?"
 DELETE_PROJECT_TASKS = "DELETE FROM task WHERE project_id = ?"
 
 DELETE_TASK = "DELETE FROM task WHERE id = ?"
+
+DELETE_TASK_ON_PROJECT_ID = "DELETE FROM task WHERE project_id = ?"

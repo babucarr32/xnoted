@@ -1,3 +1,5 @@
+import base64
+import hashlib
 from pathlib import Path
 import time
 
@@ -26,6 +28,7 @@ def slugify(text: str):
 def mask(text: str) -> str:
     return "".join(["*" for x in range(10)])
 
+
 def find_readme() -> Path:
     p = Path(__file__).resolve()
     for parent in p.parents:
@@ -33,3 +36,7 @@ def find_readme() -> Path:
         if readme.exists():
             return readme
     raise FileNotFoundError("README.md not found")
+
+
+def derive_encryption_key(password: str) -> bytes:
+    return base64.urlsafe_b64encode(hashlib.sha256(password.encode()).digest())

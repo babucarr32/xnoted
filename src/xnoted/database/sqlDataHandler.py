@@ -2,10 +2,12 @@ import bcrypt
 import sqlite3
 from typing import List, Optional, cast, Callable, TypeVar, Generic
 from xnoted.utils.logger import get_logger
+from xnoted.utils.helpers import derive_encryption_key
 from xnoted.utils.dataDir import DB_NAME
-from xnoted.database.dataProvider import Project, Task, Account
+from xnoted.database.dataProvider import Project, Task, Account, ProtectionStatus
 from xnoted.sync.syncProvider import SyncStatus
-from xnoted.database.dataHelper import DataHelper
+from cryptography.fernet import Fernet, InvalidToken
+from xnoted.database.dataHelper import DataHelper, ProjectRow, TaskRow, AccountRow
 from dataclasses import dataclass
 from xnoted.queries.sqlQueries import (
     CREATE_TASK_TABLE,
@@ -13,6 +15,7 @@ from xnoted.queries.sqlQueries import (
     INSERT_TASK_DATA,
     INSERT_ACCOUNT_DATA,
     GET_PASSWORD,
+    DELETE_TASK_ON_PROJECT_ID,
     QUERY_ALL_ACCOUNT_DATA,
     QUERY_ONE_ACCOUNT_DATA,
     UPDATE_TASK_DATA,
@@ -144,6 +147,7 @@ class SqlDataHandler:
                 status=data.status,
                 is_protected=data.is_protected,
                 sync_status=data.sync_status,
+                createdAt=data.createdAt,
             )
 
             self.cur.execute(
@@ -155,6 +159,7 @@ class SqlDataHandler:
                     new_data.content,
                     new_data.is_protected,
                     new_data.status,
+                    new_data.createdAt,
                     new_data.sync_status,
                 ),
             )
@@ -162,6 +167,112 @@ class SqlDataHandler:
         except Exception as e:
             logger.error(f"Error saving data: {e}")
             raise
+
+    def encrypt_task(self, task_id: str) -> Task | None:
+        """Encrypt a task"""
+        task = self.get_task(task_id)
+        if not task:
+            logger.error(f"Encryption: Task with id {task_id} not found")
+            return None
+
+        encrypted_password = self._get_password()
+        if not encrypted_password:
+            logger.error("Encryption: Password not found")
+            return None
+
+        decoded_encrypted_password = encrypted_password.decode("utf-8")
+        encrypted_content = self._encrypt_data(
+            encryption_key=decoded_encrypted_password, data=task.content
+        )
+        encrypted_title = self._encrypt_data(
+            encryption_key=decoded_encrypted_password, data=task.title
+        )
+
+        return Task(
+            id=task.id,
+            project_id=task.project_id,
+            title=encrypted_title,
+            content=encrypted_content,
+            status=task.status,
+            is_protected=task.is_protected,
+            sync_status=task.sync_status,
+        )
+
+    def decrypt_task(self, task_id: str) -> Task | None:
+        """Encrypt a task"""
+        task = self.get_task(task_id)
+        if not task:
+            logger.error(f"Decryption: Task with id {task_id} not found")
+            return None
+
+        encrypted_password = self._get_password()
+        if not encrypted_password:
+            logger.error("Decryption: Password not found")
+            return None
+
+        decoded_encrypted_password = encrypted_password.decode("utf-8")
+        decrypted_content = self._decrypt_data(
+            encryption_key=decoded_encrypted_password, data=task.content
+        )
+        decrypted_title = self._decrypt_data(
+            encryption_key=decoded_encrypted_password, data=task.title
+        )
+
+        return Task(
+            id=task.id,
+            project_id=task.project_id,
+            title=decrypted_title,
+            content=decrypted_content,
+            status=task.status,
+            is_protected=task.is_protected,
+            sync_status=task.sync_status,
+        )
+
+    def _get_protection_status(self, protection_status: int) -> bool:
+        return (
+            False
+            if self.is_data_unprotected
+            else protection_status == ProtectionStatus.PROTECTED.value
+        )
+
+    def _maybe_decrypt(
+        self,
+        *,
+        should_decrypt: bool,
+        encryption_key: str | None,
+        value: str,
+    ) -> str:
+        if not encryption_key:
+            return value
+
+        if should_decrypt:
+            return self._decrypt_data(
+                encryption_key=encryption_key,
+                data=value,
+            )
+        return value
+
+    def _get_encryption_key(self) -> str | None:
+        password_bytes = self._get_password()
+        encryption_key = password_bytes.decode("utf-8") if password_bytes else None
+        return encryption_key
+
+    def _get_cipher(self, encryption_key: str) -> Fernet:
+        key = derive_encryption_key(encryption_key)
+        return Fernet(key)
+
+    def _encrypt_data(self, *, encryption_key: str, data: str) -> str:
+        cipher = self._get_cipher(encryption_key)
+        return cipher.encrypt(data.encode("utf-8")).decode("utf-8")
+
+    def _decrypt_data(self, *, encryption_key: str, data: str) -> str:
+        cipher = self._get_cipher(encryption_key)
+
+        try:
+            return cipher.decrypt(data.encode("utf-8")).decode("utf-8")
+        except InvalidToken:
+            logger.error("Decrypt data: Invalid password")
+            raise ValueError("Invalid password")
 
     def save_account(self, data: Account) -> None:
         """Save account"""
@@ -197,14 +308,16 @@ class SqlDataHandler:
             logger.error(f"Error saving data: {e}")
             raise
 
-    def verify_password(self, input_password: str) -> bool:
+    def _get_password(self) -> bytes | None:
         self.cur.execute(GET_PASSWORD)
         row = self.cur.fetchone()
+        return None if not row else row[0].encode("utf-8")
 
-        if not row:
+    def verify_password(self, input_password: str) -> bool:
+        stored_hash = self._get_password()
+
+        if not stored_hash:
             return False
-
-        stored_hash = row[0].encode("utf-8")
 
         return bcrypt.checkpw(input_password.encode("utf-8"), stored_hash)
 
@@ -232,6 +345,8 @@ class SqlDataHandler:
     def update_task(self, task_id: str, data: Task) -> None:
         """Update an existing task"""
         try:
+            print("Locjing....", task_id, data)
+
             self.cur.execute(
                 UPDATE_TASK_DATA,
                 (
@@ -266,6 +381,7 @@ class SqlDataHandler:
             self.cur.execute(DELETE_PROJECT_TASKS, (project_id,))
             self.cur.execute(DELETE_PROJECT_DATA, (project_id,))
             self.con.commit()
+            self._delete_tasks_by_project_id(project_id)
         except Exception as e:
             logger.error(f"Error deleting project: {e}")
             raise
@@ -279,24 +395,47 @@ class SqlDataHandler:
             logger.error(f"Error deleting task: {e}")
             raise
 
+    def _delete_tasks_by_project_id(self, project_id: str) -> None:
+        """Delete tasks by project id"""
+        try:
+            self.cur.execute(DELETE_TASK_ON_PROJECT_ID, (project_id,))
+            self.con.commit()
+        except Exception as e:
+            logger.error(f"Error deleting tasks with id {project_id}: {e}")
+            raise
+
     def get_tasks(self, project_id: str) -> List[Task]:
         """Load all tasks for a specific project"""
         try:
-            res = self.cur.execute(QUERY_TASKS_BY_PROJECT, (project_id,))
-            rows = res.fetchall()
-            return [
-                Task(
-                    id=row[0],
-                    title=row[1],
-                    project_id=project_id,
-                    content=row[2],
-                    is_protected=False if self.is_data_unprotected else row[3],
-                    status=row[4],
-                    sync_status=row[5],
-                    createdAt=row[6],
+            rows = self.cur.execute(QUERY_TASKS_BY_PROJECT, (project_id,)).fetchall()
+            encryption_key = self._get_encryption_key()
+
+            tasks: List[Task] = []
+
+            for row in rows:
+                tasks.append(
+                    Task(
+                        id=row[0],
+                        project_id=row[1],
+                        title=self._maybe_decrypt(
+                            should_decrypt=self.is_data_unprotected and row[4],
+                            encryption_key=encryption_key,
+                            value=row[2],
+                        ),
+                        content=self._maybe_decrypt(
+                            should_decrypt=self.is_data_unprotected and row[4],
+                            encryption_key=encryption_key,
+                            value=row[3],
+                        ),
+                        is_protected=self._get_protection_status(row[4]),
+                        status=row[5],
+                        sync_status=row[6],
+                        createdAt=row[7],
+                    )
                 )
-                for row in rows
-            ]
+
+            return tasks
+
         except Exception as e:
             logger.error(f"Error loading data: {e}")
             return []
@@ -313,7 +452,7 @@ class SqlDataHandler:
 
     def get_account(self) -> Account | None:
         self.cur.execute(QUERY_ONE_ACCOUNT_DATA)
-        row = self.cur.fetchone()
+        row: AccountRow = self.cur.fetchone()
 
         if not row:
             return None
@@ -325,17 +464,28 @@ class SqlDataHandler:
             return None
 
         try:
-            res = self.cur.execute(QUERY_ONE_TASKS_BY_ID, (task_id,))
-            row = res.fetchone()
+            row: TaskRow = self.cur.execute(
+                QUERY_ONE_TASKS_BY_ID, (task_id,)
+            ).fetchone()
+            encryption_key = self._get_encryption_key()
+
             return Task(
                 id=row[0],
-                title=row[1],
-                project_id=cast(str, self.current_project_id),
-                content=row[2],
-                is_protected=False if self.is_data_unprotected else row[3],
-                status=row[4],
-                sync_status=row[5],
-                createdAt=row[6],
+                project_id=cast(str, row[1]),
+                title=self._maybe_decrypt(
+                    should_decrypt=self.is_data_unprotected and row[4],
+                    encryption_key=encryption_key,
+                    value=row[2],
+                ),
+                content=self._maybe_decrypt(
+                    should_decrypt=self.is_data_unprotected and row[4],
+                    encryption_key=encryption_key,
+                    value=row[3],
+                ),
+                is_protected=self._get_protection_status(row[4]),
+                status=row[5],
+                sync_status=row[6],
+                createdAt=row[7],
             )
         except Exception as e:
             logger.error(f"Error loading data: {e}")
@@ -344,9 +494,18 @@ class SqlDataHandler:
     def load_projects(self) -> List[Project]:
         """Load all projects"""
         try:
-            res = self.cur.execute(QUERY_ALL_PROJECT_DATA)
-            rows = res.fetchall()
-            return [data_helper.tuple_to_project(row) for row in rows]
+            rows: list[ProjectRow] = self.cur.execute(QUERY_ALL_PROJECT_DATA).fetchall()
+            return [
+                Project(
+                    id=row[0],
+                    title=row[1],
+                    description=row[2],
+                    type=row[3],
+                    createdAt=row[4],
+                    sync_status=row[5],
+                )
+                for row in rows
+            ]
         except Exception as e:
             logger.error(f"Error loading projects: {e}")
             return []
@@ -367,7 +526,14 @@ class SqlDataHandler:
             self.cur.execute(QUERY_ONE_PROJECT_DATA, (project_id,))
             row = self.cur.fetchone()
             if row:
-                return data_helper.tuple_to_project(row)
+                return Project(
+                    id=row[0],
+                    title=row[1],
+                    description=row[2],
+                    type=row[3],
+                    createdAt=row[4],
+                    sync_status=row[5],
+                )
             return None
         except Exception as e:
             logger.error(f"Error loading project: {e}")

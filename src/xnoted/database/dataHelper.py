@@ -5,8 +5,8 @@ from xnoted.sync.syncProvider import Task as SyncTask
 from xnoted.sync.syncProvider import Account as SyncAccount
 
 AccountRow: TypeAlias = tuple[str, str, str, str]
-TaskRow: TypeAlias = tuple[str, str, str, str, int, int, str, str]
-ProjectRow: TypeAlias = tuple[str, str, str, str, str, str, str]
+TaskRow: TypeAlias = tuple[str, str, str, str, bool, int, str, str, str]
+ProjectRow: TypeAlias = tuple[str, str, str, str, str, str]
 
 
 class DataHelper:

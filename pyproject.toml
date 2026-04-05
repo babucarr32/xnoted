@@ -26,7 +26,11 @@ classifiers = [
 dependencies = [
     "textual>=6.6.0",
     "platformdirs",
-    "pyperclip"
+    "pyperclip",
+    "bcrypt",
+    "pymongo",
+    "keyring",
+    "cryptography"
 ]
 
 [project.urls]
