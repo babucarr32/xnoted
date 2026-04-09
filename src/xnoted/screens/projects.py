@@ -30,10 +30,10 @@ class Projects(ListView):
 
     BORDER_TITLE = "Projects"
     BINDINGS = [
-        Binding("k", "cursor_up", "Cursor up", show=False),
-        Binding("j", "cursor_down", "Cursor down", show=False),
-        Binding("e", "edit_project", "Cursor down", show=False),
-        Binding("d", "delete_project", "Cursor down", show=False),
+        Binding("k", "cursor_up", "Cursor up"),
+        Binding("j", "cursor_down", "Cursor down"),
+        Binding("e", "edit_project", "Cursor down"),
+        Binding("d", "delete_project", "Cursor down"),
     ]
 
     def on_mount(self) -> None:

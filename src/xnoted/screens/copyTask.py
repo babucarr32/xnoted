@@ -38,8 +38,8 @@ class CopyTask(ListView):
 
     BORDER_TITLE = "Copy"
     BINDINGS = [
-        Binding("k", "cursor_up", "Cursor up", show=False),
-        Binding("j", "cursor_down", "Cursor down", show=False),
+        Binding("k", "cursor_up", "Cursor up"),
+        Binding("j", "cursor_down", "Cursor down"),
     ]
 
     OPTIONS: list[dict[str, str]] = [

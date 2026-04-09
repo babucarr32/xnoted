@@ -36,8 +36,8 @@ class SelectProject(ListView):
         self.border_title = border_title
 
     BINDINGS = [
-        Binding("k", "cursor_up", "Cursor up", show=False),
-        Binding("j", "cursor_down", "Cursor down", show=False),
+        Binding("k", "cursor_up", "Cursor up"),
+        Binding("j", "cursor_down", "Cursor down"),
     ]
 
     def on_mount(self) -> None:

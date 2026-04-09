@@ -57,16 +57,16 @@ class Tasks(ListView):
 
     BINDINGS = [
         Binding("m", "move", "Move task"),
-        Binding("enter", "select_cursor", "Select", show=False),
-        Binding("k", "cursor_up", "Cursor up", show=False),
-        Binding("j", "cursor_down", "Cursor down", show=False),
-        Binding("/", "search", "Search", show=False),
-        Binding("e", "edit_task", "Cursor down", show=False),
-        Binding("l", "lock_task", "Lock down", show=False),
-        Binding("c", "copy_task", "Copy down", show=False),
-        Binding("d", "delete_task", "Delete down", show=False),
-        Binding("left", "change_status('left')", "Change status", show=False),
-        Binding("right", "change_status('right')", "Change status", show=False),
+        Binding("enter", "select_cursor", "Select"),
+        Binding("k", "cursor_up", "Cursor up"),
+        Binding("j", "cursor_down", "Cursor down"),
+        Binding("/", "search", "Search"),
+        Binding("e", "edit_task", "Cursor down"),
+        Binding("l", "lock_task", "Lock down"),
+        Binding("c", "copy_task", "Copy down"),
+        Binding("d", "delete_task", "Delete down"),
+        Binding("left", "change_status('left')", "Change status"),
+        Binding("right", "change_status('right')", "Change status"),
     ]
 
     last_matched_search: reactive[str] = reactive("")

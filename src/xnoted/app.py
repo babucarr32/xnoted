@@ -8,6 +8,7 @@ from xnoted.components.content import ContentWrapper
 from xnoted.components.footer import Footer
 from xnoted.screens.enterPassword import EnterPasswordModal
 from xnoted.screens.syncConfig import SyncConfigModal
+from xnoted.screens.commandPalette import CommandPaletteModal
 from xnoted.components.body import Body
 from xnoted.database.dataProvider import DataProvider
 from xnoted.database.sqlDataHandler import SqlDataHandler
@@ -43,6 +44,8 @@ class XNotedApp(App):
         ("P", "push_sync", "Push sync data"),
         ("u", "unlock_password", "Unlock password"),
         ("ctrl+r", "show_readme", "Show readme"),
+        # ("?", "", "Show readme"),
+        # ("ctrl+p", "command_palette", "Show readme"),
     ]
 
     def compose(self) -> Iterator[ContentWrapper | Footer]:
@@ -55,12 +58,16 @@ class XNotedApp(App):
     @work(exclusive=True)
     async def action_pull_sync(self) -> None:
         spinner = cast(Spinner, self.app.query_one(Spinner))
-        await spinner.wrap(pull_sync(sync=self.sync, data_provider=self.data_provider), 'Pulling...')
+        await spinner.wrap(
+            pull_sync(sync=self.sync, data_provider=self.data_provider), "Pulling..."
+        )
 
     @work(exclusive=True)
     async def action_push_sync(self) -> None:
         spinner = cast(Spinner, self.app.query_one(Spinner))
-        await spinner.wrap(push_sync(sync=self.sync, data_provider=self.data_provider), 'Pushing...')
+        await spinner.wrap(
+            push_sync(sync=self.sync, data_provider=self.data_provider), "Pushing..."
+        )
 
     def action_create_new_project(self) -> None:
         self.app.push_screen(CreateProjectModal(data_provider=self.data_provider))
@@ -73,6 +80,10 @@ class XNotedApp(App):
 
     def action_select_project(self) -> None:
         self.app.push_screen(SelectProjectModal(data_provider=self.data_provider))
+
+    def action_command_palette(self) -> None:
+        bindings = self.app.active_bindings
+        self.app.push_screen(CommandPaletteModal(bindings=bindings))
 
     def action_unlock_password(self) -> None:
         def refresh_tasks():

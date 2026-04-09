@@ -38,6 +38,7 @@ SelectOverlay,
 TextArea,
 TaskContainer,
 Projects,
+CommandPalettes,
 /* FormContainer, */
 CopyTask,
 SelectProject,
@@ -84,6 +85,7 @@ Input,
 Select,
 RadioSet,
 Projects,
+CommandPalettes,
 CopyTask,
 SelectProject,
 #modal-dialog,
@@ -110,6 +112,7 @@ CopyTaskModal,
 CreateProjectModal,
 ConfirmModal,
 ImportExportProjectModal,
+CommandPaletteModal,
 CreatePasswordModal,
 EnterPasswordModal,
 Confirm {
@@ -147,6 +150,11 @@ Projects,
 SelectProject {
   width: 50%;
   height: 50%;
+}
+
+CommandPalettes {
+  width: 50%;
+  height: 70%;
 }
 
 CreatePasswordModal Form {
