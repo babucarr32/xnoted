@@ -44,8 +44,6 @@ class XNotedApp(App):
         ("P", "push_sync", "Push sync data"),
         ("u", "unlock_password", "Unlock password"),
         ("ctrl+r", "show_readme", "Show readme"),
-        # ("?", "", "Show readme"),
-        # ("ctrl+p", "command_palette", "Show readme"),
     ]
 
     def compose(self) -> Iterator[ContentWrapper | Footer]:

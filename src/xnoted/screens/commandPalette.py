@@ -25,7 +25,7 @@ class ThemeValue:
     name: str
 
 
-ValueType: TypeAlias = ThemeValue | ViewMode
+ValueType: TypeAlias = ThemeValue | ViewMode | str
 
 
 @dataclass
@@ -123,6 +123,7 @@ class CommandPalettes(ListView):
         value: ValueType | None = getattr(item, "value", None)
 
         if isinstance(value, ThemeValue):
+            # self.app.register_theme()
             self.app.theme = value.name
 
     def show_bindings(self) -> None:
@@ -131,9 +132,7 @@ class CommandPalettes(ListView):
 
         for k, v in self.active_bingings.items():
             text = f" {k} → {v.binding.description}"
-            yield_item = CommandPaletteItem(
-                Label(self._pad(text)), value=ThemeValue(name=text)
-            )
+            yield_item = CommandPaletteItem(Label(self._pad(text)), value=text)
             self.append(yield_item)
 
 
