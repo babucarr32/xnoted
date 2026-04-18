@@ -1,4 +1,5 @@
-from typing import Awaitable, TypeVar
+import inspect
+from typing import Awaitable, TypeVar, Callable, Union
 
 from textual.app import ComposeResult
 from textual.reactive import reactive
@@ -65,7 +66,11 @@ class Spinner(Widget):
             self._timer = None
             self.is_spinning = False
 
-    async def wrap(self, coro: Awaitable[T], text: str = '') -> T:
+    async def wrap(
+        self,
+        coro: Awaitable[T],
+        text: str = "",
+    ) -> T:
         self.start(text)
         try:
             return await coro

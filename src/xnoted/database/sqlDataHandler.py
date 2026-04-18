@@ -85,6 +85,10 @@ class SqlDataHandler:
             self.current_project_id = projects[0].id
             self.project_type = projects[0].type
 
+    @property
+    def is_password_set(self) -> bool:
+        return bool(self._get_password())
+
     def _ensure_default_project(self) -> None:
         """Create a default project if no projects exist"""
         try:
@@ -168,6 +172,26 @@ class SqlDataHandler:
             logger.error(f"Error saving data: {e}")
             raise
 
+    def _encrypt_task(self, *, encryption_key: str, task: Task) -> Task | None:
+        """Encrypt a task"""
+
+        encrypted_content = self._encrypt_data(
+            encryption_key=encryption_key, data=task.content
+        )
+        encrypted_title = self._encrypt_data(
+            encryption_key=encryption_key, data=task.title
+        )
+
+        return Task(
+            id=task.id,
+            project_id=task.project_id,
+            title=encrypted_title,
+            content=encrypted_content,
+            status=task.status,
+            is_protected=task.is_protected,
+            sync_status=task.sync_status,
+        )
+
     def encrypt_task(self, task_id: str) -> Task | None:
         """Encrypt a task"""
         task = self.get_task(task_id)
@@ -199,7 +223,7 @@ class SqlDataHandler:
         )
 
     def decrypt_task(self, task_id: str) -> Task | None:
-        """Encrypt a task"""
+        """Decrypt a task"""
         task = self.get_task(task_id)
         if not task:
             logger.error(f"Decryption: Task with id {task_id} not found")
@@ -228,11 +252,34 @@ class SqlDataHandler:
             sync_status=task.sync_status,
         )
 
-    def _get_protection_status(self, protection_status: int) -> bool:
+    def _decrypt_task(self, *, encryption_key: str, task: Task) -> Task | None:
+        """Decrypt a task"""
+
+        if task.content:
+            decrypted_content = self._decrypt_data(
+                encryption_key=encryption_key, data=task.content
+            )
+        decrypted_title = self._decrypt_data(
+            encryption_key=encryption_key, data=task.title
+        )
+
+        return Task(
+            id=task.id,
+            project_id=task.project_id,
+            title=decrypted_title,
+            content=decrypted_content or task.content,
+            status=task.status,
+            is_protected=task.is_protected,
+            sync_status=task.sync_status,
+        )
+
+    def _get_protection_status(self, protection_status: int) -> int:
         return (
-            False
+            ProtectionStatus.NOT_PROTECTED.value
             if self.is_data_unprotected
-            else protection_status == ProtectionStatus.PROTECTED.value
+            else ProtectionStatus.PROTECTED.value
+            if protection_status == ProtectionStatus.PROTECTED.value
+            else ProtectionStatus.NOT_PROTECTED.value
         )
 
     def _maybe_decrypt(
@@ -274,6 +321,62 @@ class SqlDataHandler:
             logger.error("Decrypt data: Invalid password")
             raise ValueError("Invalid password")
 
+    def _update_account_password(self, password: str) -> None:
+        account = self.get_account()
+        if not account:
+            return
+
+        self.save_account(
+            Account(
+                id=account.id,
+                password=password,
+                sync_status=SyncStatus.PENDING_EDIT.value,
+            )
+        )
+
+    def _update_encrypted_data(
+        self,
+        *,
+        old_encryption_key: str,
+        password: str,
+        new_encryption_key: str,
+    ) -> None:
+        for project in self.load_projects():
+            for task in self.get_tasks(project.id):
+                if not task.is_protected:
+                    continue
+
+                decrypted = self._decrypt_task(
+                    encryption_key=old_encryption_key,
+                    task=task,
+                )
+                if not decrypted:
+                    continue
+
+                encrypted = self._encrypt_task(
+                    encryption_key=new_encryption_key,
+                    task=decrypted,
+                )
+
+                if not encrypted:
+                    continue
+
+                self.update_task(
+                    encrypted.id,
+                    Task(
+                        id=encrypted.id,
+                        project_id=encrypted.project_id,
+                        title=encrypted.title,
+                        content=encrypted.content,
+                        is_protected=encrypted.is_protected,
+                        status=encrypted.status,
+                        sync_status=SyncStatus.PENDING_EDIT.value,
+                        createdAt=encrypted.createdAt,
+                    ),
+                )
+
+        self._update_account_password(password)
+
     def save_account(self, data: Account) -> None:
         """Save account"""
         try:
@@ -287,10 +390,20 @@ class SqlDataHandler:
             logger.error(f"Error saving data: {e}")
             raise
 
-    def save_password(self, password: str) -> None:
+    def save_password(self, password: str, edited: bool) -> None:
         """Save password"""
         try:
             hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+            decoded_password = hashed.decode("utf-8")
+
+            if edited:
+                self._update_encrypted_data(
+                    old_encryption_key=self._get_encryption_key() or "",
+                    password=decoded_password,
+                    new_encryption_key=decoded_password,
+                )
+                return
+
             account = self.get_account()
             account_id = "1"
 
@@ -301,7 +414,7 @@ class SqlDataHandler:
                 sync_status = SyncStatus.PENDING.value
 
             account_data = Account(
-                id=account_id, password=hashed.decode("utf-8"), sync_status=sync_status
+                id=account_id, password=decoded_password, sync_status=sync_status
             )
             self.save_account(account_data)
         except Exception as e:
@@ -321,6 +434,7 @@ class SqlDataHandler:
 
         return bcrypt.checkpw(input_password.encode("utf-8"), stored_hash)
 
+    @property
     def has_password(self) -> bool:
         """Return True if a password has been set."""
         try:
@@ -345,8 +459,6 @@ class SqlDataHandler:
     def update_task(self, task_id: str, data: Task) -> None:
         """Update an existing task"""
         try:
-            print("Locjing....", task_id, data)
-
             self.cur.execute(
                 UPDATE_TASK_DATA,
                 (
@@ -406,6 +518,8 @@ class SqlDataHandler:
 
     def get_tasks(self, project_id: str) -> List[Task]:
         """Load all tasks for a specific project"""
+        encryption_key = self._get_encryption_key()
+
         try:
             rows = self.cur.execute(QUERY_TASKS_BY_PROJECT, (project_id,)).fetchall()
             encryption_key = self._get_encryption_key()

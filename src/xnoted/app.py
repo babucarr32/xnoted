@@ -8,6 +8,8 @@ from xnoted.components.content import ContentWrapper
 from xnoted.components.footer import Footer
 from xnoted.screens.enterPassword import EnterPasswordModal
 from xnoted.screens.syncConfig import SyncConfigModal
+from xnoted.screens.createPassword import CreatePasswordModal
+from xnoted.screens.editPassword import EditPasswordModal
 from xnoted.screens.commandPalette import CommandPaletteModal
 from xnoted.components.body import Body
 from xnoted.database.dataProvider import DataProvider
@@ -42,6 +44,7 @@ class XNotedApp(App):
         ("p", "pull_sync", "Pull sync data"),
         ("s", "config_sync", "Config sync data"),
         ("P", "push_sync", "Push sync data"),
+        ("L", "create_password", "Create or edit password"),
         ("u", "unlock_password", "Unlock password"),
         ("ctrl+r", "show_readme", "Show readme"),
     ]
@@ -69,6 +72,21 @@ class XNotedApp(App):
 
     def action_create_new_project(self) -> None:
         self.app.push_screen(CreateProjectModal(data_provider=self.data_provider))
+
+    def action_create_password(self) -> None:
+        def on_password_created():
+            pass
+
+        if self.data_provider.is_password_set:
+            self.app.push_screen(EditPasswordModal(data_provider=self.data_provider))
+            return
+
+        self.app.push_screen(
+            CreatePasswordModal(
+                data_provider=self.data_provider,
+                on_password_created=on_password_created,
+            )
+        )
 
     def action_config_sync(self) -> None:
         self.app.push_screen(SyncConfigModal(data_provider=self.data_provider))

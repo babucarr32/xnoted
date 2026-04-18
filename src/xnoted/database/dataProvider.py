@@ -63,6 +63,9 @@ class DataHandler(Protocol):
     def project_type(self) -> str: ...
 
     @property
+    def is_password_set(self) -> bool: ...
+
+    @property
     def is_data_unprotected(self) -> bool: ...
 
     @is_data_unprotected.setter
@@ -75,10 +78,11 @@ class DataHandler(Protocol):
 
     def save_task(self, data: Task) -> None: ...
 
-    def save_password(self, password: str) -> None: ...
+    def save_password(self, password: str, edited: bool) -> None: ...
 
     def verify_password(self, input_password: str) -> bool: ...
 
+    @property
     def has_password(self) -> bool: ...
 
     def save_project(self, data: Project) -> None: ...
@@ -139,6 +143,10 @@ class DataProvider:
         return self.provider.project_type
 
     @property
+    def is_password_set(self) -> bool:
+        return self.provider.is_password_set
+
+    @property
     def is_data_unprotected(self) -> bool:
         return self.provider.is_data_unprotected
 
@@ -156,15 +164,16 @@ class DataProvider:
     def save_task(self, data: Task) -> None:
         self.provider.save_task(data)
 
-    def save_password(self, password: str) -> None:
-        self.provider.save_password(password)
+    def save_password(self, password: str, edited: bool) -> None:
+        self.provider.save_password(password, edited)
 
     def verify_password(self, input_password: str) -> bool:
         return self.provider.verify_password(input_password)
 
+    @property
     def has_password(self) -> bool:
         """Return True if a password has been set."""
-        return self.provider.has_password()
+        return self.provider.has_password
 
     def save_project(self, data: Project) -> None:
         """Create a new project"""

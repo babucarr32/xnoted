@@ -114,6 +114,7 @@ ConfirmModal,
 ImportExportProjectModal,
 CommandPaletteModal,
 CreatePasswordModal,
+EditPasswordModal,
 EnterPasswordModal,
 Confirm {
   align: center middle;
@@ -160,6 +161,11 @@ CommandPalettes {
 CreatePasswordModal Form {
   width: 30%;
   height: 12%;
+}
+
+EditPasswordModal EditPasswordForm {
+  width: 30%;
+  height: 19%;
 }
 
 EnterPasswordModal EnterPasswordForm {

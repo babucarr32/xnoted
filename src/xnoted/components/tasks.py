@@ -256,28 +256,44 @@ class Tasks(ListView):
         self.app.push_screen(ConfirmModal(on_confirm=on_confirm))
 
     def action_lock_task(self) -> None:
-        child: TaskItem | None = cast(TaskItem | None, self.highlighted_child)
+        child = cast(TaskItem | None, self.highlighted_child)
 
         if not child or not hasattr(child, "task_id"):
             return
 
         label_widget = cast(TaskLabel, child.get_child_by_id(TASK_LABEL_ID))
-
         task_id = child.task_id
-        encrypted_task = self.data_provider.encrypt_task(task_id)
-
-        new_data = Task(
-            id=encrypted_task.id,
-            title=encrypted_task.title,
-            content=encrypted_task.content,
-            status=encrypted_task.status,
-            sync_status=SyncStatus.PENDING_EDIT.value,
-            is_protected=ProtectionStatus.PROTECTED.value,
-            project_id=encrypted_task.project_id,
-        )
 
         def on_password_created() -> None:
-            self.data_provider.update_task(child.task_id, new_data)
+            encrypted_task = self.data_provider.encrypt_task(task_id)
+
+            new_data = Task(
+                id=encrypted_task.id,
+                title=encrypted_task.title,
+                content=encrypted_task.content,
+                status=encrypted_task.status,
+                sync_status=SyncStatus.PENDING_EDIT.value,
+                is_protected=ProtectionStatus.PROTECTED.value,
+                project_id=encrypted_task.project_id,
+            )
+
+            self.data_provider.update_task(encrypted_task.id, new_data)
+
+            project = self.data_provider.get_project(
+                self.data_provider.current_project_id
+            )
+
+            label = self._get_label(
+                GetLabelArg(
+                    status=new_data.status,
+                    title=new_data.title,
+                    project_type=project.type,
+                    is_protected=True,
+                )
+            )
+
+            label_widget.update(label)
+            self._display_task(new_data.id)
 
         if not self.data_provider.has_password:
             self.app.push_screen(
@@ -288,18 +304,7 @@ class Tasks(ListView):
             )
             return
 
-        self.data_provider.update_task(encrypted_task.id, new_data)
-        project = self.data_provider.get_project(self.data_provider.current_project_id)
-        label_arg = GetLabelArg(
-            status=new_data.status,
-            title=new_data.title,
-            project_type=project.type,
-            is_protected=new_data.is_protected == ProtectionStatus.PROTECTED.value,
-        )
-        label = self._get_label(label_arg)
-
-        label_widget.update(label)
-        self._display_task(new_data.id)
+        on_password_created()
 
     def action_copy_task(self) -> None:
         child: TaskItem | None = cast(TaskItem | None, self.highlighted_child)
