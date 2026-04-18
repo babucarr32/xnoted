@@ -1,15 +1,6 @@
-```
- █████ █████ ██████   █████           █████                 █████
-░░███ ░░███ ░░██████ ░░███           ░░███                 ░░███ 
- ░░███ ███   ░███░███ ░███   ██████  ███████    ██████   ███████ 
-  ░░█████    ░███░░███░███  ███░░███░░░███░    ███░░███ ███░░███ 
-   ███░███   ░███ ░░██████ ░███ ░███  ░███    ░███████ ░███ ░███ 
-  ███ ░░███  ░███  ░░█████ ░███ ░███  ░███ ███░███░░░  ░███ ░███ 
- █████ █████ █████  ░░█████░░██████   ░░█████ ░░██████ ░░████████
-░░░░░ ░░░░░ ░░░░░    ░░░░░  ░░░░░░     ░░░░░   ░░░░░░   ░░░░░░░░ 
-```
+![xnoted screenshot](images/xnoted.png)
 
-A powerful terminal-based task and note management application built with Python and Textual. Organize your tasks and notes into projects with a modern, keyboard-driven interface.
+A powerful terminal-based task and note management application built with Python and Textual.
 
 ## Features
 
@@ -197,6 +188,7 @@ Project data structure sample
       "id": "task-001-uuid-1234",
       "title": "Research competitor websites",
       "content": "Analyze top 5 competitor websites and document design patterns, user flows, and features. Focus on:\n- Navigation structure\n- Color schemes\n- Typography choices\n- Mobile responsiveness\n- Accessibility features",
+      "is_protected": 1,
       "status": 1,
       "createdAt": "2025-12-15 10:15:00"
     }

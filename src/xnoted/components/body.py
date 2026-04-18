@@ -3,7 +3,7 @@ from textual.app import Timer
 from xnoted.database.dataProvider import DataProvider
 from textual.reactive import var
 from xnoted.utils.logger import get_logger
-from xnoted.utils.helpers import find_readme
+from xnoted.utils.helpers import find_file
 
 logger = get_logger(__name__)
 
@@ -21,17 +21,30 @@ class Body(MarkdownViewer):
     def welcome(self) -> None:
         """Load and display README content on mount."""        
         try:
-            readme_path = find_readme()
-            logger.error(readme_path)
+            banner_path = find_file("banner.md")
+            readme_path = find_file("README.md")
+
             content = readme_path.read_text(encoding="utf-8")
-            self.document.update(content)
+            banner = banner_path.read_text(encoding="utf-8")
+
+            lines = content.splitlines()
+
+            if lines:
+                lines[0] = banner.strip()
+            else:
+                lines = [banner.strip()]
+
+            updated_content = "\n".join(lines)
+
+            self.document.update(updated_content)
+
         except FileNotFoundError:
             self.document.update("# Welcome\n\nREADME.md not found.")
             logger.error(f"Welcome README.md not found. Path: {readme_path}")
         except Exception as e:
             self.document.update(f"# Error\n\nFailed to load README: {e}")
-            logger.error(f"Error failed to load README: {readme_path}")
-    
+            logger.error(f"Error failed to load README: {readme_path}")    
+
     def show_task(self, task_id: str, debounce_ms: int = 150) -> None:
         """Display the content of a specific task by its ID with debouncing.
         
