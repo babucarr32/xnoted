@@ -609,17 +609,7 @@ class SqlDataHandler:
         """Load all projects"""
         try:
             rows: list[ProjectRow] = self.cur.execute(QUERY_ALL_PROJECT_DATA).fetchall()
-            return [
-                Project(
-                    id=row[0],
-                    title=row[1],
-                    description=row[2],
-                    type=row[3],
-                    createdAt=row[4],
-                    sync_status=row[5],
-                )
-                for row in rows
-            ]
+            return [data_helper.tuple_to_project(row) for row in rows]
         except Exception as e:
             logger.error(f"Error loading projects: {e}")
             return []
