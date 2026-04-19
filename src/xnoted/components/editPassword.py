@@ -88,7 +88,7 @@ class EditPasswordForm(Container):
             return False
 
         await asyncio.sleep(0)  # let spinner render
-        self.data_provider.save_password(password, True)
+        self.data_provider.edit_password(password)
         self.on_password_created()
 
         return True

@@ -53,7 +53,7 @@ class Tasks(ListView):
         super().__init__(id=TASKS_ID)
         self.has_task_result = True
         self.data_provider = data_provider
-        self.loaded_tasks: list[Task] = []
+        self.tasks: list[Task] = []
 
     BINDINGS = [
         Binding("m", "move", "Move task"),
@@ -84,13 +84,17 @@ class Tasks(ListView):
         return f"{ICONS[arg.status].get('icon')} {self._handle_mask(arg.title, arg.is_protected)}"
 
     def load_tasks(self) -> None:
-        self.loaded_tasks = self.data_provider.load_tasks(
+        self.tasks = self.data_provider.get_tasks(
             self.data_provider.current_project_id
         )
         self.clear()
         project = self.data_provider.get_project(self.data_provider.current_project_id)
 
-        for task in self.loaded_tasks:
+        if not self.tasks or not len(self.tasks):
+            self.append(ListItem(Label("No tasks yet")))
+            return
+
+        for task in self.tasks:
             if self.data_provider.project_type == PROJECT_TASK_TYPE_ID:
                 label_arg = GetLabelArg(
                     status=task.status,
@@ -106,9 +110,6 @@ class Tasks(ListView):
 
             list_item = TaskItem(TaskLabel(label), task_id=task.id, status=task.status)
             self.append(list_item)
-
-        if self.data_provider.is_empty():
-            self.append(ListItem(Label("No tasks yet")))
 
     def refresh_tasks(self) -> None:
         """Public method to refresh the task list"""
@@ -130,13 +131,13 @@ class Tasks(ListView):
 
         self.clear()
 
-        if len(self.loaded_tasks) and self.has_task_result:
+        if len(self.tasks) and self.has_task_result:
             found_any = False
             project = self.data_provider.get_project(
                 self.data_provider.current_project_id
             )
 
-            for task in self.loaded_tasks:
+            for task in self.tasks:
                 if search_text in task.title.lower() and not task.is_protected:
                     label_arg = GetLabelArg(
                         status=task.status,

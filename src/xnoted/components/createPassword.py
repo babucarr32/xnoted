@@ -57,7 +57,7 @@ class Form(Container):
                 f"{password_widget.border_title} / Unmatched password"
             )
             return
-        self.data_provider.save_password(password, False)
+        self.data_provider.save_password(password=password)
         self.on_password_created()
 
     def action_submit(self, debounce_ms: int = 150) -> None:

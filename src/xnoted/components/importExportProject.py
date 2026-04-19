@@ -80,23 +80,26 @@ class ImportExportProject(Container):
                 return
 
             # Get all tasks for the project
-            tasks = self.data_provider.load_tasks(self.data_provider.current_project_id)
+            if tasks := self.data_provider.get_tasks(
+                self.data_provider.current_project_id
+            ):
+                # Create export data structure
+                export_data = {
+                    "version": "1.0",
+                    "exported_at": datetime.now().isoformat(),
+                    "project": project.to_dict(),
+                    "tasks": [task.to_dict() for task in tasks],
+                    "task_count": len(tasks),
+                }
 
-            # Create export data structure
-            export_data = {
-                "version": "1.0",
-                "exported_at": datetime.now().isoformat(),
-                "project": project.to_dict(),
-                "tasks": [task.to_dict() for task in tasks],
-                "task_count": len(tasks),
-            }
+                # Write to file
+                with open(file_path, "w", encoding="utf-8") as f:
+                    json.dump(export_data, f, indent=2, ensure_ascii=False)
 
-            # Write to file
-            with open(file_path, "w", encoding="utf-8") as f:
-                json.dump(export_data, f, indent=2, ensure_ascii=False)
-
-            self._update_status(f"Successfully exported to {file_path}", "success")
-            logger.error(f"Exported project '{project.title}' with {len(tasks)} tasks")
+                self._update_status(f"Successfully exported to {file_path}", "success")
+                logger.error(
+                    f"Exported project '{project.title}' with {len(tasks)} tasks"
+                )
 
         except Exception as e:
             self._update_status(f"Export failed: {str(e)}", "error")

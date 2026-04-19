@@ -1,4 +1,11 @@
 DB_PATH = "db.json"
+DEFAULT_ACCOUNT_ID = "1"
+ENCRYPTION_ERROR_TITLE = "Encryption Error"
+DECRYPTION_ERROR_TITLE = "Decryption Error"
+SAVING_ERROR_TITLE = "Saving Error"
+EXIST_ERROR_TITLE = "Exist Error"
+DELETE_ERROR_TITLE = "Delete Error"
+LOAD_DATA_ERROR_TITLE = "Load Data Error"
 
 ICONS = [
     {"icon": "○", "title": "Not started"},

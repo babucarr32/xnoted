@@ -78,7 +78,9 @@ class DataHandler(Protocol):
 
     def save_task(self, data: Task) -> None: ...
 
-    def save_password(self, password: str, edited: bool) -> None: ...
+    def edit_password(self, password: str) -> None: ...
+
+    def save_password(self, password: str) -> None: ...
 
     def verify_password(self, input_password: str) -> bool: ...
 
@@ -95,9 +97,9 @@ class DataHandler(Protocol):
 
     def delete_task(self, task_id: str) -> None: ...
 
-    def get_tasks(self, project_id: str) -> List[Task]: ...
+    def get_tasks(self, project_id: str) -> List[Task] | None: ...
 
-    def get_accounts(self) -> List[Account]: ...
+    def get_accounts(self) -> List[Account] | None: ...
 
     def get_account(self) -> Account | None: ...
 
@@ -164,8 +166,11 @@ class DataProvider:
     def save_task(self, data: Task) -> None:
         self.provider.save_task(data)
 
-    def save_password(self, password: str, edited: bool) -> None:
-        self.provider.save_password(password, edited)
+    def save_password(self,password: str) -> None:
+        self.provider.save_password(password)
+
+    def edit_password(self, password: str) -> None:
+        self.provider.edit_password(password)
 
     def verify_password(self, input_password: str) -> bool:
         return self.provider.verify_password(input_password)
@@ -195,11 +200,11 @@ class DataProvider:
         """Delete a task"""
         self.provider.delete_task(task_id)
 
-    def load_tasks(self, project_id: str) -> List[Task]:
+    def get_tasks(self, project_id: str) -> List[Task] | None:
         """Load all tasks for a specific project"""
         return self.provider.get_tasks(project_id)
 
-    def get_accounts(self) -> List[Account]:
+    def get_accounts(self) -> List[Account] | None:
         """Load all accounts"""
         return self.provider.get_accounts()
 

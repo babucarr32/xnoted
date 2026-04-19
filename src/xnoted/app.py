@@ -13,7 +13,7 @@ from xnoted.screens.editPassword import EditPasswordModal
 from xnoted.screens.commandPalette import CommandPaletteModal
 from xnoted.components.body import Body
 from xnoted.database.dataProvider import DataProvider
-from xnoted.database.sqlDataHandler import SqlDataHandler
+from xnoted.database.sqlDataHandler import SqlDataHandler, NotifyData
 from xnoted.components.spinner import Spinner
 from typing import Iterator, cast
 from xnoted.action.pullSync import pull_sync
@@ -28,7 +28,7 @@ class XNotedApp(App):
         super().__init__()
         self.db_keyring = DBKeyring()
         self.credentials = self.db_keyring.get_credentials()
-        self.sqlDataHandler = SqlDataHandler()
+        self.sqlDataHandler = SqlDataHandler(notify=self._notify)
         self.data_provider = DataProvider(self.sqlDataHandler)
         mongoDBSyncHandler = MongoDBSyncHandler(credentials=self.credentials)
         self.sync = SyncProvider(sync=mongoDBSyncHandler)
@@ -55,6 +55,13 @@ class XNotedApp(App):
 
     def action_create_new_task(self) -> None:
         self.app.push_screen(CreateTaskModal(data_provider=self.data_provider))
+
+    def _notify(self, notifi: NotifyData) -> None:
+        self.notify(
+            notifi.content,
+            title=notifi.title,
+            severity=notifi.severity,
+        )
 
     @work(exclusive=True)
     async def action_pull_sync(self) -> None:

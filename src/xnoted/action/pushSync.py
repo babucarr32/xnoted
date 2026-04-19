@@ -46,7 +46,8 @@ async def push_sync(sync: SyncProvider, data_provider: DataProvider) -> None:
     # Push tasks
     tasks: list[Task] = []
     for a in projects:
-        tasks.extend(data_provider.load_tasks(a.id))
+        if res := data_provider.get_tasks(a.id):
+            tasks.extend(res)
 
     await sync.push_tasks(
         [
@@ -84,15 +85,15 @@ async def push_sync(sync: SyncProvider, data_provider: DataProvider) -> None:
                 ),
             )
     # Push accounts
-    accounts: list[Account] = data_provider.get_accounts()
-    await sync.push_accounts(
-        [
-            SyncAccount(
-                account_id=p.id,
-                password=p.password,
-                createdAt=p.createdAt,
-                sync_status=p.sync_status,
-            )
-            for p in accounts
-        ]
-    )
+    if accounts := data_provider.get_accounts():
+        await sync.push_accounts(
+            [
+                SyncAccount(
+                    account_id=p.id,
+                    password=p.password,
+                    createdAt=p.createdAt,
+                    sync_status=p.sync_status,
+                )
+                for p in accounts
+            ]
+        )

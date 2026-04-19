@@ -1,9 +1,18 @@
 import bcrypt
 import sqlite3
-from typing import List, Optional, cast, Callable, TypeVar, Generic
+from typing import List, Optional, cast, Callable, TypeVar, Generic, TypeAlias, Literal
 from xnoted.utils.logger import get_logger
 from xnoted.utils.helpers import derive_encryption_key
 from xnoted.utils.dataDir import DB_NAME
+from xnoted.utils.constants import (
+    DEFAULT_ACCOUNT_ID,
+    ENCRYPTION_ERROR_TITLE,
+    EXIST_ERROR_TITLE,
+    DELETE_ERROR_TITLE,
+    LOAD_DATA_ERROR_TITLE,
+    DECRYPTION_ERROR_TITLE,
+    SAVING_ERROR_TITLE,
+)
 from xnoted.database.dataProvider import Project, Task, Account, ProtectionStatus
 from xnoted.sync.syncProvider import SyncStatus
 from cryptography.fernet import Fernet, InvalidToken
@@ -36,6 +45,7 @@ from xnoted.queries.sqlQueries import (
 )
 
 T = TypeVar("T")
+SeverityLevel: TypeAlias = Literal["information", "warning", "error"]
 logger = get_logger(__name__)
 data_helper = DataHelper()
 
@@ -46,14 +56,22 @@ class DataFilter(Generic[T]):
     removed: list[T]
 
 
+@dataclass
+class NotifyData:
+    title: str
+    content: str
+    severity: SeverityLevel
+
+
 class SqlDataHandler:
-    def __init__(self) -> None:
+    def __init__(self, notify: Callable[[NotifyData], None]) -> None:
         self.path = DB_NAME
         self.current_project_id: Optional[str] = None
         self.project_name: str = "Project"
         self.project_type: str = ""
         self.con = sqlite3.connect(DB_NAME)
         self.cur = self.con.cursor()
+        self.notify = notify
         self.cur.execute(CREATE_TASK_TABLE)
         self.cur.execute(CREATE_ACCOUNT_TABLE)
         self.cur.execute(CREATE_PROJECT_TABLE)
@@ -143,34 +161,29 @@ class SqlDataHandler:
             return
 
         try:
-            new_data = Task(
-                id=data.id,
-                project_id=data.project_id,
-                title=data.title,
-                content=data.content,
-                status=data.status,
-                is_protected=data.is_protected,
-                sync_status=data.sync_status,
-                createdAt=data.createdAt,
-            )
-
             self.cur.execute(
                 INSERT_TASK_DATA,
                 (
-                    new_data.id,
-                    new_data.project_id,
-                    new_data.title,
-                    new_data.content,
-                    new_data.is_protected,
-                    new_data.status,
-                    new_data.createdAt,
-                    new_data.sync_status,
+                    data.id,
+                    data.project_id,
+                    data.title,
+                    data.content,
+                    data.is_protected,
+                    data.status,
+                    data.createdAt,
+                    data.sync_status,
                 ),
             )
             self.con.commit()
         except Exception as e:
+            self.notify(
+                NotifyData(
+                    title="Error",
+                    content="Error saving data",
+                    severity="error",
+                )
+            )
             logger.error(f"Error saving data: {e}")
-            raise
 
     def _encrypt_task(self, *, encryption_key: str, task: Task) -> Task | None:
         """Encrypt a task"""
@@ -197,11 +210,23 @@ class SqlDataHandler:
         task = self.get_task(task_id)
         if not task:
             logger.error(f"Encryption: Task with id {task_id} not found")
+            NotifyData(
+                title=ENCRYPTION_ERROR_TITLE,
+                content=f"Encryption: Task with id {task_id} not found",
+                severity="error",
+            )
             return None
 
         encrypted_password = self._get_password()
         if not encrypted_password:
             logger.error("Encryption: Password not found")
+            self.notify(
+                NotifyData(
+                    title=ENCRYPTION_ERROR_TITLE,
+                    content="Password not found",
+                    severity="error",
+                )
+            )
             return None
 
         decoded_encrypted_password = encrypted_password.decode("utf-8")
@@ -227,11 +252,25 @@ class SqlDataHandler:
         task = self.get_task(task_id)
         if not task:
             logger.error(f"Decryption: Task with id {task_id} not found")
+            self.notify(
+                NotifyData(
+                    title=DECRYPTION_ERROR_TITLE,
+                    content=f"Decryption: Task with id {task_id} not found",
+                    severity="error",
+                )
+            )
             return None
 
         encrypted_password = self._get_password()
         if not encrypted_password:
             logger.error("Decryption: Password not found")
+            self.notify(
+                NotifyData(
+                    title=DECRYPTION_ERROR_TITLE,
+                    content="Decryption: Password not found",
+                    severity="error",
+                )
+            )
             return None
 
         decoded_encrypted_password = encrypted_password.decode("utf-8")
@@ -341,8 +380,16 @@ class SqlDataHandler:
         password: str,
         new_encryption_key: str,
     ) -> None:
-        for project in self.load_projects():
-            for task in self.get_tasks(project.id):
+        projects = self.load_projects()
+        if not projects:
+            return
+
+        for project in projects:
+            tasks = self.get_tasks(project.id)
+            if not tasks:
+                continue
+
+            for task in tasks:
                 if not task.is_protected:
                     continue
 
@@ -388,38 +435,79 @@ class SqlDataHandler:
 
         except Exception as e:
             logger.error(f"Error saving data: {e}")
-            raise
+            self.notify(
+                NotifyData(
+                    title=SAVING_ERROR_TITLE,
+                    content="Error saving data",
+                    severity="error",
+                )
+            )
 
-    def save_password(self, password: str, edited: bool) -> None:
+    def _hash_password(self, password: str) -> str:
+        hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+        return hashed.decode("utf-8")
+
+    def edit_password(self, password: str) -> None:
         """Save password"""
         try:
-            hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
-            decoded_password = hashed.decode("utf-8")
+            hashed_password = self._hash_password(password)
+            old_encryption_key = self._get_encryption_key()
 
-            if edited:
-                self._update_encrypted_data(
-                    old_encryption_key=self._get_encryption_key() or "",
-                    password=decoded_password,
-                    new_encryption_key=decoded_password,
-                )
+            if not old_encryption_key:
                 return
 
-            account = self.get_account()
-            account_id = "1"
+            self._update_encrypted_data(
+                old_encryption_key=old_encryption_key,
+                password=hashed_password,
+                new_encryption_key=hashed_password,
+            )
 
-            if account and account.sync_status == SyncStatus.SYNCED.value:
-                account_id = account.id
-                sync_status = SyncStatus.PENDING_EDIT.value
-            else:
-                sync_status = SyncStatus.PENDING.value
+            account = self.get_account()
+            account_id = DEFAULT_ACCOUNT_ID
+
+            if not account:
+                return
+
+            account_id = account.id
 
             account_data = Account(
-                id=account_id, password=decoded_password, sync_status=sync_status
+                id=account_id,
+                password=hashed_password,
+                sync_status=SyncStatus.PENDING_EDIT.value,
             )
             self.save_account(account_data)
         except Exception as e:
             logger.error(f"Error saving data: {e}")
-            raise
+            self.notify(
+                NotifyData(
+                    title=SAVING_ERROR_TITLE,
+                    content="Error saving data",
+                    severity="error",
+                )
+            )
+
+    def save_password(self, password: str) -> None:
+        """Save password"""
+        try:
+            hashed_password = self._hash_password(password)
+
+            account_id = DEFAULT_ACCOUNT_ID
+
+            sync_status = SyncStatus.PENDING.value
+
+            account_data = Account(
+                id=account_id, password=hashed_password, sync_status=sync_status
+            )
+            self.save_account(account_data)
+        except Exception as e:
+            logger.error(f"Error saving data: {e}")
+            self.notify(
+                NotifyData(
+                    title=SAVING_ERROR_TITLE,
+                    content="Error saving data",
+                    severity="error",
+                )
+            )
 
     def _get_password(self) -> bytes | None:
         self.cur.execute(GET_PASSWORD)
@@ -442,7 +530,14 @@ class SqlDataHandler:
             return self.cur.fetchone() is not None
         except Exception as e:
             logger.error(f"Error checking password existence: {e}")
-            raise
+            self.notify(
+                NotifyData(
+                    title=EXIST_ERROR_TITLE,
+                    content="Error checking password existence",
+                    severity="error",
+                )
+            )
+            return False
 
     def save_project(self, data: Project) -> None:
         """Create a new project"""
@@ -454,7 +549,13 @@ class SqlDataHandler:
             self.con.commit()
         except Exception as e:
             logger.error(f"Error saving project: {e}")
-            raise
+            self.notify(
+                NotifyData(
+                    title=SAVING_ERROR_TITLE,
+                    content="Error saving project",
+                    severity="error",
+                )
+            )
 
     def update_task(self, task_id: str, data: Task) -> None:
         """Update an existing task"""
@@ -473,7 +574,13 @@ class SqlDataHandler:
             self.con.commit()
         except Exception as e:
             logger.error(f"Error updating task: {e}")
-            raise
+            self.notify(
+                NotifyData(
+                    title=SAVING_ERROR_TITLE,
+                    content="Error updating task",
+                    severity="error",
+                )
+            )
 
     def update_project(self, project_id: str, data: Project) -> None:
         """Update an existing project"""
@@ -485,7 +592,13 @@ class SqlDataHandler:
             self.con.commit()
         except Exception as e:
             logger.error(f"Error updating project: {e}")
-            raise
+            self.notify(
+                NotifyData(
+                    title=SAVING_ERROR_TITLE,
+                    content="Error updating project",
+                    severity="error",
+                )
+            )
 
     def delete_project(self, project_id: str) -> None:
         """Delete a project and all its tasks"""
@@ -496,7 +609,13 @@ class SqlDataHandler:
             self._delete_tasks_by_project_id(project_id)
         except Exception as e:
             logger.error(f"Error deleting project: {e}")
-            raise
+            self.notify(
+                NotifyData(
+                    title=DELETE_ERROR_TITLE,
+                    content="Error deleting project",
+                    severity="error",
+                )
+            )
 
     def delete_task(self, task_id: str) -> None:
         """Delete a task"""
@@ -505,7 +624,13 @@ class SqlDataHandler:
             self.con.commit()
         except Exception as e:
             logger.error(f"Error deleting task: {e}")
-            raise
+            self.notify(
+                NotifyData(
+                    title=DELETE_ERROR_TITLE,
+                    content="Error deleting task",
+                    severity="error",
+                )
+            )
 
     def _delete_tasks_by_project_id(self, project_id: str) -> None:
         """Delete tasks by project id"""
@@ -514,9 +639,15 @@ class SqlDataHandler:
             self.con.commit()
         except Exception as e:
             logger.error(f"Error deleting tasks with id {project_id}: {e}")
-            raise
+            self.notify(
+                NotifyData(
+                    title=DELETE_ERROR_TITLE,
+                    content=f"Error deleting tasks with id {project_id}",
+                    severity="error",
+                )
+            )
 
-    def get_tasks(self, project_id: str) -> List[Task]:
+    def get_tasks(self, project_id: str) -> List[Task] | None:
         """Load all tasks for a specific project"""
         encryption_key = self._get_encryption_key()
 
@@ -552,9 +683,16 @@ class SqlDataHandler:
 
         except Exception as e:
             logger.error(f"Error loading data: {e}")
-            return []
+            self.notify(
+                NotifyData(
+                    title=LOAD_DATA_ERROR_TITLE,
+                    content="Error loading data",
+                    severity="error",
+                )
+            )
+            return None
 
-    def get_accounts(self) -> list[Account]:
+    def get_accounts(self) -> List[Account] | None:
         """Load all tasks for a specific project"""
         try:
             res = self.cur.execute(QUERY_ALL_ACCOUNT_DATA)
@@ -562,7 +700,14 @@ class SqlDataHandler:
             return [data_helper.tuple_to_account(row) for row in rows]
         except Exception as e:
             logger.error(f"Error loading data: {e}")
-            return []
+            self.notify(
+                NotifyData(
+                    title=LOAD_DATA_ERROR_TITLE,
+                    content="Error loading data",
+                    severity="error",
+                )
+            )
+            return None
 
     def get_account(self) -> Account | None:
         self.cur.execute(QUERY_ONE_ACCOUNT_DATA)
@@ -603,16 +748,30 @@ class SqlDataHandler:
             )
         except Exception as e:
             logger.error(f"Error loading data: {e}")
+            self.notify(
+                NotifyData(
+                    title=LOAD_DATA_ERROR_TITLE,
+                    content="Error loading data",
+                    severity="error",
+                )
+            )
             return None
 
-    def load_projects(self) -> List[Project]:
+    def load_projects(self) -> List[Project] | None:
         """Load all projects"""
         try:
             rows: list[ProjectRow] = self.cur.execute(QUERY_ALL_PROJECT_DATA).fetchall()
             return [data_helper.tuple_to_project(row) for row in rows]
         except Exception as e:
             logger.error(f"Error loading projects: {e}")
-            return []
+            self.notify(
+                NotifyData(
+                    title=LOAD_DATA_ERROR_TITLE,
+                    content="Error loading projects",
+                    severity="error",
+                )
+            )
+            return None
 
     def get_first_project(self) -> Project | None:
         """Get the first project"""
@@ -622,25 +781,31 @@ class SqlDataHandler:
             return data_helper.tuple_to_project(row)
         except Exception as e:
             logger.error(f"Error loading project: {e}")
+            self.notify(
+                NotifyData(
+                    title=LOAD_DATA_ERROR_TITLE,
+                    content="Error loading first project",
+                    severity="error",
+                )
+            )
             return None
 
     def get_project(self, project_id: str) -> Project | None:
         """Get a specific project by ID"""
         try:
-            self.cur.execute(QUERY_ONE_PROJECT_DATA, (project_id,))
-            row = self.cur.fetchone()
+            row = self.cur.execute(QUERY_ONE_PROJECT_DATA, (project_id,)).fetchone()
             if row:
-                return Project(
-                    id=row[0],
-                    title=row[1],
-                    description=row[2],
-                    type=row[3],
-                    createdAt=row[4],
-                    sync_status=row[5],
-                )
+                return data_helper.tuple_to_project(row)
             return None
         except Exception as e:
             logger.error(f"Error loading project: {e}")
+            self.notify(
+                NotifyData(
+                    title=LOAD_DATA_ERROR_TITLE,
+                    content="Error loading project",
+                    severity="error",
+                )
+            )
             return None
 
     def add_task(self, data: Task) -> None:
@@ -723,24 +888,26 @@ class SqlDataHandler:
     ) -> None:
         projects = self.load_projects()
         tasks: list[Task] = []
-        accounts: list[Account] = self.get_accounts()
 
-        for p in projects:
-            tasks.extend(self.get_tasks(p.id))
+        if projects:
+            if accounts := self.get_accounts():
+                for p in projects:
+                    if res := self.get_tasks(p.id):
+                        tasks.extend(res)
 
-        filtered_account: DataFilter[Account] | None = self._handle_filter_data(
-            incoming_data=incoming_accounts,
-            existing_data=accounts,
-            get_id=lambda p: p.id,
-            get_sync_status=lambda p: p.sync_status or "",
-        )
+                filtered_account: DataFilter[Account] | None = self._handle_filter_data(
+                    incoming_data=incoming_accounts,
+                    existing_data=accounts,
+                    get_id=lambda p: p.id,
+                    get_sync_status=lambda p: p.sync_status or "",
+                )
 
-        filtered_project: DataFilter[Project] | None = self._handle_filter_data(
-            incoming_data=incoming_projects,
-            existing_data=projects,
-            get_id=lambda p: p.id,
-            get_sync_status=lambda p: p.sync_status or "",
-        )
+            filtered_project: DataFilter[Project] | None = self._handle_filter_data(
+                incoming_data=incoming_projects,
+                existing_data=projects,
+                get_id=lambda p: p.id,
+                get_sync_status=lambda p: p.sync_status or "",
+            )
 
         filtered_task: DataFilter[Task] | None = self._handle_filter_data(
             incoming_data=incoming_tasks,
