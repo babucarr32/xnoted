@@ -302,7 +302,6 @@ class MongoDBSyncHandler:
             return
 
         filtered_project = await self._handle_filter_projects(projects)
-
         if not filtered_project:
             return None
 
