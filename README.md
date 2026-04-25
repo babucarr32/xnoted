@@ -1,4 +1,4 @@
-![xnoted screenshot](images/xnoted.png)
+![xnoted screenshot](https://github.com/babucarr32/xnoted/blob/main/images/xnoted.png)
 
 A powerful terminal-based task and note management application built with Python and Textual.
 
@@ -134,34 +134,37 @@ pip install --force .
 #### Global Application Shortcuts
 | Shortcut | Action | Description |
 |----------|--------|-------------|
-| `Ctrl+n` | Create new task | Opens modal to create a new task in current project |
-| `Ctrl+b` | Create new project | Opens modal to create a new project |
-| `Ctrl+l` | Select project | Opens project selector to switch between projects |
-| `Ctrl+o` | Import/Export | Opens modal to import or export projects |
-| `Ctrl+r` | Show readme | Displays the README in the content panel |
-| `Ctrl+d` | Scroll down | Scrolls the content panel down |
-| `Ctrl+u` | Scroll up | Scrolls the content panel up |
+| `ctrl+n` | Create new task | Opens modal to create a new task in current project |
+| `ctrl+b` | Create new project | Opens modal to create a new project |
+| `ctrl+l` | Select project | Opens project selector to switch between projects |
+| `ctrl+o` | Import/Export | Opens modal to import or export projects |
+| `ctrl+r` | Show readme | Displays the README in the content panel |
+| `ctrl+d` | Scroll down | Scrolls the content panel down |
+| `ctrl+u` | Scroll up | Scrolls the content panel up |
 | `u` | Unlock tasks | Unlock all locked tasks |
+| `ctrl+p` | Command pallette | Display command pallette |
+| `s` | Command pallette | Display command pallette |
+| `L` | Create password / Edit password | Create or edit password |
 
 #### Task List Navigation
 | Shortcut | Action | Description |
 |----------|--------|-------------|
-| `j` | Move down | Move cursor down in task list (Vim-style) |
-| `k` | Move up | Move cursor up in task list (Vim-style) |
-| `Enter` | Select task | View the selected task's content |
+| `j` | Move down | Move cursor down in task list |
+| `k` | Move up | Move cursor up in task list |
+| `enter` | Select task | View the selected task's content |
 | `e` | Edit task | Edit the highlighted task |
 | `c` | Copy task | Copy the highlighted task |
-| `l` | Lock task | Lock the highlighted task |
+| `l` | Lock task / Permanently unlock task | Lock or permanently unlock the highlighted task |
 | `d` | Delete task | Delete the highlighted task (with confirmation) |
 | `←` | Previous status | Cycle task status backward |
 | `→` | Next status | Cycle task status forward |
 | `/` | Search | Search the tasks |
 
-#### Task/Project Editor Shortcuts
+#### Form(s) Shortcuts
 | Shortcut | Action | Description |
 |----------|--------|-------------|
-| `Ctrl+s` | Save | Save the current task or project |
-| `Esc` | Cancel | Close modal without saving |
+| `enter` | Save | Save the current changes |
+| `esc` | Cancel | Close modal without saving |
 
 #### Task Status Indicators
 - ○ **Not started** - Task hasn't been started yet
@@ -250,6 +253,12 @@ The SQLite database contains two main tables:
 - `Linux`: `~/.local/share/xnoted/`
 - `macOS`: `~/Library/Application Support/xnoted/`
 - `Windows`: `C:\Users\YourName\AppData\Roaming\xnoted\`
+
+
+### Logs Path
+- `Linux`: `~/.local/share/xnoted/log.txt`
+- `macOS`: `~/Library/Application Support/xnoted/log.txt`
+- `Windows`: `C:\Users\YourName\AppData\Roaming\xnoted\log.txt`
 
 ## License
 
