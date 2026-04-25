@@ -1,4 +1,4 @@
-import uuid
+from xnoted.errors.errorHandler import ErrorHandler
 from textual.widgets import ListView, ListItem, Label
 from xnoted.utils.constants import (
     ICONS,
@@ -7,6 +7,7 @@ from xnoted.utils.constants import (
     PROJECT_TASK_TYPE_ID,
     PROJECT_OTHER_TYPE_ID,
     TASK_LABEL_ID,
+    ERROR_TITLE,
 )
 from xnoted.utils.helpers import mask
 from xnoted.components.body import Body
@@ -84,61 +85,21 @@ class Tasks(ListView):
         return f"{ICONS[arg.status].get('icon')} {self._handle_mask(arg.title, arg.is_protected)}"
 
     def load_tasks(self) -> None:
-        self.tasks = self.data_provider.get_tasks(
-            self.data_provider.current_project_id
-        )
-        self.clear()
-        project = self.data_provider.get_project(self.data_provider.current_project_id)
-
-        if not self.tasks or not len(self.tasks):
-            self.append(ListItem(Label("No tasks yet")))
-            return
-
-        for task in self.tasks:
-            if self.data_provider.project_type == PROJECT_TASK_TYPE_ID:
-                label_arg = GetLabelArg(
-                    status=task.status,
-                    title=task.title,
-                    is_protected=task.is_protected == ProtectionStatus.PROTECTED.value,
-                    project_type=project.type,
-                )
-                label = self._get_label(label_arg)
-            else:
-                label = self._handle_mask(
-                    task.title, task.is_protected == ProtectionStatus.PROTECTED.value
-                )
-
-            list_item = TaskItem(TaskLabel(label), task_id=task.id, status=task.status)
-            self.append(list_item)
-
-    def refresh_tasks(self) -> None:
-        """Public method to refresh the task list"""
-        self.load_tasks()
-
-    def quick_search(self, text: str) -> None:
-        """Public method to quick search the task list"""
-        search_text = text.lower()
-
-        if not text or self.last_matched_search == search_text:
-            self.has_task_result = True
-
-        if not self.has_task_result:
-            return
-
-        if not search_text:
-            self.load_tasks()
-            return
-
-        self.clear()
-
-        if len(self.tasks) and self.has_task_result:
-            found_any = False
+        try:
+            self.tasks = self.data_provider.get_tasks(
+                self.data_provider.current_project_id
+            )
+            self.clear()
             project = self.data_provider.get_project(
                 self.data_provider.current_project_id
             )
 
+            if not self.tasks or not len(self.tasks):
+                self.append(ListItem(Label("No tasks yet")))
+                return
+
             for task in self.tasks:
-                if search_text in task.title.lower() and not task.is_protected:
+                if self.data_provider.project_type == PROJECT_TASK_TYPE_ID:
                     label_arg = GetLabelArg(
                         status=task.status,
                         title=task.title,
@@ -147,100 +108,191 @@ class Tasks(ListView):
                         project_type=project.type,
                     )
                     label = self._get_label(label_arg)
-                    list_item = TaskItem(
-                        TaskLabel(label), task_id=task.id, status=task.status
+                else:
+                    label = self._handle_mask(
+                        task.title,
+                        task.is_protected == ProtectionStatus.PROTECTED.value,
                     )
-                    self.append(list_item)
-                    found_any = True
 
-            if not found_any:
-                self.has_task_result = False
-                self.append(ListItem(Label("No matching tasks")))
-            else:
-                self.last_matched_search = search_text
-            return
+                list_item = TaskItem(
+                    TaskLabel(label), task_id=task.id, status=task.status
+                )
+                self.append(list_item)
+        except Exception as e:
+            ErrorHandler(
+                file_name=__name__,
+                error=e,
+                cb=lambda e: self.notify(e.content, title=e.title, severity=e.severity),
+            )
 
-        self.append(ListItem(Label("No tasks yet")))
+    def refresh_tasks(self) -> None:
+        """Public method to refresh the task list"""
+        self.load_tasks()
+
+    def quick_search(self, text: str) -> None:
+        """Public method to quick search the task list"""
+        try:
+            search_text = text.lower()
+
+            if not text or self.last_matched_search == search_text:
+                self.has_task_result = True
+
+            if not self.has_task_result:
+                return
+
+            if not search_text:
+                self.load_tasks()
+                return
+
+            self.clear()
+
+            if len(self.tasks) and self.has_task_result:
+                found_any = False
+                project = self.data_provider.get_project(
+                    self.data_provider.current_project_id
+                )
+
+                for task in self.tasks:
+                    if search_text in task.title.lower() and not task.is_protected:
+                        label_arg = GetLabelArg(
+                            status=task.status,
+                            title=task.title,
+                            is_protected=task.is_protected
+                            == ProtectionStatus.PROTECTED.value,
+                            project_type=project.type,
+                        )
+                        label = self._get_label(label_arg)
+                        list_item = TaskItem(
+                            TaskLabel(label), task_id=task.id, status=task.status
+                        )
+                        self.append(list_item)
+                        found_any = True
+
+                if not found_any:
+                    self.has_task_result = False
+                    self.append(ListItem(Label("No matching tasks")))
+                else:
+                    self.last_matched_search = search_text
+                return
+
+            self.append(ListItem(Label("No tasks yet")))
+        except Exception as e:
+            ErrorHandler(
+                file_name=__name__,
+                error=e,
+                cb=lambda e: self.notify(e.content, title=e.title, severity=e.severity),
+            )
 
     def _display_task(self, task_id: str) -> None:
         body_widget = self.app.query_one(Body)
         body_widget.show_task(task_id)
 
     def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
-        if event.item and hasattr(event.item, "task_id"):
-            # Display the highlighted task
-            task_id = event.item.task_id
-            self._display_task(task_id)
+        try:
+            if event.item and hasattr(event.item, "task_id"):
+                # Display the highlighted task
+                task_id = event.item.task_id
+                self._display_task(task_id)
+        except Exception as e:
+            ErrorHandler(
+                file_name=__name__,
+                error=e,
+                cb=lambda e: self.notify(e.content, title=e.title, severity=e.severity),
+            )
 
     def action_edit_task(self) -> None:
-        from xnoted.screens.createTask import CreateTaskModal
+        try:
+            from xnoted.screens.createTask import CreateTaskModal
 
-        child = self.highlighted_child
+            child = self.highlighted_child
 
-        if child and hasattr(child, "task_id"):
-            task_id = child.task_id
-            task = self.data_provider.get_task(task_id)
+            if child and hasattr(child, "task_id"):
+                task_id = child.task_id
+                task = self.data_provider.get_task(task_id)
 
-            if not task:
-                logger.error(f"Task with id {task_id} not found")
-                return None
+                if not task:
+                    self.notify(
+                        f"Task with id {task_id} not found",
+                        title=ERROR_TITLE,
+                        severity="error",
+                    )
+                    logger.error(f"Task with id {task_id} not found")
+                    return None
 
-            self.app.push_screen(
-                CreateTaskModal(
-                    data_provider=self.data_provider,
-                    editing=True,
-                    task_id=task.id,
+                self.app.push_screen(
+                    CreateTaskModal(
+                        data_provider=self.data_provider,
+                        editing=True,
+                        task_id=task.id,
+                    )
                 )
+        except Exception as e:
+            ErrorHandler(
+                file_name=__name__,
+                error=e,
+                cb=lambda e: self.notify(e.content, title=e.title, severity=e.severity),
             )
 
     def action_change_status(self, direction: str) -> None:
-        if self.data_provider.project_type != PROJECT_TASK_TYPE_ID:
-            return
+        try:
+            if self.data_provider.project_type != PROJECT_TASK_TYPE_ID:
+                return
 
-        child: TaskLabel | None = cast(TaskLabel | None, self.highlighted_child)
-        if child is None or not hasattr(child, "task_id"):
-            return
+            child: TaskLabel | None = cast(TaskLabel | None, self.highlighted_child)
+            if child is None or not hasattr(child, "task_id"):
+                return
 
-        task = self.data_provider.get_task(task_id=child.task_id)
+            task = self.data_provider.get_task(task_id=child.task_id)
 
-        if not task:
-            logger.error(f"Task with id {task.id} not found")
-            return None
+            if not task:
+                logger.error(f"Task with id {task.id} not found")
+                self.notify(
+                    f"Task with id {task.id} not found",
+                    title=ERROR_TITLE,
+                    severity="error",
+                )
+                return None
 
-        # Update status index for this item
-        if direction == "right" and task.status < len(ICONS) - 1:
-            new_status = task.status + 1
-        elif direction == "left" and task.status > 0:
-            new_status = task.status - 1
-        elif direction == "left" and task.status == 0:
-            new_status = len(ICONS) - 1
-        else:
-            new_status = 0
+            # Update status index for this item
+            if direction == "right" and task.status < len(ICONS) - 1:
+                new_status = task.status + 1
+            elif direction == "left" and task.status > 0:
+                new_status = task.status - 1
+            elif direction == "left" and task.status == 0:
+                new_status = len(ICONS) - 1
+            else:
+                new_status = 0
 
-        # Update only the highlighted item's label
-        label = cast(TaskLabel, child.query_one(f"#{TASK_LABEL_ID}"))
+            # Update only the highlighted item's label
+            label = cast(TaskLabel, child.query_one(f"#{TASK_LABEL_ID}"))
 
-        label_arg = GetLabelArg(
-            status=new_status,
-            title=task.title,
-            is_protected=task.is_protected,
-            project_type=PROJECT_OTHER_TYPE_ID,
-        )
+            label_arg = GetLabelArg(
+                status=new_status,
+                title=task.title,
+                is_protected=task.is_protected,
+                project_type=PROJECT_OTHER_TYPE_ID,
+            )
 
-        label.update(self._get_label(label_arg))
-        child.status = new_status
+            label.update(self._get_label(label_arg))
+            child.status = new_status
 
-        new_data = Task(
-            id=task.id,
-            title=task.title,
-            content=task.content,
-            status=new_status,
-            is_protected=task.is_protected,
-            project_id=task.project_id,
-            sync_status=SyncStatus.PENDING_EDIT.value,
-        )
+            new_data = Task(
+                id=task.id,
+                title=task.title,
+                content=task.content,
+                status=new_status,
+                is_protected=task.is_protected,
+                project_id=task.project_id,
+                sync_status=SyncStatus.PENDING_EDIT.value,
+            )
 
-        self.data_provider.update_task(task.id, new_data)
+            self.data_provider.update_task(task.id, new_data)
+        except Exception as e:
+            ErrorHandler(
+                file_name=__name__,
+                error=e,
+                cb=lambda e: self.notify(e.content, title=e.title, severity=e.severity),
+            )
 
     def action_delete_task(self) -> None:
         child: TaskItem | None = cast(TaskItem | None, self.highlighted_child)
@@ -251,118 +303,152 @@ class Tasks(ListView):
         task_id = child.task_id
 
         def on_confirm():
-            self.data_provider.delete_task(task_id)
-            self.refresh_tasks()
+            try:
+                self.data_provider.delete_task(task_id)
+                self.refresh_tasks()
+            except Exception as e:
+                ErrorHandler(
+                    file_name=__name__,
+                    error=e,
+                    cb=lambda e: self.notify(
+                        e.content, title=e.title, severity=e.severity
+                    ),
+                )
 
         self.app.push_screen(ConfirmModal(on_confirm=on_confirm))
 
     def action_lock_task(self) -> None:
-        child = cast(TaskItem | None, self.highlighted_child)
+        try:
+            child = cast(TaskItem | None, self.highlighted_child)
 
-        if not child or not hasattr(child, "task_id"):
-            return
+            if not child or not hasattr(child, "task_id"):
+                return
 
-        label_widget = cast(TaskLabel, child.get_child_by_id(TASK_LABEL_ID))
-        task_id = child.task_id
+            label_widget = cast(TaskLabel, child.get_child_by_id(TASK_LABEL_ID))
+            task_id = child.task_id
 
-        def on_password_created() -> None:
-            encrypted_task = self.data_provider.encrypt_task(task_id)
+            def on_password_created() -> None:
+                encrypted_task = self.data_provider.encrypt_task(task_id)
 
-            new_data = Task(
-                id=encrypted_task.id,
-                title=encrypted_task.title,
-                content=encrypted_task.content,
-                status=encrypted_task.status,
-                sync_status=SyncStatus.PENDING_EDIT.value,
-                is_protected=ProtectionStatus.PROTECTED.value,
-                project_id=encrypted_task.project_id,
-            )
-
-            self.data_provider.update_task(encrypted_task.id, new_data)
-
-            project = self.data_provider.get_project(
-                self.data_provider.current_project_id
-            )
-
-            label = self._get_label(
-                GetLabelArg(
-                    status=new_data.status,
-                    title=new_data.title,
-                    project_type=project.type,
-                    is_protected=True,
+                new_data = Task(
+                    id=encrypted_task.id,
+                    title=encrypted_task.title,
+                    content=encrypted_task.content,
+                    status=encrypted_task.status,
+                    sync_status=SyncStatus.PENDING_EDIT.value,
+                    is_protected=ProtectionStatus.PROTECTED.value,
+                    project_id=encrypted_task.project_id,
                 )
-            )
 
-            label_widget.update(label)
-            self._display_task(new_data.id)
+                self.data_provider.update_task(encrypted_task.id, new_data)
 
-        if not self.data_provider.has_password:
-            self.app.push_screen(
-                CreatePasswordModal(
-                    data_provider=self.data_provider,
-                    on_password_created=on_password_created,
+                project = self.data_provider.get_project(
+                    self.data_provider.current_project_id
                 )
-            )
-            return
 
-        on_password_created()
+                label = self._get_label(
+                    GetLabelArg(
+                        status=new_data.status,
+                        title=new_data.title,
+                        project_type=project.type,
+                        is_protected=True,
+                    )
+                )
+
+                label_widget.update(label)
+                self._display_task(new_data.id)
+
+            if not self.data_provider.has_password:
+                self.app.push_screen(
+                    CreatePasswordModal(
+                        data_provider=self.data_provider,
+                        on_password_created=on_password_created,
+                    )
+                )
+                return
+
+            on_password_created()
+        except Exception as e:
+            ErrorHandler(
+                file_name=__name__,
+                error=e,
+                cb=lambda e: self.notify(e.content, title=e.title, severity=e.severity),
+            )
 
     def action_copy_task(self) -> None:
-        child: TaskItem | None = cast(TaskItem | None, self.highlighted_child)
+        try:
+            child: TaskItem | None = cast(TaskItem | None, self.highlighted_child)
 
-        if child and hasattr(child, "task_id"):
-            task_id = child.task_id
-            self.app.push_screen(
-                CopyTaskModal(data_provider=self.data_provider, item_id=task_id)
+            if child and hasattr(child, "task_id"):
+                task_id = child.task_id
+                self.app.push_screen(
+                    CopyTaskModal(data_provider=self.data_provider, item_id=task_id)
+                )
+        except Exception as e:
+            ErrorHandler(
+                file_name=__name__,
+                error=e,
+                cb=lambda e: self.notify(e.content, title=e.title, severity=e.severity),
             )
 
     def action_search(self) -> None:
-        footer: Footer = cast(Footer, self.app.query_one(f"#{FOOTER_ID}"))
-        footer.toggle_search()
-
-    def action_move(self) -> None:
-        child: TaskItem | None = cast(TaskItem | None, self.highlighted_child)
-
-        if not child or not hasattr(child, "task_id"):
-            return
-
-        task_id = child.task_id
-        cached_project_id = self.data_provider.current_project_id
-
-        def on_select(project_id: str):
-            if not project_id:
-                return
-
-            self.data_provider.set_current_project(project_id)
-            # Save the highlighted task to the selected project
-            task = self.data_provider.get_task(task_id)
-
-            if not task:
-                return
-
-            data = Task(
-                id=str(uuid.uuid4()),
-                title=task.title,
-                content=task.content,
-                project_id=task.project_id,
-                is_protected=task.is_protected,
-                status=task.status,
+        try:
+            footer: Footer = cast(Footer, self.app.query_one(f"#{FOOTER_ID}"))
+            footer.toggle_search()
+        except Exception as e:
+            ErrorHandler(
+                file_name=__name__,
+                error=e,
+                cb=lambda e: self.notify(e.content, title=e.title, severity=e.severity),
             )
 
-            try:
+    def action_move(self) -> None:
+        try:
+            child: TaskItem | None = cast(TaskItem | None, self.highlighted_child)
+
+            if not child or not hasattr(child, "task_id"):
+                return
+
+            task_id = child.task_id
+            cached_project_id = self.data_provider.current_project_id
+
+            def on_select(project_id: str):
+                if not project_id:
+                    return
+
+                self.data_provider.set_current_project(project_id)
+                # Save the highlighted task to the selected project
+                task = self.data_provider.get_task(task_id)
+
+                if not task:
+                    return
+
+                data = Task(
+                    id="str(uuid.uuid4())",
+                    title=task.title,
+                    content=task.content,
+                    project_id=task.project_id,
+                    is_protected=task.is_protected,
+                    status=task.status,
+                )
+
                 self.data_provider.save_task(data)
                 # Then delete the task
                 self.data_provider.delete_task(task_id)
                 # Set the project id back
                 self.data_provider.set_current_project(cached_project_id)
                 self.refresh_tasks()
-            except Exception as e:
-                logger.error(f"Unable to move task {e}")
 
-        self.app.push_screen(
-            SelectProjectModal(
-                data_provider=self.data_provider,
-                on_select=on_select,
-                _border_title="Move to",
+            self.app.push_screen(
+                SelectProjectModal(
+                    data_provider=self.data_provider,
+                    on_select=on_select,
+                    _border_title="Move to",
+                )
             )
-        )
+        except Exception as e:
+            ErrorHandler(
+                file_name=__name__,
+                error=e,
+                cb=lambda e: self.notify(e.content, title=e.title, severity=e.severity),
+            )

@@ -8,9 +8,6 @@ from textual.app import Timer
 
 from xnoted.database.dataProvider import DataProvider
 from xnoted.utils.keyringService import DBKeyring
-from xnoted.utils.logger import get_logger
-
-logger = get_logger(__name__)
 
 URL_ID = "url"
 DATABASE_NAME_ID = "database"

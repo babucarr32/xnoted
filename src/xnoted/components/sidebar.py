@@ -8,7 +8,7 @@ from xnoted.database.dataProvider import DataProvider, Task, ProtectionStatus, S
 from xnoted.components.tasks import Tasks
 from textual.app import Timer
 from typing import cast
-from xnoted.utils.constants import TASKS_ID
+from xnoted.utils.constants import TASKS_ID, ERROR_TITLE
 
 logger = get_logger(__name__)
 
@@ -107,6 +107,11 @@ class Form(Container):
         task = self.data_provider.get_task(self.task_id)
 
         if not task:
+            self.notify(
+                f"Task with id {self.task_id} not found",
+                title=ERROR_TITLE,
+                severity="error",
+            )
             logger.error(f"Task with id {self.task_id} not found")
             return None
 

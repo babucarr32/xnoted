@@ -97,17 +97,17 @@ class DataHandler(Protocol):
 
     def delete_task(self, task_id: str) -> None: ...
 
-    def get_tasks(self, project_id: str) -> List[Task] | None: ...
+    def get_tasks(self, project_id: str) -> List[Task]: ...
 
-    def get_accounts(self) -> List[Account] | None: ...
+    def get_accounts(self) -> List[Account]: ...
 
     def get_account(self) -> Account | None: ...
 
     def get_task(self, task_id: str) -> Task | None: ...
 
-    def decrypt_task(self, task_id: str) -> Task | None: ...
+    def decrypt_task(self, task_id: str) -> Task: ...
 
-    def encrypt_task(self, task_id: str) -> Task | None: ...
+    def encrypt_task(self, task_id: str) -> Task: ...
 
     def load_projects(self) -> List[Project]: ...
 
@@ -120,8 +120,6 @@ class DataHandler(Protocol):
     def is_storage_exist(self) -> bool: ...
 
     def is_empty(self) -> bool: ...
-
-    def get_last_id(self, project_id: str) -> str: ...
 
     def sync(
         self,
@@ -166,7 +164,7 @@ class DataProvider:
     def save_task(self, data: Task) -> None:
         self.provider.save_task(data)
 
-    def save_password(self,password: str) -> None:
+    def save_password(self, password: str) -> None:
         self.provider.save_password(password)
 
     def edit_password(self, password: str) -> None:
@@ -200,11 +198,11 @@ class DataProvider:
         """Delete a task"""
         self.provider.delete_task(task_id)
 
-    def get_tasks(self, project_id: str) -> List[Task] | None:
+    def get_tasks(self, project_id: str) -> List[Task]:
         """Load all tasks for a specific project"""
         return self.provider.get_tasks(project_id)
 
-    def get_accounts(self) -> List[Account] | None:
+    def get_accounts(self) -> List[Account]:
         """Load all accounts"""
         return self.provider.get_accounts()
 
@@ -215,10 +213,10 @@ class DataProvider:
     def get_task(self, task_id: str) -> Task | None:
         return self.provider.get_task(task_id)
 
-    def encrypt_task(self, task_id: str) -> Task | None:
+    def encrypt_task(self, task_id: str) -> Task:
         return self.provider.encrypt_task(task_id)
 
-    def decrypt_task(self, task_id: str) -> Task | None:
+    def decrypt_task(self, task_id: str) -> Task:
         return self.provider.decrypt_task(task_id)
 
     def load_projects(self) -> List[Project]:
@@ -248,10 +246,6 @@ class DataProvider:
             True if there's exactly 1 project and 0 tasks, False otherwise
         """
         return self.provider.is_empty()
-
-    def get_last_id(self, project_id: str) -> str:
-        """Get the last task ID for a project"""
-        return self.provider.get_last_id(project_id)
 
     def sync(
         self,
