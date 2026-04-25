@@ -14,7 +14,7 @@ from xnoted.screens.editPassword import EditPasswordModal
 from xnoted.screens.commandPalette import CommandPaletteModal
 from xnoted.components.body import Body
 from xnoted.database.dataProvider import DataProvider
-from xnoted.database.sqlDataHandler import SqlDataHandler, NotifyData
+from xnoted.database.sqlDataHandler import SqlDataHandler
 from xnoted.components.spinner import Spinner
 from typing import Iterator, cast
 from xnoted.action.pullSync import pull_sync
