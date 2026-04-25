@@ -78,7 +78,9 @@ class DataHandler(Protocol):
 
     def save_task(self, data: Task) -> None: ...
 
-    def save_password(self, password: str, edited: bool) -> None: ...
+    def edit_password(self, password: str) -> None: ...
+
+    def save_password(self, password: str) -> None: ...
 
     def verify_password(self, input_password: str) -> bool: ...
 
@@ -103,9 +105,9 @@ class DataHandler(Protocol):
 
     def get_task(self, task_id: str) -> Task | None: ...
 
-    def decrypt_task(self, task_id: str) -> Task | None: ...
+    def decrypt_task(self, task_id: str) -> Task: ...
 
-    def encrypt_task(self, task_id: str) -> Task | None: ...
+    def encrypt_task(self, task_id: str) -> Task: ...
 
     def load_projects(self) -> List[Project]: ...
 
@@ -118,8 +120,6 @@ class DataHandler(Protocol):
     def is_storage_exist(self) -> bool: ...
 
     def is_empty(self) -> bool: ...
-
-    def get_last_id(self, project_id: str) -> str: ...
 
     def sync(
         self,
@@ -164,8 +164,11 @@ class DataProvider:
     def save_task(self, data: Task) -> None:
         self.provider.save_task(data)
 
-    def save_password(self, password: str, edited: bool) -> None:
-        self.provider.save_password(password, edited)
+    def save_password(self, password: str) -> None:
+        self.provider.save_password(password)
+
+    def edit_password(self, password: str) -> None:
+        self.provider.edit_password(password)
 
     def verify_password(self, input_password: str) -> bool:
         return self.provider.verify_password(input_password)
@@ -195,7 +198,7 @@ class DataProvider:
         """Delete a task"""
         self.provider.delete_task(task_id)
 
-    def load_tasks(self, project_id: str) -> List[Task]:
+    def get_tasks(self, project_id: str) -> List[Task]:
         """Load all tasks for a specific project"""
         return self.provider.get_tasks(project_id)
 
@@ -210,10 +213,10 @@ class DataProvider:
     def get_task(self, task_id: str) -> Task | None:
         return self.provider.get_task(task_id)
 
-    def encrypt_task(self, task_id: str) -> Task | None:
+    def encrypt_task(self, task_id: str) -> Task:
         return self.provider.encrypt_task(task_id)
 
-    def decrypt_task(self, task_id: str) -> Task | None:
+    def decrypt_task(self, task_id: str) -> Task:
         return self.provider.decrypt_task(task_id)
 
     def load_projects(self) -> List[Project]:
@@ -243,10 +246,6 @@ class DataProvider:
             True if there's exactly 1 project and 0 tasks, False otherwise
         """
         return self.provider.is_empty()
-
-    def get_last_id(self, project_id: str) -> str:
-        """Get the last task ID for a project"""
-        return self.provider.get_last_id(project_id)
 
     def sync(
         self,

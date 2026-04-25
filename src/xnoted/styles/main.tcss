@@ -222,3 +222,7 @@ VerticalScroll,
 TextArea {
   scrollbar-visibility: hidden;
 }
+
+Toast {
+  background: transparent;
+}

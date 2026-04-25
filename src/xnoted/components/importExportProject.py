@@ -6,7 +6,7 @@ from textual.containers import Container
 from textual.widgets import RadioSet, RadioButton, Input
 from textual.app import ComposeResult
 from textual.binding import Binding
-from xnoted.utils.logger import get_logger
+from xnoted.errors.errorHandler import ErrorHandler
 from xnoted.database.dataHelper import DataHelper
 from xnoted.database.dataProvider import DataProvider, Task, Project
 from xnoted.utils.constants import (
@@ -15,7 +15,6 @@ from xnoted.utils.constants import (
     EXPORT_PROJECT_RADIO_ID,
 )
 
-logger = get_logger(__name__)
 data_helper = DataHelper()
 
 
@@ -46,13 +45,20 @@ class ImportExportProject(Container):
         self,
     ) -> None:
         """Handle execute button press"""
-        radio_set = self.query_one(ProjectTypeContainer)
-        selected = radio_set.pressed_button
+        try:
+            radio_set = self.query_one(ProjectTypeContainer)
+            selected = radio_set.pressed_button
 
-        if selected and selected.id == EXPORT_PROJECT_ID:
-            self.handle_export()
-        elif selected and selected.id == IMPORT_PROJECT_ID:
-            self.handle_import()
+            if selected and selected.id == EXPORT_PROJECT_ID:
+                self.handle_export()
+            elif selected and selected.id == IMPORT_PROJECT_ID:
+                self.handle_import()
+        except Exception as e:
+            ErrorHandler(
+                file_name=__name__,
+                error=e,
+                cb=lambda e: self.notify(e.content, title=e.title, severity=e.severity),
+            )
 
     def handle_export(self) -> None:
         """Export current project and its tasks to JSON"""
@@ -80,27 +86,27 @@ class ImportExportProject(Container):
                 return
 
             # Get all tasks for the project
-            tasks = self.data_provider.load_tasks(self.data_provider.current_project_id)
+            if tasks := self.data_provider.get_tasks(
+                self.data_provider.current_project_id
+            ):
+                # Create export data structure
+                export_data = {
+                    "version": "1.0",
+                    "exported_at": datetime.now().isoformat(),
+                    "project": project.to_dict(),
+                    "tasks": [task.to_dict() for task in tasks],
+                    "task_count": len(tasks),
+                }
 
-            # Create export data structure
-            export_data = {
-                "version": "1.0",
-                "exported_at": datetime.now().isoformat(),
-                "project": project.to_dict(),
-                "tasks": [task.to_dict() for task in tasks],
-                "task_count": len(tasks),
-            }
+                # Write to file
+                with open(file_path, "w", encoding="utf-8") as f:
+                    json.dump(export_data, f, indent=2, ensure_ascii=False)
 
-            # Write to file
-            with open(file_path, "w", encoding="utf-8") as f:
-                json.dump(export_data, f, indent=2, ensure_ascii=False)
-
-            self._update_status(f"Successfully exported to {file_path}", "success")
-            logger.error(f"Exported project '{project.title}' with {len(tasks)} tasks")
+                self._update_status(f"Successfully exported to {file_path}", "success")
 
         except Exception as e:
-            self._update_status(f"Export failed: {str(e)}", "error")
-            logger.error(f"Export error: {e}")
+            self._update_status("Failed to export", "error")
+            raise Exception("Something we wrong, failed to export") from e
 
     def handle_import(self) -> None:
         """Import project and tasks from JSON"""
@@ -178,16 +184,13 @@ class ImportExportProject(Container):
                 f"Successfully imported project '{new_project.title}' with {imported_count} tasks",
                 "success",
             )
-            logger.error(
-                f"Imported {imported_count} tasks into project {new_project_id}"
-            )
 
         except json.JSONDecodeError as e:
-            self._update_status(f"Invalid JSON file: {str(e)}", "error")
-            logger.error(f"JSON decode error: {e}")
+            self._update_status("Invalid JSON file", "error")
+            raise Exception("JSON decode error") from e
         except Exception as e:
-            self._update_status(f"Import failed: {str(e)}", "error")
-            logger.error(f"Import error: {e}")
+            self._update_status("Failed to import", "error")
+            raise Exception("Something went wrong, import error") from e
 
     def _update_status(self, message: str, status_type: str = "info") -> None:
         """Update status message with styling"""

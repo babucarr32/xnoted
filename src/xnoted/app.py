@@ -5,6 +5,7 @@ from xnoted.screens.projects import SelectProjectModal
 from xnoted.screens.createProject import CreateProjectModal
 from xnoted.screens.importExportProject import ImportExportProjectModal
 from xnoted.components.content import ContentWrapper
+from xnoted.errors.errorHandler import ErrorHandler
 from xnoted.components.footer import Footer
 from xnoted.screens.enterPassword import EnterPasswordModal
 from xnoted.screens.syncConfig import SyncConfigModal
@@ -13,7 +14,7 @@ from xnoted.screens.editPassword import EditPasswordModal
 from xnoted.screens.commandPalette import CommandPaletteModal
 from xnoted.components.body import Body
 from xnoted.database.dataProvider import DataProvider
-from xnoted.database.sqlDataHandler import SqlDataHandler
+from xnoted.database.sqlDataHandler import SqlDataHandler, NotifyData
 from xnoted.components.spinner import Spinner
 from typing import Iterator, cast
 from xnoted.action.pullSync import pull_sync
@@ -58,17 +59,33 @@ class XNotedApp(App):
 
     @work(exclusive=True)
     async def action_pull_sync(self) -> None:
-        spinner = cast(Spinner, self.app.query_one(Spinner))
-        await spinner.wrap(
-            pull_sync(sync=self.sync, data_provider=self.data_provider), "Pulling..."
-        )
+        try:
+            spinner = cast(Spinner, self.app.query_one(Spinner))
+            await spinner.wrap(
+                pull_sync(sync=self.sync, data_provider=self.data_provider),
+                "Pulling...",
+            )
+        except Exception as e:
+            ErrorHandler(
+                file_name=__name__,
+                error=e,
+                cb=lambda e: self.notify(e.content, title=e.title, severity=e.severity),
+            )
 
     @work(exclusive=True)
     async def action_push_sync(self) -> None:
-        spinner = cast(Spinner, self.app.query_one(Spinner))
-        await spinner.wrap(
-            push_sync(sync=self.sync, data_provider=self.data_provider), "Pushing..."
-        )
+        try:
+            spinner = cast(Spinner, self.app.query_one(Spinner))
+            await spinner.wrap(
+                push_sync(sync=self.sync, data_provider=self.data_provider),
+                "Pushing...",
+            )
+        except Exception as e:
+            ErrorHandler(
+                file_name=__name__,
+                error=e,
+                cb=lambda e: self.notify(e.content, title=e.title, severity=e.severity),
+            )
 
     def action_create_new_project(self) -> None:
         self.app.push_screen(CreateProjectModal(data_provider=self.data_provider))

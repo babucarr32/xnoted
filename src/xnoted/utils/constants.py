@@ -1,4 +1,7 @@
 DB_PATH = "db.json"
+DEFAULT_ACCOUNT_ID = "1"
+EXPORT_ERROR_TITLE = "Export Error"
+ERROR_TITLE = "Error"
 
 ICONS = [
     {"icon": "○", "title": "Not started"},

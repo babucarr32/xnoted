@@ -6,7 +6,7 @@ from collections.abc import Callable
 from textual.widgets import Label, ListView, ListItem
 from xnoted.database.dataProvider import DataProvider
 from textual.binding import Binding
-from xnoted.utils.constants import COPY_TASK
+from xnoted.utils.constants import COPY_TASK, EXPORT_ERROR_TITLE
 from typing import cast
 from textual.app import ComposeResult
 from xnoted.utils.logger import get_logger
@@ -71,6 +71,11 @@ class CopyTask(ListView):
 
         item_data = self.data_provider.get_task(self.item_id)
         if not item_data:
+            self.notify(
+                f"Task not found for id {opt_id}",
+                title=EXPORT_ERROR_TITLE,
+                severity="error",
+            )
             logger.error(f"Task not found for id {opt_id}")
             return None
 
