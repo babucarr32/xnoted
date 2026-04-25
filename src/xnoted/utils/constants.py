@@ -1,5 +1,10 @@
 DB_PATH = "db.json"
 DEFAULT_ACCOUNT_ID = "1"
+PASSWORD = 'password'
+RE_PASSWORD = 'Re-Password'
+OLD_PASSWORD = "Old Password"
+RIGHT_DIRECTION = 'right'
+LEFT_DIRECTION = 'left'
 EXPORT_ERROR_TITLE = "Export Error"
 ERROR_TITLE = "Error"
 

@@ -1,6 +1,6 @@
 from textual.containers import Container
 from typing import cast
-from textual.app import Timer
+from textual.app import Timer,Binding
 from collections.abc import Callable
 from textual.widgets import Input, Static
 from textual.app import ComposeResult
@@ -8,6 +8,7 @@ from xnoted.database.dataProvider import DataProvider
 from xnoted.utils.constants import (
     PASSWORD_ID,
     ENTER_PASSWORD_ID,
+    PASSWORD,
     ENTER_PASSWORD_FORM_CONTAINER_ID,
 )
 
@@ -28,7 +29,7 @@ class FormContainer(Static):
 
     def compose(self) -> ComposeResult:
         """Compose the modal content."""
-        yield InputContainer(id=PASSWORD_ID, border_title="Password")
+        yield InputContainer(id=PASSWORD_ID, border_title=PASSWORD)
 
 
 class EnterPasswordForm(Container):
@@ -45,7 +46,7 @@ class EnterPasswordForm(Container):
         self._debounce_timer: Timer | None = None
 
     BINDINGS = [
-        ("ctrl+s", "submit", "Validate password"),
+        Binding("enter", "submit", "Validate password", priority=True),
     ]
 
     def compose(self) -> ComposeResult:
@@ -58,7 +59,7 @@ class EnterPasswordForm(Container):
         if not is_valid_password:
             password_widget = self.query_one(f"#{PASSWORD_ID}")
             password_widget.border_title = (
-                f"{password_widget.border_title} / Invalid password"
+                f"{PASSWORD} / Invalid password"
             )
         else:
             self.on_password_valid()

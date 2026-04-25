@@ -1,7 +1,7 @@
 from typing import Callable
 from textual.containers import Container
 from typing import cast
-from textual.app import Timer
+from textual.app import Timer, Binding
 from textual.widgets import Input, Static
 from textual.app import ComposeResult
 from xnoted.database.dataProvider import DataProvider
@@ -9,6 +9,8 @@ from xnoted.utils.constants import (
     PASSWORD_ID,
     RE_PASSWORD_ID,
     CREATE_PASSWORD_ID,
+    PASSWORD,
+    RE_PASSWORD,
     CREATE_PASSWORD_FORM_CONTAINER_ID,
 )
 
@@ -27,11 +29,11 @@ class FormContainer(Static):
 
     def compose(self) -> ComposeResult:
         """Compose the modal content."""
-        yield InputContainer(id=PASSWORD_ID, border_title="Password")
-        yield InputContainer(id=RE_PASSWORD_ID, border_title="Re-Password")
+        yield InputContainer(id=PASSWORD_ID, border_title=PASSWORD)
+        yield InputContainer(id=RE_PASSWORD_ID, border_title=RE_PASSWORD)
 
 
-class Form(Container):
+class CreatePasswordForm(Container):
     def __init__(
         self, data_provider: DataProvider, on_password_created: Callable[[], None]
     ):
@@ -41,7 +43,7 @@ class Form(Container):
         self.on_password_created = on_password_created
 
     BINDINGS = [
-        ("ctrl+s", "submit", "Save form"),
+        Binding("enter", "submit", "Save form", priority=True),
     ]
 
     def compose(self) -> ComposeResult:
@@ -53,9 +55,8 @@ class Form(Container):
 
         if password != re_password:
             password_widget = self.query_one(f"#{PASSWORD_ID}")
-            password_widget.border_title = (
-                f"{password_widget.border_title} / Unmatched password"
-            )
+            password_widget.border_title = f"{PASSWORD} / Unmatched password"
+
             return
         self.data_provider.save_password(password=password)
         self.on_password_created()

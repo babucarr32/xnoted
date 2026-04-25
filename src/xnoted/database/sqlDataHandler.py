@@ -53,13 +53,6 @@ class DataFilter(Generic[T]):
     removed: list[T]
 
 
-@dataclass
-class NotifyData:
-    title: str
-    content: str
-    severity: SeverityLevel
-
-
 class SqlDataHandler:
     def __init__(self) -> None:
         self.path = DB_NAME
@@ -219,7 +212,7 @@ class SqlDataHandler:
             title=encrypted_title,
             content=encrypted_content,
             status=task.status,
-            is_protected=task.is_protected,
+            is_protected=ProtectionStatus.PROTECTED.value,
             sync_status=task.sync_status,
         )
 
@@ -249,7 +242,7 @@ class SqlDataHandler:
             title=decrypted_title,
             content=decrypted_content,
             status=task.status,
-            is_protected=task.is_protected,
+            is_protected=ProtectionStatus.NOT_PROTECTED.value,
             sync_status=task.sync_status,
         )
 

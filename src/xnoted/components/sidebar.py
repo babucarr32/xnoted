@@ -2,7 +2,7 @@ import uuid
 from xnoted.sync.syncProvider import SyncStatus
 from textual.containers import Container
 from textual.widgets import Input, TextArea
-from textual.app import ComposeResult
+from textual.app import ComposeResult, Binding
 from xnoted.utils.logger import get_logger
 from xnoted.database.dataProvider import DataProvider, Task, ProtectionStatus, Status
 from xnoted.components.tasks import Tasks
@@ -48,7 +48,7 @@ class Form(Container):
         self._debounce_timer: None | Timer = None
 
     BINDINGS = [
-        ("ctrl+s", "submit", "Save form"),
+        Binding("enter", "submit", "Save form", priority=True),
     ]
 
     def _get_title_widget(self) -> InputContainer:

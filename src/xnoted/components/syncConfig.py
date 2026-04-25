@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Callable, cast
 
-from textual.app import ComposeResult
+from textual.app import ComposeResult, Binding
 from textual.containers import Container
 from textual.widgets import Input
 from textual.app import Timer
@@ -26,7 +26,7 @@ class InputContainer(Input):
 
 
 class SyncConfigForm(Container):
-    BINDINGS = [("ctrl+s", "submit", "Save form")]
+    BINDINGS = [Binding("enter", "submit", "Save form", priority=True)]
 
     def __init__(
         self,

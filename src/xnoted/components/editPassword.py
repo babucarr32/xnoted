@@ -4,22 +4,20 @@ import asyncio
 from xnoted.components.spinner import Spinner
 from textual.containers import Container
 from typing import cast
-from textual.app import Timer
+from textual.app import Timer, Binding
 from textual.widgets import Input, Static
 from textual.app import ComposeResult
 from xnoted.database.dataProvider import DataProvider
 from xnoted.utils.constants import (
+    PASSWORD,
     PASSWORD_ID,
     OLD_PASSWORD_ID,
+    RE_PASSWORD,
     RE_PASSWORD_ID,
     CREATE_PASSWORD_ID,
+    OLD_PASSWORD,
     CREATE_PASSWORD_FORM_CONTAINER_ID,
 )
-
-
-OLD_PASSWORD_BORDER_TITLE = "Old Password"
-PASSWORD_BORDER_TITLE = "Password"
-RE_PASSWORD_BORDER_TITLE = "Re-Password"
 
 
 class InputContainer(Input):
@@ -36,9 +34,9 @@ class FormContainer(Static):
 
     def compose(self) -> ComposeResult:
         """Compose the modal content."""
-        yield InputContainer(id=OLD_PASSWORD_ID, border_title=OLD_PASSWORD_BORDER_TITLE)
-        yield InputContainer(id=PASSWORD_ID, border_title=PASSWORD_BORDER_TITLE)
-        yield InputContainer(id=RE_PASSWORD_ID, border_title=RE_PASSWORD_BORDER_TITLE)
+        yield InputContainer(id=OLD_PASSWORD_ID, border_title=OLD_PASSWORD)
+        yield InputContainer(id=PASSWORD_ID, border_title=PASSWORD)
+        yield InputContainer(id=RE_PASSWORD_ID, border_title=RE_PASSWORD)
 
 
 class EditPasswordForm(Container):
@@ -51,7 +49,7 @@ class EditPasswordForm(Container):
         self.on_password_created = on_password_created
 
     BINDINGS = [
-        ("ctrl+s", "submit", "Save form"),
+        Binding("enter", "submit", "Save form", priority=True),
     ]
 
     def compose(self) -> ComposeResult:
@@ -70,21 +68,17 @@ class EditPasswordForm(Container):
         password_widget = self.query_one(f"#{PASSWORD_ID}")
 
         def reset_border_title():
-            old_password_widget.border_title = OLD_PASSWORD_BORDER_TITLE
-            password_widget.border_title = PASSWORD_BORDER_TITLE
+            old_password_widget.border_title = OLD_PASSWORD
+            password_widget.border_title = PASSWORD
 
         if not is_old_password_valid:
             reset_border_title()
-            old_password_widget.border_title = (
-                f"{old_password_widget.border_title} / Invalid password"
-            )
+            old_password_widget.border_title = f"{PASSWORD} / Invalid password"
             return False
 
         if password != re_password:
             reset_border_title()
-            password_widget.border_title = (
-                f"{password_widget.border_title} / Unmatched password"
-            )
+            password_widget.border_title = f"{PASSWORD} / Unmatched password"
             return False
 
         await asyncio.sleep(0)  # let spinner render

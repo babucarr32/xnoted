@@ -34,7 +34,7 @@ class ImportExportProject(Container):
         self.data_provider = data_provider
 
     BINDINGS = [
-        Binding("ctrl+s", "import_export", "Export or Import"),
+        Binding("enter", "import_export", "Export or Import", priority=True),
     ]
 
     def compose(self) -> ComposeResult:

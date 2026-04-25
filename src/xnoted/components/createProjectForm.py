@@ -2,7 +2,7 @@ import uuid
 from xnoted.sync.syncProvider import SyncStatus
 from textual.containers import Container
 from textual.widgets import Input, TextArea, RadioSet, RadioButton, Label
-from textual.app import ComposeResult
+from textual.app import ComposeResult, Binding
 from xnoted.database.dataProvider import DataProvider, Project
 from xnoted.components.tasks import Tasks
 from typing import cast
@@ -60,7 +60,7 @@ class CreateProjectForm(Container):
         self.project_id = project_id
 
     BINDINGS = [
-        ("ctrl+s", "submit", "Save project form"),
+        Binding("enter", "submit", "Save project form", priority=True),
     ]
 
     def _get_title_widget(self) -> InputContainer:
