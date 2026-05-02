@@ -7,7 +7,7 @@ from xnoted.utils.logger import get_logger
 from xnoted.database.dataProvider import DataProvider, Task, ProtectionStatus, Status
 from xnoted.components.tasks import Tasks
 from textual.app import Timer
-from typing import cast
+from typing import cast, Callable, Any
 from xnoted.utils.constants import TASKS_ID, ERROR_TITLE
 
 logger = get_logger(__name__)
@@ -34,17 +34,19 @@ class ContentContainer(TextArea):
         )
 
 
-class Form(Container):
+class CreateTaskForm(Container):
     def __init__(
         self,
         data_provider: DataProvider,
         editing=False,
         task_id="",
+        on_submit=Callable[[], Any],
     ):
         super().__init__()
         self.editing = editing
         self.task_id = task_id
         self.data_provider = data_provider
+        self.on_submit = on_submit
         self._debounce_timer: None | Timer = None
 
     BINDINGS = [
@@ -143,3 +145,4 @@ class Form(Container):
             self._debounce_timer = self.set_timer(
                 debounce_ms / 1000, lambda: self.handle_save_new()
             )
+        self.on_submit()

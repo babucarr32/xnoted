@@ -3,7 +3,9 @@ from textual.containers import Vertical
 from textual.screen import ModalScreen
 from xnoted.components.syncConfig import SyncConfigForm, FormData
 from xnoted.database.dataProvider import DataProvider
+from xnoted.utils.constants import SYNC_CONFIG_ID
 from xnoted.utils.keyringService import DBKeyring, Credentials
+
 
 class SyncConfigModal(ModalScreen):
     def __init__(
@@ -11,7 +13,7 @@ class SyncConfigModal(ModalScreen):
         data_provider: DataProvider,
         task_id="",
     ):
-        super().__init__(id="createTaskModal")
+        super().__init__(id=SYNC_CONFIG_ID)
         self.task_id = task_id
         self.data_provider = data_provider
 
@@ -26,9 +28,8 @@ class SyncConfigModal(ModalScreen):
             SyncConfigForm(
                 data_provider=self.data_provider,
                 task_id=self.task_id,
-                on_submit=self.on_submit
+                on_submit=self.on_submit,
             ),
-            id="modal-content",
         )
 
     def action_close(self) -> None:

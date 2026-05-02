@@ -1,8 +1,9 @@
 from textual.app import ComposeResult
 from textual.containers import Vertical
 from textual.screen import ModalScreen
-from xnoted.components.sidebar import Form
+from xnoted.components.createTaskForm import CreateTaskForm
 from xnoted.database.dataProvider import DataProvider
+from xnoted.utils.constants import CREATE_TASK_ID
 
 
 class CreateTaskModal(ModalScreen):
@@ -12,7 +13,7 @@ class CreateTaskModal(ModalScreen):
         editing=False,
         task_id="",
     ):
-        super().__init__(id="createTaskModal")
+        super().__init__(id=CREATE_TASK_ID)
         self.editing = editing
         self.task_id = task_id
         self.data_provider = data_provider
@@ -25,12 +26,12 @@ class CreateTaskModal(ModalScreen):
 
     def compose(self) -> ComposeResult:
         yield Vertical(
-            Form(
+            CreateTaskForm(
                 data_provider=self.data_provider,
                 editing=self.editing,
                 task_id=self.task_id,
+                on_submit=lambda: self.app.pop_screen(),
             ),
-            id="modal-content",
         )
 
     def action_close(self) -> None:

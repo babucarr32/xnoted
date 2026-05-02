@@ -5,7 +5,7 @@ from textual.widgets import Input, TextArea, RadioSet, RadioButton, Label
 from textual.app import ComposeResult, Binding
 from xnoted.database.dataProvider import DataProvider, Project
 from xnoted.components.tasks import Tasks
-from typing import cast
+from typing import cast, Callable, Any
 from xnoted.utils.constants import (
     PROJECT_TITLE_ID,
     PROJECT_DESCRIPTION_ID,
@@ -50,6 +50,7 @@ class CreateProjectForm(Container):
         self,
         data_provider: DataProvider,
         project_id="",
+        on_submit=Callable[[], Any],
         project_type=PROJECT_TASK_TYPE_ID,
         editing=False,
     ):
@@ -57,6 +58,7 @@ class CreateProjectForm(Container):
         self.data_provider = data_provider
         self.project_type = project_type
         self.editing = editing
+        self.on_submit = on_submit
         self.project_id = project_id
 
     BINDINGS = [
@@ -165,3 +167,4 @@ class CreateProjectForm(Container):
             self.handle_edit()
         else:
             self.handle_save_new()
+        self.on_submit()

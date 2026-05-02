@@ -45,6 +45,8 @@ ENTER_PASSWORD_FORM_CONTAINER_ID = "enter-password-form-container"
 CREATE_PROJECT_ID = "create-project-modal"
 CREATE_PASSWORD_ID = "create-password-modal"
 ENTER_PASSWORD_ID = "enter-password-modal"
+SYNC_CONFIG_ID = "sync-config-modal"
+CREATE_TASK_ID = "create-task-modal"
 SELECT_PROJECT_MODAL_ID = "select-project"
 
 MONGO_URI = "mongodb://localhost:27017"

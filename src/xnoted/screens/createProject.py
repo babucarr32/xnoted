@@ -35,6 +35,7 @@ class CreateProjectModal(ModalScreen):
                 project_id=self.project_id,
                 editing=self.editing,
                 project_type=self.project_type,
+                on_submit=lambda: self.app.pop_screen(),
             ),
             id=PROJECT_MODAL_CONTENT,
         )

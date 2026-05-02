@@ -143,7 +143,7 @@ LoadingIndicator {
 
 SyncConfigModal Vertical {
   width: 50%;
-  height: 10%;
+  height: 6;
 }
 
 CreateProjectModal Vertical,
@@ -175,7 +175,7 @@ EnterPasswordModal EnterPasswordForm {
 
 CopyTask {
   width: 30%;
-  height: 10%;
+  height: 7;
 }
 
 ImportExportProjectModal Vertical {
