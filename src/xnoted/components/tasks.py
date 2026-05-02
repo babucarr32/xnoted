@@ -86,6 +86,10 @@ class Tasks(ListView):
             self.index = 0
             self.scroll_visible
 
+    def focus_container_and_fist_child(self):
+        self.focus_fist_child()
+        self.focus()
+
     def action_cursor_up(self) -> None:
         count = len(self)
         if count == 0:
