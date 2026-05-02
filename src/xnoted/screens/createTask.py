@@ -30,7 +30,7 @@ class CreateTaskModal(ModalScreen):
                 data_provider=self.data_provider,
                 editing=self.editing,
                 task_id=self.task_id,
-                on_submit=lambda: self.app.pop_screen(),
+                on_submit=lambda: self.action_close(),
             ),
         )
 

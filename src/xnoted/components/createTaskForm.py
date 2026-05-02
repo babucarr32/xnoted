@@ -130,19 +130,16 @@ class CreateTaskForm(Container):
 
         tasks_widget = cast(Tasks, self.app.query_one("#tasks"))
         tasks_widget.refresh_tasks()
+        self.on_submit()
 
     def action_submit(self, debounce_ms: int = 150) -> None:
-        # Cancel previous timer
         if self._debounce_timer is not None:
             self._debounce_timer.stop()
 
-        if self.editing:
-            self._debounce_timer = self.set_timer(
-                debounce_ms / 1000, lambda: self.handle_edit()
-            )
+        action = self.handle_edit if self.editing else self.handle_save_new
 
-        else:
-            self._debounce_timer = self.set_timer(
-                debounce_ms / 1000, lambda: self.handle_save_new()
-            )
-        self.on_submit()
+        def callback():
+            action()
+            self.on_submit()
+
+        self._debounce_timer = self.set_timer(debounce_ms / 1000, callback)

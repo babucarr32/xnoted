@@ -76,4 +76,5 @@ class SyncConfigForm(Container):
     def action_submit(self, debounce_ms: int = 150) -> None:
         if self._debounce_timer is not None:
             self._debounce_timer.stop()
+
         self._debounce_timer = self.set_timer(debounce_ms / 1000, self._handle_submit)
