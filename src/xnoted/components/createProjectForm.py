@@ -163,8 +163,6 @@ class CreateProjectForm(Container):
             task_header_label_widget.update(self.data_provider.project_name)
 
     def action_submit(self) -> None:
-        if self.editing:
-            self.handle_edit()
-        else:
-            self.handle_save_new()
+        callable = self.handle_edit if self.editing else self.handle_save_new
+        callable()
         self.on_submit()

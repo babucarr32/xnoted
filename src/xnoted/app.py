@@ -88,7 +88,9 @@ class XNotedApp(App):
             )
 
     def action_create_new_project(self) -> None:
-        self.app.push_screen(CreateProjectModal(data_provider=self.data_provider))
+        self.app.push_screen(
+            CreateProjectModal(data_provider=self.data_provider, on_submit=lambda: None)
+        )
 
     def action_create_password(self) -> None:
         def on_password_created():

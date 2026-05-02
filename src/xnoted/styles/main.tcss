@@ -37,7 +37,7 @@ Select,
 SelectOverlay,
 TextArea,
 TaskContainer,
-Projects,
+ProjectsModal,
 CommandPalettes,
 /* FormContainer, */
 CopyTask,
@@ -48,7 +48,7 @@ FooterLabel,
 }
 
 TaskContainer,
-Projects,
+ProjectsModal,
 CopyTask,
 SelectProject {
   border-title-align: left;
@@ -84,7 +84,7 @@ Tasks,
 Input,
 Select,
 RadioSet,
-Projects,
+ProjectsModal,
 CommandPalettes,
 CopyTask,
 SelectProject,
@@ -147,7 +147,7 @@ SyncConfigModal Vertical {
 }
 
 CreateProjectModal Vertical,
-Projects,
+ProjectsModal,
 SelectProject {
   width: 50%;
   height: 50%;

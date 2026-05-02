@@ -21,7 +21,7 @@ class ProjectItem(ListItem):
         self.project_name = project_name
 
 
-class Projects(ListView):
+class ProjectsModal(ListView):
     def __init__(self, data_provider: DataProvider, close_app: Callable[[], None]):
         super().__init__(id=PROJECTS_ID)
         self.has_task_result = True
@@ -80,6 +80,7 @@ class Projects(ListView):
             CreateProjectModal(
                 data_provider=self.data_provider,
                 editing=True,
+                on_submit= lambda: self.load_projects(),
                 project_id=project_id,
                 project_type=project.type,
             )
@@ -114,7 +115,7 @@ class SelectProjectModal(ModalScreen):
     ]
 
     def compose(self) -> ComposeResult:
-        yield Projects(data_provider=self.data_provider, close_app=self.action_close)
+        yield ProjectsModal(data_provider=self.data_provider, close_app=self.action_close)
 
     def action_close(self) -> None:
         self.app.pop_screen()
