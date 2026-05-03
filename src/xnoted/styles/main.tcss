@@ -170,7 +170,7 @@ EditPasswordModal EditPasswordForm {
 
 EnterPasswordModal EnterPasswordForm {
   width: 30%;
-  height: 5%;
+  height: 3;
 }
 
 CopyTask {
