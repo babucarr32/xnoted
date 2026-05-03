@@ -30,7 +30,8 @@ dependencies = [
     "bcrypt",
     "pymongo",
     "keyring",
-    "cryptography"
+    "cryptography",
+    "pydantic"
 ]
 
 [project.urls]

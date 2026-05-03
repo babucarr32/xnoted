@@ -1,5 +1,5 @@
 import json
-from typing import Iterator
+from typing import Iterator, Callable, Any
 from pathlib import Path
 from datetime import datetime
 from textual.containers import Container
@@ -8,6 +8,9 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from xnoted.errors.errorHandler import ErrorHandler
 from xnoted.database.dataHelper import DataHelper
+import uuid
+from pydantic import ValidationError
+from xnoted.models.project import ProjectExport
 from xnoted.database.dataProvider import DataProvider, Task, Project
 from xnoted.utils.constants import (
     EXPORT_PROJECT_ID,
@@ -29,9 +32,14 @@ class ProjectTypeContainer(RadioSet):
 
 
 class ImportExportProject(Container):
-    def __init__(self, data_provider: DataProvider):
+    def __init__(
+        self,
+        data_provider: DataProvider,
+        on_submit=Callable[[], Any],
+    ):
         super().__init__()
         self.data_provider = data_provider
+        self.on_submit = on_submit
 
     BINDINGS = [
         Binding("enter", "import_export", "Export or Import", priority=True),
@@ -104,6 +112,7 @@ class ImportExportProject(Container):
 
                 self._update_status(f"Successfully exported to {file_path}", "success")
 
+            self.on_submit()
         except Exception as e:
             self._update_status("Failed to export", "error")
             raise Exception("Something we wrong, failed to export") from e
@@ -122,24 +131,27 @@ class ImportExportProject(Container):
                 self._update_status(f"File not found: {file_path}", "error")
                 return
 
-            # Read JSON file
             with open(file_path, "r", encoding="utf-8") as f:
-                import_data = json.load(f)
+                raw_data = json.load(f)
 
-            # Validate data structure
-            if "project" not in import_data or "tasks" not in import_data:
-                self._update_status("Invalid JSON format", "error")
+            try:
+                validated = ProjectExport(**raw_data)
+            except ValidationError as e:
+                self._update_status("Invalid import format", "error")
+                ErrorHandler(
+                    file_name=__name__,
+                    error=e,
+                    cb=lambda e: None,
+                )
                 return
 
-            project_data = data_helper.dict_to_project(import_data["project"])
-            tasks_data = import_data["tasks"]
+            # Access validated data
+            project_data = validated.project
+            tasks_data = validated.tasks
 
-            # Generate new IDs to avoid conflicts
-            import uuid
-
+            # Generate new project ID
             new_project_id = str(uuid.uuid4())
 
-            # Create new project
             new_project = Project(
                 id=new_project_id,
                 title=f"{project_data.title} (Imported)",
@@ -149,48 +161,49 @@ class ImportExportProject(Container):
 
             self.data_provider.save_project(new_project)
 
-            # Import tasks with new IDs
-            id_mapping = {}  # Map old IDs to new IDs
+            # Import tasks
             imported_count = 0
+            original_project = self.data_provider.current_project_id
 
-            for t in tasks_data:
-                task = data_helper.dict_to_task(t)
+            self.data_provider.set_current_project(new_project_id)
 
-                old_task_id = task.id
-                new_task_id = str(uuid.uuid4())
-                id_mapping[old_task_id] = new_task_id
-
+            for task in tasks_data:
                 new_task = Task(
-                    id=new_task_id,
+                    id=str(uuid.uuid4()),
                     title=task.title,
                     content=task.content,
                     status=task.status,
-                    project_id=task.project_id,
+                    project_id=new_project_id,
                     is_protected=task.is_protected,
                 )
-
-                # Temporarily set current project to the new one
-                original_project = self.data_provider.current_project_id
-                self.data_provider.set_current_project(new_project_id)
 
                 self.data_provider.save_task(new_task)
                 imported_count += 1
 
-                # Restore original project
-                if original_project:
-                    self.data_provider.set_current_project(original_project)
+            if original_project:
+                self.data_provider.set_current_project(original_project)
 
             self._update_status(
                 f"Successfully imported project '{new_project.title}' with {imported_count} tasks",
                 "success",
             )
 
+            self.on_submit()
         except json.JSONDecodeError as e:
             self._update_status("Invalid JSON file", "error")
-            raise Exception("JSON decode error") from e
+            ErrorHandler(
+                file_name=__name__,
+                error=e,
+                cb=lambda e: None,
+            )
+
         except Exception as e:
             self._update_status("Failed to import", "error")
-            raise Exception("Something went wrong, import error") from e
+            ErrorHandler(
+                file_name=__name__,
+                error=e,
+                cb=lambda e: None,
+            )
 
     def _update_status(self, message: str, status_type: str = "info") -> None:
         """Update status message with styling"""

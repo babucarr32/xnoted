@@ -6,3 +6,4 @@ bcrypt
 pymongo
 keyring
 cryptography
+pydantic

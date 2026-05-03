@@ -1,7 +1,7 @@
 from typing import List, Optional, Protocol
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from enum import Enum
-
+from datetime import datetime
 
 class ProtectionStatus(Enum):
     PROTECTED = 1
@@ -16,6 +16,10 @@ class Status(Enum):
     CANCELED = 4
 
 
+def now_iso() -> str:
+    return datetime.utcnow().isoformat()
+
+
 @dataclass(frozen=True)
 class Task:
     id: str
@@ -24,7 +28,7 @@ class Task:
     content: str
     is_protected: int
     status: int
-    createdAt: Optional[str] = ""
+    createdAt: str = field(default_factory=now_iso)
     sync_status: Optional[str] = None
 
     def to_dict(self) -> dict:
@@ -36,7 +40,7 @@ class Account:
     id: str
     password: str
     sync_status: Optional[str] = None
-    createdAt: Optional[str] = ""
+    createdAt: str = field(default_factory=now_iso)
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -48,12 +52,11 @@ class Project:
     title: str
     description: str
     type: str
-    createdAt: str | None = ""
+    createdAt: str = field(default_factory=now_iso)
     sync_status: Optional[str] = None
 
     def to_dict(self) -> dict:
         return asdict(self)
-
 
 class DataHandler(Protocol):
     @property

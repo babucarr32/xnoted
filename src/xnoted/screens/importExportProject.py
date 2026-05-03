@@ -20,7 +20,7 @@ class ImportExportProjectModal(ModalScreen):
     def compose(self) -> Iterator[Vertical]:
         yield Vertical(
             ImportExportProject(
-                data_provider=self.data_provider,
+                data_provider=self.data_provider, on_submit=lambda: self.action_close()
             ),
         )
 
