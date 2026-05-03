@@ -68,6 +68,17 @@ class SqlDataHandler:
         self.is_data_unprotected = False
 
         # Update database with missing column
+        self.update_missing_column()
+
+        # Ensure a default project exists
+        self._ensure_default_project()
+        projects = self.load_projects()
+
+        if projects:
+            self.current_project_id = projects[0].id
+            self.project_type = projects[0].type
+
+    def update_missing_column(self):
         if not self._column_exists("task", "is_protected"):
             self.cur.execute(UPDATE_TASK_COLUMN)
             self.con.commit()
@@ -84,14 +95,6 @@ class SqlDataHandler:
             self.cur.execute(UPDATE_ACCOUNT_SYNC_COLUMN)
             self.con.commit()
 
-        # Ensure a default project exists
-        self._ensure_default_project()
-        projects = self.load_projects()
-
-        if projects:
-            self.current_project_id = projects[0].id
-            self.project_type = projects[0].type
-
     @property
     def is_password_set(self) -> bool:
         return bool(self._get_password())
@@ -102,27 +105,29 @@ class SqlDataHandler:
             self.cur.execute("SELECT COUNT(*) FROM project")
             count = self.cur.fetchone()[0]
 
-            if count == 0:
-                import uuid
+            if count > 0:
+                return
 
-                default_project = Project(
-                    id=str(uuid.uuid4()),
-                    title="Default",
-                    description="Default project",
-                    type="general",
-                    sync_status=SyncStatus.PENDING.value,
-                )
-                self.cur.execute(
-                    INSERT_PROJECT_DATA,
-                    (
-                        default_project.id,
-                        default_project.title,
-                        default_project.description,
-                        default_project.type,
-                        default_project.sync_status,
-                    ),
-                )
-                self.con.commit()
+            import uuid
+
+            default_project = Project(
+                id=str(uuid.uuid4()),
+                title="Default",
+                description="Default project",
+                type="general",
+                sync_status=SyncStatus.PENDING.value,
+            )
+            self.cur.execute(
+                INSERT_PROJECT_DATA,
+                (
+                    default_project.id,
+                    default_project.title,
+                    default_project.description,
+                    default_project.type,
+                    default_project.sync_status,
+                ),
+            )
+            self.con.commit()
         except Exception as e:
             self.con.rollback()
             raise DatabaseError(
@@ -415,7 +420,6 @@ class SqlDataHandler:
             raise AccountError(message="Account not found.")
 
         account_id = account.id
-
         account_data = Account(
             id=account_id,
             password=hashed_password,

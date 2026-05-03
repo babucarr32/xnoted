@@ -28,10 +28,9 @@ class XNotedApp(App):
     def __init__(self) -> None:
         super().__init__()
         self.db_keyring = DBKeyring()
-        self.credentials = self.db_keyring.get_credentials()
         self.sqlDataHandler = SqlDataHandler()
         self.data_provider = DataProvider(self.sqlDataHandler)
-        mongoDBSyncHandler = MongoDBSyncHandler(credentials=self.credentials)
+        mongoDBSyncHandler = MongoDBSyncHandler(keyring=self.db_keyring)
         self.sync = SyncProvider(sync=mongoDBSyncHandler)
 
     CSS_PATH = "styles/main.tcss"

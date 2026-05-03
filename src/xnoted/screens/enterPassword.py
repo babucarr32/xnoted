@@ -1,7 +1,7 @@
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
 from xnoted.components.enterPassword import EnterPasswordForm
-from typing import Callable
+from typing import Callable, Any
 from xnoted.database.dataProvider import DataProvider
 
 
@@ -14,7 +14,7 @@ class EnterPasswordModal(ModalScreen):
     def __init__(
         self,
         data_provider: DataProvider,
-        on_password_valid: Callable[[], None],
+        on_password_valid: Callable[[], Any],
     ):
         super().__init__()
         self.data_provider = data_provider

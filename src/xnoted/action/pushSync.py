@@ -3,7 +3,7 @@ from xnoted.sync.syncProvider import Project as SyncProject
 from xnoted.sync.syncProvider import Task as SyncTask
 from xnoted.sync.syncProvider import Account as SyncAccount
 from xnoted.sync.syncProvider import SyncProvider
-from xnoted.database.dataProvider import DataProvider, Task, Project, Account
+from xnoted.database.dataProvider import DataProvider, Task, Project
 
 
 async def push_sync(sync: SyncProvider, data_provider: DataProvider) -> None:

@@ -1,5 +1,4 @@
 import keyring
-from typing import Optional
 from dataclasses import dataclass
 
 
@@ -9,7 +8,7 @@ SERVICE_NAME = "xnoted"
 @dataclass(frozen=True)
 class Credentials:
     url: str
-    db_name: Optional[str] = None
+    db_name: str
 
 
 class DBKeyring:
@@ -22,11 +21,11 @@ class DBKeyring:
         if data.db_name:
             keyring.set_password(SERVICE_NAME, self.NAME_KEY, data.db_name)
 
-    def get_credentials(self) -> Optional[Credentials]:
+    def get_credentials(self) -> Credentials | None:
         url = keyring.get_password(SERVICE_NAME, self.URL_KEY)
         db_name = keyring.get_password(SERVICE_NAME, self.NAME_KEY)
 
-        if not url:
+        if not url or not db_name:
             return None
 
         return Credentials(url=url, db_name=db_name)

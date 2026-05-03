@@ -120,7 +120,7 @@ class Tasks(ListView):
         self.scroll_to_widget(self.children[0], animate=False)
 
     def _handle_mask(self, text: str, is_protected: bool) -> str:
-        return mask(text) if is_protected else text
+        return mask() if is_protected else text
 
     def _get_label(self, arg: GetLabelArg) -> str:
         if arg.project_type == PROJECT_OTHER_TYPE_ID:

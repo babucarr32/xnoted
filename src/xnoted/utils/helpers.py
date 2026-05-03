@@ -25,9 +25,14 @@ def slugify(text: str):
     return text.lower().replace(" ", "_")
 
 
-def mask(text: str) -> str:
-    return "".join(["*" for x in range(10)])
+def mask(text: str = "", unmasked: int = 6) -> str:
+    if not text:
+        return "".join(["*" for x in range(10)])
 
+    if len(text) <= unmasked:
+        return text
+
+    return "*" * (len(text) - unmasked) + text[-unmasked:]
 
 def find_file(file_name: str) -> Path:
     p = Path(__file__).resolve()
