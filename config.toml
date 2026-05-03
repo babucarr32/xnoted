@@ -1,0 +1,58 @@
+[theme]
+name = "dark"
+
+
+# =========================
+# GLOBAL APPLICATION SHORTCUTS
+# =========================
+[keybindings.global]
+
+create_task = "ctrl+n"
+create_project = "ctrl+b"
+select_project = "ctrl+l"
+import_export = "ctrl+o"
+
+show_readme = "ctrl+r"
+
+scroll_down = "ctrl+d"
+scroll_up = "ctrl+u"
+
+unlock_tasks = "u"
+
+command_palette_primary = "ctrl+p"
+config_sync = "s"
+pull_sync = "p"
+push_sync = "P"
+
+edit_password = "L"
+
+
+# =========================
+# TASK LIST NAVIGATION
+# =========================
+[keybindings.task_list]
+
+move_down = "j"
+move_up = "k"
+
+select_task = "enter"
+edit_task = "e"
+copy_task = "c"
+
+lock_task = "l"
+
+delete_task = "d"
+
+cycle_status_prev = "left"
+cycle_status_next = "right"
+
+search = "/"
+
+
+# =========================
+# FORM SHORTCUTS (MODALS)
+# =========================
+[keybindings.form]
+
+save = "enter"
+cancel = "esc"

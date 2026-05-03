@@ -22,32 +22,67 @@ from xnoted.action.pushSync import push_sync
 from xnoted.sync.syncProvider import SyncProvider
 from xnoted.utils.keyringService import DBKeyring
 from xnoted.sync.mongodbSyncHandler import MongoDBSyncHandler
+from xnoted.config.manager import ConfigHandler
 
 
 class XNotedApp(App):
     def __init__(self) -> None:
         super().__init__()
+        self.config_handler = ConfigHandler()
         self.db_keyring = DBKeyring()
-        self.sqlDataHandler = SqlDataHandler()
-        self.data_provider = DataProvider(self.sqlDataHandler)
-        mongoDBSyncHandler = MongoDBSyncHandler(keyring=self.db_keyring)
-        self.sync = SyncProvider(sync=mongoDBSyncHandler)
+        self.sql_data_handler = SqlDataHandler()
+        self.data_provider = DataProvider(self.sql_data_handler)
+        mongo_db_sync_handler = MongoDBSyncHandler(keyring=self.db_keyring)
+        self.sync = SyncProvider(sync=mongo_db_sync_handler)
 
     CSS_PATH = "styles/main.tcss"
-    BINDINGS = [
-        ("ctrl+n", "create_new_task", "Create new task"),
-        ("ctrl+l", "select_project", "Select project"),
-        ("ctrl+o", "import_export_project", "Import or Export project"),
-        ("ctrl+b", "create_new_project", "Create project"),
-        ("ctrl+d", "scroll_body_down", "Scroll body down"),
-        ("ctrl+u", "scroll_body_up", "Scroll body up"),
-        ("p", "pull_sync", "Pull sync data"),
-        ("s", "config_sync", "Config sync data"),
-        ("P", "push_sync", "Push sync data"),
-        ("L", "create_password", "Create or edit password"),
-        ("u", "unlock_password", "Unlock password"),
-        ("ctrl+r", "show_readme", "Show readme"),
-    ]
+
+    def on_mount(self):
+        config = self.config_handler.get()
+        kb = config.keybindings.global_
+
+        self.bind(
+            keys=kb.create_task, action="create_new_task", description="Create new task"
+        )
+        self.bind(
+            keys=kb.select_project,
+            action="select_project",
+            description="Select project",
+        )
+        self.bind(
+            keys=kb.import_export,
+            action="import_export_project",
+            description="Import or Export project",
+        )
+        self.bind(
+            keys=kb.create_project,
+            action="create_new_project",
+            description="Create project",
+        )
+        self.bind(
+            keys=kb.scroll_down,
+            action="scroll_body_down",
+            description="Scroll body down",
+        )
+        self.bind(
+            keys=kb.scroll_up, action="scroll_body_up", description="Scroll body up"
+        )
+        self.bind(keys=kb.pull_sync, action="pull_sync", description="Pull sync data")
+        self.bind(
+            keys=kb.config_sync, action="config_sync", description="Config sync data"
+        )
+        self.bind(keys=kb.push_sync, action="push_sync", description="Push sync data")
+        self.bind(
+            keys=kb.edit_password,
+            action="create_password",
+            description="Create or edit password",
+        )
+        self.bind(
+            keys=kb.unlock_tasks,
+            action="unlock_password",
+            description="Unlock password",
+        )
+        self.bind(keys=kb.show_readme, action="show_readme", description="Show readme")
 
     def compose(self) -> Iterator[ContentWrapper | Footer]:
         yield ContentWrapper(data_provider=self.data_provider)
