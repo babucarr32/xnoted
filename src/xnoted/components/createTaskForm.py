@@ -2,13 +2,16 @@ import uuid
 from xnoted.sync.syncProvider import SyncStatus
 from textual.containers import Container
 from textual.widgets import Input, TextArea
-from textual.app import ComposeResult, Binding
+from textual.app import ComposeResult
 from xnoted.utils.logger import get_logger
 from xnoted.database.dataProvider import DataProvider, Task, ProtectionStatus, Status
 from xnoted.components.tasks import Tasks
 from textual.app import Timer
 from typing import cast, Callable, Any
 from xnoted.utils.constants import TASKS_ID, ERROR_TITLE
+from xnoted.config.manager import ConfigHandler
+
+
 
 logger = get_logger(__name__)
 
@@ -37,6 +40,7 @@ class ContentContainer(TextArea):
 class CreateTaskForm(Container):
     def __init__(
         self,
+        config_handler: ConfigHandler,
         data_provider: DataProvider,
         editing=False,
         task_id="",
@@ -45,13 +49,10 @@ class CreateTaskForm(Container):
         super().__init__()
         self.editing = editing
         self.task_id = task_id
+        self.config_handler = config_handler
         self.data_provider = data_provider
         self.on_submit = on_submit
         self._debounce_timer: None | Timer = None
-
-    BINDINGS = [
-        Binding("enter", "submit", "Save form", priority=True),
-    ]
 
     def _get_title_widget(self) -> InputContainer:
         return cast(InputContainer, self.query_one(f"#{TITLE_ID}"))
@@ -67,6 +68,11 @@ class CreateTaskForm(Container):
         textarea_widget.text = data.content
 
     def on_mount(self) -> None:
+        config = self.config_handler.get()
+        kb = config.keybindings.form
+
+        self._bindings.bind(keys=kb.save, action="submit", description="Save form", priority=True)
+
         if self.editing:
             task = self.data_provider.get_task(self.task_id)
 

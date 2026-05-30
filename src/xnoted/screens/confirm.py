@@ -1,8 +1,9 @@
-from textual.app import ComposeResult, Binding
+from textual.app import ComposeResult
 from textual.containers import Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Label, Static
 from collections.abc import Callable
+from xnoted.config.manager import ConfigHandler
 
 
 class Confirm(Static):
@@ -24,14 +25,10 @@ class Confirm(Static):
 class ConfirmModal(ModalScreen):
     """A modal dialog for confirming actions."""
 
-    BINDINGS = [
-        Binding("escape", "cancel", "Cancel"),
-        Binding("enter", "confirm", "Confirm", priority=True),
-    ]
-
     def __init__(
         self,
         on_confirm: Callable[[], None],
+        config_handler: ConfigHandler,
         title: str = "Confirm Action",
         message: str = "Are you sure you want to proceed?",
     ):
@@ -45,7 +42,15 @@ class ConfirmModal(ModalScreen):
         super().__init__()
         self.on_confirm = on_confirm
         self.modal_title = title
+        self.config_handler = config_handler
         self.modal_message = message
+
+    def on_mount(self) -> None:
+        config = self.config_handler.get()
+        kb = config.keybindings.form
+
+        self._bindings.bind(keys=kb.save, action="confirm", description="Confirm", priority=True)
+        self._bindings.bind(keys=kb.cancel, action="cancel", description="Cancel")
 
     def compose(self) -> ComposeResult:
         yield Confirm(self.modal_title, self.modal_message)

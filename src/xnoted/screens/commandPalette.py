@@ -2,11 +2,11 @@ from textual.screen import ModalScreen
 from collections.abc import Callable
 from textual.app import ComposeResult, ActiveBinding
 from textual.widgets import Label, ListView, ListItem
-from textual.binding import Binding
 from xnoted.utils.constants import COMMAND_PALETTE_ID
 from dataclasses import dataclass
 from typing import TypeAlias
 from enum import Enum
+from xnoted.config.manager import ConfigHandler
 
 
 ActiveBindingType: TypeAlias = dict[str, ActiveBinding]
@@ -50,20 +50,28 @@ commands: list[CommandPaletteItemData] = [
 
 
 class CommandPalettes(ListView):
-    def __init__(self, bindings: ActiveBindingType, close_app: Callable[[], None]):
+    def __init__(
+        self,
+        bindings: ActiveBindingType,
+        close_app: Callable[[], None],
+        config_handler: ConfigHandler,
+    ):
         super().__init__(id=COMMAND_PALETTE_ID)
         self.has_task_result = True
         self.close_app = close_app
         self.active_bingings = bindings
         self.mode: ViewMode = ViewMode.Root
+        self.config_handler = config_handler
 
     BORDER_TITLE = "Command Palette"
 
-    BINDINGS = [
-        Binding("k", "cursor_up", "Cursor up"),
-        Binding("j", "cursor_down", "Cursor down"),
-        Binding("escape", "back", "Back"),
-    ]
+    def on_mount(self) -> None:
+        config = self.config_handler.get()
+        kb = config.keybindings.command_palette
+
+        self._bindings.bind(keys=kb.cursor_up, action="cursor_up", description="Cursor up")
+        self._bindings.bind(keys=kb.cursor_down, action="cursor_down", description="Cursor down")
+        self._bindings.bind(keys=kb.cancel, action="back", description="Back")
 
     def compose(self) -> ComposeResult:
         for cmd in commands:
@@ -137,16 +145,23 @@ class CommandPalettes(ListView):
 
 
 class CommandPaletteModal(ModalScreen):
-    def __init__(self, bindings: ActiveBindingType):
+    def __init__(self, bindings: ActiveBindingType, config_handler: ConfigHandler):
         super().__init__()
         self.bindings = bindings
+        self.config_handler = config_handler
 
-    BINDINGS = [
-        ("escape", "close", "Close modal"),
-    ]
+    def on_mount(self) -> None:
+        config = self.config_handler.get()
+        kb = config.keybindings.form
+
+        self._bindings.bind(keys=kb.cancel, action="close", description="Close Modal ")
 
     def compose(self) -> ComposeResult:
-        yield CommandPalettes(close_app=self.action_close, bindings=self.bindings)
+        yield CommandPalettes(
+            close_app=self.action_close,
+            bindings=self.bindings,
+            config_handler=self.config_handler,
+        )
 
     def action_close(self) -> None:
         self.app.pop_screen()

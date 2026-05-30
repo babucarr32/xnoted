@@ -32,8 +32,13 @@ edit_password = "L"
 # =========================
 [keybindings.task_list]
 
-move_down = "j"
-move_up = "k"
+move = "m"
+
+cursor_down = "j"
+cursor_up = "k"
+
+goto_first = "ctrl+t"
+goto_last = "ctrl+e"
 
 select_task = "enter"
 edit_task = "e"
@@ -46,7 +51,38 @@ delete_task = "d"
 cycle_status_prev = "left"
 cycle_status_next = "right"
 
-search = "/"
+search = "slash"
+
+
+# =========================
+# PROJECT LIST NAVIGATION
+# =========================
+[keybindings.project_list]
+
+cursor_down = "j"
+cursor_up = "k"
+
+delete_project = "d"
+edit_project = "e"
+
+
+# =========================
+# COMMAND PALETTE NAVIGATION
+# =========================
+[keybindings.command_palette]
+
+cursor_down = "j"
+cursor_up = "k"
+
+cancel = "esc"
+
+# =========================
+# COPY TASK NAVIGATION
+# =========================
+[keybindings.copy_task]
+
+cursor_down = "j"
+cursor_up = "k"
 
 
 # =========================
@@ -55,4 +91,4 @@ search = "/"
 [keybindings.form]
 
 save = "enter"
-cancel = "esc"
+cancel = "escape"

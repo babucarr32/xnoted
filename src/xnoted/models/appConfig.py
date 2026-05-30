@@ -22,16 +22,34 @@ class GlobalKeybindings(BaseModel):
 
 
 class TaskListKeybindings(BaseModel):
-    move_down: str
-    move_up: str
+    cursor_down: str
+    cursor_up: str
+    move: str
     select_task: str
     edit_task: str
     copy_task: str
     lock_task: str
+    goto_first: str
+    goto_last: str
     delete_task: str
     cycle_status_prev: str
     cycle_status_next: str
     search: str
+
+class ProjectListKeybindings(BaseModel):
+    cursor_down: str
+    cursor_up: str
+    edit_project: str
+    delete_project: str
+
+class CommandPaletteKeybindings(BaseModel):
+    cursor_down: str
+    cursor_up: str
+    cancel: str
+
+class CopyTaskKeybindings(BaseModel):
+    cursor_down: str
+    cursor_up: str
 
 
 class FormKeybindings(BaseModel):
@@ -42,7 +60,10 @@ class FormKeybindings(BaseModel):
 class Keybindings(BaseModel):
     global_: GlobalKeybindings = Field(alias="global")
     task_list: TaskListKeybindings
+    project_list: ProjectListKeybindings
     form: FormKeybindings
+    command_palette: CommandPaletteKeybindings
+    copy_task: CopyTaskKeybindings
 
 
 # =========================

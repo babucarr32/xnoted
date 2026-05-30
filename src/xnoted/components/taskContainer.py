@@ -3,16 +3,21 @@ from textual.app import ComposeResult
 from textual.containers import Container
 from xnoted.database.dataProvider import DataProvider
 from xnoted.utils.constants import TASK_CONTAINER_ID
+from xnoted.config.manager import ConfigHandler
+
 
 class TaskContainer(Container):
-    def __init__(self, data_provider: DataProvider):
+    def __init__(self, data_provider: DataProvider, config_handler: ConfigHandler):
         super().__init__(id=TASK_CONTAINER_ID)
         self.data_provider = data_provider
         self.border_title = "Tasks"
+        self.config_handler = config_handler
 
     def compose(self) -> ComposeResult:
-        yield Tasks(data_provider=self.data_provider)
-    
+        yield Tasks(
+            data_provider=self.data_provider, config_handler=self.config_handler
+        )
+
     def on_mount(self) -> None:
         """Focus the search input when container is mounted"""
         self.query_one("#tasks").focus()

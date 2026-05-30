@@ -5,11 +5,12 @@ from textual.screen import ModalScreen
 from collections.abc import Callable
 from textual.widgets import Label, ListView, ListItem
 from xnoted.database.dataProvider import DataProvider
-from textual.binding import Binding
 from xnoted.utils.constants import COPY_TASK, EXPORT_ERROR_TITLE
 from typing import cast
 from textual.app import ComposeResult
 from xnoted.utils.logger import get_logger
+from xnoted.config.manager import ConfigHandler
+
 
 logger = get_logger(__name__)
 
@@ -28,19 +29,20 @@ class CopyItem(ListItem):
 
 class CopyTask(ListView):
     def __init__(
-        self, data_provider: DataProvider, close_app: Callable[[], None], item_id: str
+        self,
+        data_provider: DataProvider,
+        close_app: Callable[[], None],
+        item_id: str,
+        config_handler: ConfigHandler,
     ):
         super().__init__(id=COPY_TASK)
         self.has_task_result = True
         self.data_provider = data_provider
         self.close_app = close_app
         self.item_id = item_id
+        self.config_handler = config_handler
 
     BORDER_TITLE = "Copy"
-    BINDINGS = [
-        Binding("k", "cursor_up", "Cursor up"),
-        Binding("j", "cursor_down", "Cursor down"),
-    ]
 
     OPTIONS: list[dict[str, str]] = [
         {"id": cast(str, OptionIDS.COPY_TITLE), "title": "Copy title"},
@@ -49,6 +51,16 @@ class CopyTask(ListView):
     ]
 
     def on_mount(self) -> None:
+        config = self.config_handler.get()
+        kb = config.keybindings.copy_task
+
+        self._bindings.bind(
+            keys=kb.cursor_up, action="cursor_up", description="Cursor up"
+        )
+        self._bindings.bind(
+            keys=kb.cursor_down, action="cursor_down", description="Cursor down"
+        )
+
         self.load_options()
 
     def load_options(self) -> None:
@@ -91,20 +103,26 @@ class CopyTask(ListView):
 
 
 class CopyTaskModal(ModalScreen):
-    def __init__(self, data_provider: DataProvider, item_id: str):
+    def __init__(
+        self, data_provider: DataProvider, item_id: str, config_handler: ConfigHandler
+    ):
         self.data_provider = data_provider
         self.item_id = item_id
+        self.config_handler = config_handler
         super().__init__()
 
-    BINDINGS = [
-        ("escape", "close", "Close modal"),
-    ]
+    def on_mount(self) -> None:
+        config = self.config_handler.get()
+        kb = config.keybindings.form
+
+        self._bindings.bind(keys=kb.cancel, action="close", description="Close modal")
 
     def compose(self) -> ComposeResult:
         yield CopyTask(
             data_provider=self.data_provider,
             close_app=self.action_close,
             item_id=self.item_id,
+            config_handler=self.config_handler,
         )
 
     def action_close(self) -> None:

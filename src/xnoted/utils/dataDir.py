@@ -10,4 +10,5 @@ def get_data_dir() -> Path:
 
 
 XNOTED_PATH = get_data_dir() / "database.db"
-DB_NAME = str(XNOTED_PATH)
+CUSTOM_XNOTED_PATH = get_data_dir() / "config.toml"
+DB_PATH = str(XNOTED_PATH)

@@ -5,7 +5,6 @@ from datetime import datetime
 from textual.containers import Container
 from textual.widgets import RadioSet, RadioButton, Input
 from textual.app import ComposeResult
-from textual.binding import Binding
 from xnoted.errors.errorHandler import ErrorHandler
 from xnoted.database.dataHelper import DataHelper
 import uuid
@@ -17,6 +16,8 @@ from xnoted.utils.constants import (
     IMPORT_PROJECT_ID,
     EXPORT_PROJECT_RADIO_ID,
 )
+from xnoted.config.manager import ConfigHandler
+
 
 data_helper = DataHelper()
 
@@ -34,16 +35,25 @@ class ProjectTypeContainer(RadioSet):
 class ImportExportProject(Container):
     def __init__(
         self,
+        config_handler: ConfigHandler,
         data_provider: DataProvider,
         on_submit=Callable[[], Any],
     ):
         super().__init__()
         self.data_provider = data_provider
         self.on_submit = on_submit
+        self.config_handler = config_handler
 
-    BINDINGS = [
-        Binding("enter", "import_export", "Export or Import", priority=True),
-    ]
+    def on_mount(self) -> None:
+        config = self.config_handler.get()
+        kb = config.keybindings.form
+
+        self._bindings.bind(
+            keys=kb.save,
+            action="import_export",
+            description="Export or Import",
+            priority=True,
+        )
 
     def compose(self) -> ComposeResult:
         yield ProjectTypeContainer()

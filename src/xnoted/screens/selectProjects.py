@@ -3,10 +3,10 @@ from textual.screen import ModalScreen
 from collections.abc import Callable
 from textual.widgets import Label, ListView, ListItem
 from xnoted.database.dataProvider import DataProvider
-from textual.binding import Binding
 from typing import cast, Any
 from xnoted.utils.helpers import slugify
 from xnoted.utils.constants import PROJECTS_ID
+from xnoted.config.manager import ConfigHandler
 
 
 class ProjectItem(ListItem):
@@ -23,6 +23,7 @@ class SelectProject(ListView):
         self,
         data_provider: DataProvider,
         close_app: Callable[[], None],
+        config_handler: ConfigHandler,
         on_select: Callable[[str], None],
         close_on_select: bool,
         border_title: str,
@@ -31,16 +32,21 @@ class SelectProject(ListView):
         self.has_task_result = True
         self.data_provider = data_provider
         self.close_app = close_app
+        self.config_handler = config_handler
         self.on_select = on_select
         self.close_on_select = close_on_select
         self.border_title = border_title
 
-    BINDINGS = [
-        Binding("k", "cursor_up", "Cursor up"),
-        Binding("j", "cursor_down", "Cursor down"),
-    ]
-
     def on_mount(self) -> None:
+        config = self.config_handler.get()
+        kb = config.keybindings.project_list
+
+        self._bindings.bind(
+            keys=kb.cursor_up, action="cursor_up", description="Cursor up"
+        )
+        self._bindings.bind(
+            keys=kb.cursor_down, action="cursor_down", description="Cursor down"
+        )
         self.load_projects()
 
     def load_projects(self) -> None:
@@ -76,20 +82,26 @@ class SelectProjectModal(ModalScreen):
         self,
         data_provider: DataProvider,
         on_select: Callable[[str], None],
+        config_handler: ConfigHandler,
         _border_title: str = "Select project",
     ):
         super().__init__()
         self.data_provider = data_provider
         self.on_select = on_select
+        self.config_handler = config_handler
         self._border_title: Any = _border_title
 
-    BINDINGS = [
-        ("escape", "close", "Close modal"),
-    ]
+    def on_mount(self) -> None:
+        config = self.config_handler.get()
+        kb = config.keybindings.form
+        print('----------', kb)
+
+        self._bindings.bind(keys=kb.cancel, action="close", description="Close modal")
 
     def compose(self) -> Iterator[SelectProject]:
         yield SelectProject(
             data_provider=self.data_provider,
+            config_handler=self.config_handler,
             close_app=self.action_close,
             close_on_select=True,
             on_select=self.on_select,

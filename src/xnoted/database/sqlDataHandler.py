@@ -2,7 +2,7 @@ import bcrypt
 import sqlite3
 from typing import List, Optional, cast, Callable, TypeVar, Generic, TypeAlias, Literal
 from xnoted.utils.helpers import derive_encryption_key
-from xnoted.utils.dataDir import DB_NAME
+from xnoted.utils.dataDir import DB_PATH
 from xnoted.errors.projectNotFoundError import ProjectNotFoundError
 from xnoted.errors.encryptionError import EncryptionError
 from xnoted.errors.passwordError import PasswordError
@@ -55,11 +55,11 @@ class DataFilter(Generic[T]):
 
 class SqlDataHandler:
     def __init__(self) -> None:
-        self.path = DB_NAME
+        self.path = DB_PATH
         self.current_project_id: Optional[str] = None
         self.project_name: str = "Project"
         self.project_type: str = ""
-        self.con = sqlite3.connect(DB_NAME)
+        self.con = sqlite3.connect(DB_PATH)
         self.cur = self.con.cursor()
         self.cur.execute(CREATE_TASK_TABLE)
         self.cur.execute(CREATE_ACCOUNT_TABLE)

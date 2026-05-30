@@ -1,7 +1,7 @@
 from typing import Callable
 from textual.containers import Container
 from typing import cast
-from textual.app import Timer, Binding
+from textual.app import Timer
 from textual.widgets import Input, Static
 from textual.app import ComposeResult
 from xnoted.database.dataProvider import DataProvider
@@ -13,6 +13,7 @@ from xnoted.utils.constants import (
     RE_PASSWORD,
     CREATE_PASSWORD_FORM_CONTAINER_ID,
 )
+from xnoted.config.manager import ConfigHandler
 
 
 class InputContainer(Input):
@@ -35,16 +36,24 @@ class FormContainer(Static):
 
 class CreatePasswordForm(Container):
     def __init__(
-        self, data_provider: DataProvider, on_password_created: Callable[[], None]
+        self,
+        data_provider: DataProvider,
+        on_password_created: Callable[[], None],
+        config_handler: ConfigHandler,
     ):
         super().__init__(id=CREATE_PASSWORD_ID)
         self.data_provider = data_provider
         self._debounce_timer: Timer | None = None
         self.on_password_created = on_password_created
+        self.config_handler = config_handler
 
-    BINDINGS = [
-        Binding("enter", "submit", "Save form", priority=True),
-    ]
+    def on_mount(self) -> None:
+        config = self.config_handler.get()
+        kb = config.keybindings.form
+
+        self._bindings.bind(
+            keys=kb.save, action="submit", description="Save form", priority=True
+        )
 
     def compose(self) -> ComposeResult:
         yield FormContainer()

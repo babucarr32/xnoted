@@ -85,11 +85,19 @@ class XNotedApp(App):
         self.bind(keys=kb.show_readme, action="show_readme", description="Show readme")
 
     def compose(self) -> Iterator[ContentWrapper | Footer]:
-        yield ContentWrapper(data_provider=self.data_provider)
-        yield Footer(data_provider=self.data_provider)
+        yield ContentWrapper(
+            data_provider=self.data_provider, config_handler=self.config_handler
+        )
+        yield Footer(
+            data_provider=self.data_provider, config_handler=self.config_handler
+        )
 
     def action_create_new_task(self) -> None:
-        self.app.push_screen(CreateTaskModal(data_provider=self.data_provider))
+        self.app.push_screen(
+            CreateTaskModal(
+                data_provider=self.data_provider, config_handler=self.config_handler
+            )
+        )
 
     @work(exclusive=True)
     async def action_pull_sync(self) -> None:
@@ -123,7 +131,11 @@ class XNotedApp(App):
 
     def action_create_new_project(self) -> None:
         self.app.push_screen(
-            CreateProjectModal(data_provider=self.data_provider, on_submit=lambda: None)
+            CreateProjectModal(
+                data_provider=self.data_provider,
+                on_submit=lambda: None,
+                config_handler=self.config_handler,
+            )
         )
 
     def action_create_password(self) -> None:
@@ -131,28 +143,47 @@ class XNotedApp(App):
             pass
 
         if self.data_provider.is_password_set:
-            self.app.push_screen(EditPasswordModal(data_provider=self.data_provider))
+            self.app.push_screen(
+                EditPasswordModal(
+                    data_provider=self.data_provider, config_handler=self.config_handler
+                )
+            )
             return
 
         self.app.push_screen(
             CreatePasswordModal(
                 data_provider=self.data_provider,
                 on_password_created=on_password_created,
+                config_handler=self.config_handler,
             )
         )
 
     def action_config_sync(self) -> None:
-        self.app.push_screen(SyncConfigModal(data_provider=self.data_provider))
+        self.app.push_screen(
+            SyncConfigModal(
+                data_provider=self.data_provider, config_handler=self.config_handler
+            )
+        )
 
     def action_import_export_project(self) -> None:
-        self.app.push_screen(ImportExportProjectModal(data_provider=self.data_provider))
+        self.app.push_screen(
+            ImportExportProjectModal(
+                data_provider=self.data_provider, config_handler=self.config_handler
+            )
+        )
 
     def action_select_project(self) -> None:
-        self.app.push_screen(SelectProjectModal(data_provider=self.data_provider))
+        self.app.push_screen(
+            SelectProjectModal(
+                data_provider=self.data_provider, config_handler=self.config_handler
+            )
+        )
 
     def action_command_palette(self) -> None:
         bindings = self.app.active_bindings
-        self.app.push_screen(CommandPaletteModal(bindings=bindings))
+        self.app.push_screen(
+            CommandPaletteModal(bindings=bindings, config_handler=self.config_handler)
+        )
 
     def action_unlock_password(self) -> None:
         def refresh_tasks():
@@ -170,7 +201,9 @@ class XNotedApp(App):
         self.data_provider.is_data_unprotected = True
         self.app.push_screen(
             EnterPasswordModal(
-                data_provider=self.data_provider, on_password_valid=refresh_tasks
+                data_provider=self.data_provider,
+                on_password_valid=refresh_tasks,
+                config_handler=self.config_handler,
             )
         )
 

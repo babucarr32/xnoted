@@ -54,6 +54,7 @@ artifacts = [
 [tool.hatch.build.targets.wheel.force-include]
 "README.md" = "xnoted/README.md"
 "banner.md" = "xnoted/banner.md"
+"config.toml" = "xnoted/config.toml"
 
 [tool.pylsp-mypy]
 enabled = true

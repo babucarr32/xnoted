@@ -4,6 +4,8 @@ from xnoted.database.dataProvider import DataProvider
 from textual.reactive import var
 from xnoted.errors.errorHandler import ErrorHandler
 from xnoted.utils.helpers import find_file
+from xnoted.config.manager import ConfigHandler
+
 
 
 class Body(MarkdownViewer):
@@ -11,11 +13,12 @@ class Body(MarkdownViewer):
 
     _pending_task_id: var[str | None] = var(None)
 
-    def __init__(self, data_provider: DataProvider):
+    def __init__(self, data_provider: DataProvider, config_handler: ConfigHandler):
         super().__init__(show_table_of_contents=False)
         self.code_indent_guides = False
         self.data_provider = data_provider
         self._debounce_timer: Timer | None = None
+        self.config_handler=config_handler
 
     def welcome(self) -> None:
         """Load and display README content on mount."""

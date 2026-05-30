@@ -23,10 +23,11 @@ from xnoted.screens.createPassword import CreatePasswordModal
 from typing import cast, Callable
 from dataclasses import dataclass
 from xnoted.database.dataProvider import DataProvider, Task, ProtectionStatus
-from textual.binding import Binding
 from textual.reactive import reactive
 from xnoted.utils.logger import get_logger
 from xnoted.components.footer import Footer
+from xnoted.config.manager import ConfigHandler
+
 
 logger = get_logger(__name__)
 
@@ -54,31 +55,57 @@ class TaskItem(ListItem):
 
 
 class Tasks(ListView):
-    def __init__(self, data_provider=DataProvider) -> None:
+    def __init__(
+        self, data_provider: DataProvider, config_handler: ConfigHandler
+    ) -> None:
         super().__init__(id=TASKS_ID)
         self.has_task_result = True
         self.data_provider = data_provider
         self.tasks: list[Task] = []
-
-    BINDINGS = [
-        Binding("m", "move", "Move task"),
-        Binding("enter", "select_cursor", "Select"),
-        Binding("k", "cursor_up", "Cursor up"),
-        Binding("j", "cursor_down", "Cursor down"),
-        Binding("/", "search", "Search"),
-        Binding("e", "edit_task", "Cursor down"),
-        Binding("l", "lock_task", "Lock down"),
-        Binding("c", "copy_task", "Copy down"),
-        Binding("d", "delete_task", "Delete down"),
-        Binding("ctrl+e", "goto_last", "Last item"),
-        Binding("ctrl+t", "goto_first", "First item"),
-        Binding("left", f"change_status('{LEFT_DIRECTION}')", "Change status"),
-        Binding("right", f"change_status('{RIGHT_DIRECTION}')", "Change status"),
-    ]
+        self.config_handler = config_handler
 
     last_matched_search: reactive[str] = reactive("")
 
     def on_mount(self) -> None:
+        config = self.config_handler.get()
+        kb = config.keybindings.task_list
+
+        self._bindings.bind(keys=kb.move, action="move", description="Move task")
+        self._bindings.bind(
+            keys=kb.select_task, action="select_cursor", description="Select"
+        )
+        self._bindings.bind(
+            keys=kb.cursor_up, action="cursor_up", description="Cursor up"
+        )
+        self._bindings.bind(
+            keys=kb.cursor_down, action="cursor_down", description="Cursor down"
+        )
+        self._bindings.bind(keys=kb.search, action="search", description="Search")
+        self._bindings.bind(
+            keys=kb.edit_task, action="edit_task", description="Cursor down"
+        )
+        self._bindings.bind(
+            keys=kb.lock_task, action="lock_task", description="Lock down"
+        )
+        self._bindings.bind(
+            keys=kb.copy_task, action="copy_task", description="Copy down"
+        )
+        self._bindings.bind(
+            keys=kb.delete_task, action="delete_task", description="Delete down"
+        )
+        self._bindings.bind(
+            keys=kb.goto_last, action="goto_last", description="Last item"
+        )
+        self._bindings.bind(
+            keys=kb.goto_first, action="goto_first", description="First item"
+        )
+        self._bindings.bind(
+            kb.cycle_status_prev, f"change_status('{LEFT_DIRECTION}')", "Change status"
+        )
+        self._bindings.bind(
+            kb.cycle_status_next, f"change_status('{RIGHT_DIRECTION}')", "Change status"
+        )
+
         self.load_tasks()
 
     def focus_fist_child(self):
@@ -128,16 +155,41 @@ class Tasks(ListView):
 
         return f"{ICONS[arg.status].get('icon')} {self._handle_mask(arg.title, arg.is_protected)}"
 
+    def _project_with_id_not_found(self, project_id: str) -> None:
+        ErrorHandler(
+            file_name=__name__,
+            error=None,
+            cb=lambda e: self.notify(
+                f"Project with id {project_id} not found",
+                title=ERROR_TITLE,
+                severity=e.severity,
+            ),
+        )
+
     def load_tasks(self) -> None:
         try:
+            if not self.data_provider.current_project_id:
+                self._project_with_id_not_found(
+                    cast(str, self.data_provider.current_project_id)
+                )
+                return None
+
             self.tasks = self.data_provider.get_tasks(
                 self.data_provider.current_project_id
             )
+
             self.clear()
             self.call_after_refresh(self.focus_fist_child)
+
             project = self.data_provider.get_project(
                 self.data_provider.current_project_id
             )
+
+            if not project:
+                self._project_with_id_not_found(
+                    cast(str, self.data_provider.current_project_id)
+                )
+                return None
 
             if not self.tasks or not len(self.tasks):
                 self.append(ListItem(Label("No tasks yet")))
@@ -191,11 +243,23 @@ class Tasks(ListView):
 
             self.clear()
 
+            if not self.data_provider.current_project_id:
+                self._project_with_id_not_found(
+                    cast(str, self.data_provider.current_project_id)
+                )
+                return
+
             if len(self.tasks) and self.has_task_result:
                 found_any = False
                 project = self.data_provider.get_project(
                     self.data_provider.current_project_id
                 )
+
+                if not project:
+                    self._project_with_id_not_found(
+                        cast(str, self.data_provider.current_project_id)
+                    )
+                    return
 
                 for task in self.tasks:
                     if search_text in task.title.lower() and not task.is_protected:
@@ -269,6 +333,7 @@ class Tasks(ListView):
                         data_provider=self.data_provider,
                         editing=True,
                         task_id=task.id,
+                        config_handler=self.config_handler,
                     )
                 )
         except Exception as e:
@@ -288,6 +353,18 @@ class Tasks(ListView):
                 return
 
             task = self.data_provider.get_task(task_id=child.task_id)
+
+            if not task:
+                ErrorHandler(
+                    file_name=__name__,
+                    error=None,
+                    cb=lambda e: self.notify(
+                        f"Task with id {child.task_id} not found",
+                        title=ERROR_TITLE,
+                        severity=e.severity,
+                    ),
+                )
+                return
 
             if not task:
                 logger.error(f"Task with id {task.id} not found")
@@ -314,7 +391,7 @@ class Tasks(ListView):
             label_arg = GetLabelArg(
                 status=new_status,
                 title=task.title,
-                is_protected=task.is_protected,
+                is_protected=task.is_protected == ProtectionStatus.PROTECTED.value,
                 project_type=self.data_provider.project_type,
             )
 
@@ -360,7 +437,9 @@ class Tasks(ListView):
                     ),
                 )
 
-        self.app.push_screen(ConfirmModal(on_confirm=on_confirm))
+        self.app.push_screen(
+            ConfirmModal(on_confirm=on_confirm, config_handler=self.config_handler)
+        )
 
     def _update_task_state(
         self,
@@ -375,7 +454,19 @@ class Tasks(ListView):
 
         self.data_provider.update_task(task.id, updated)
 
+        if not self.data_provider.current_project_id:
+            self._project_with_id_not_found(
+                cast(str, self.data_provider.current_project_id)
+            )
+            return
+
         project = self.data_provider.get_project(self.data_provider.current_project_id)
+
+        if not project:
+            self._project_with_id_not_found(
+                cast(str, self.data_provider.current_project_id)
+            )
+            return
 
         label = self._get_label(
             GetLabelArg(
@@ -402,6 +493,7 @@ class Tasks(ListView):
             self.app.push_screen(
                 CreatePasswordModal(
                     data_provider=self.data_provider,
+                    config_handler=self.config_handler,
                     on_password_created=proceed,
                 )
             )
@@ -420,7 +512,9 @@ class Tasks(ListView):
 
         self.app.push_screen(
             EnterPasswordModal(
-                data_provider=self.data_provider, on_password_valid=on_password_valid
+                data_provider=self.data_provider,
+                on_password_valid=on_password_valid,
+                config_handler=self.config_handler,
             )
         )
 
@@ -475,7 +569,11 @@ class Tasks(ListView):
             if child and hasattr(child, "task_id"):
                 task_id = child.task_id
                 self.app.push_screen(
-                    CopyTaskModal(data_provider=self.data_provider, item_id=task_id)
+                    CopyTaskModal(
+                        data_provider=self.data_provider,
+                        item_id=task_id,
+                        config_handler=self.config_handler,
+                    )
                 )
         except Exception as e:
             ErrorHandler(
@@ -500,6 +598,12 @@ class Tasks(ListView):
             child: TaskItem | None = cast(TaskItem | None, self.highlighted_child)
 
             if not child or not hasattr(child, "task_id"):
+                return
+
+            if not self.data_provider.current_project_id:
+                self._project_with_id_not_found(
+                    cast(str, self.data_provider.current_project_id)
+                )
                 return
 
             task_id = child.task_id
@@ -537,6 +641,7 @@ class Tasks(ListView):
                     data_provider=self.data_provider,
                     on_select=on_select,
                     _border_title="Move to",
+                    config_handler=self.config_handler,
                 )
             )
         except Exception as e:

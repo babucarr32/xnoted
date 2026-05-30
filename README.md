@@ -153,6 +153,7 @@ pip install --force .
 | `k` | Move up | Move cursor up in task list |
 | `enter` | Select task | View the selected task's content |
 | `e` | Edit task | Edit the highlighted task |
+| `m` | Move task | Move the highlighted task |
 | `c` | Copy task | Copy the highlighted task |
 | `l` | Lock task / Permanently unlock task | Lock or permanently unlock the highlighted task |
 | `d` | Delete task | Delete the highlighted task (with confirmation) |
@@ -160,11 +161,26 @@ pip install --force .
 | `→` | Next status | Cycle task status forward |
 | `/` | Search | Search the tasks |
 
+#### Project List Navigation
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `j` | Move down | Move cursor down in task list |
+| `k` | Move up | Move cursor up in task list |
+| `e` | Edit project | Edit the highlighted project |
+| `d` | Delete project | Delete the highlighted project (with confirmation) |
+
+
+#### Copy Task List Navigation
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `j` | Move down | Move cursor down in copy task list |
+| `k` | Move up | Move cursor up in copy task list |
+
 #### Form(s) Shortcuts
 | Shortcut | Action | Description |
 |----------|--------|-------------|
 | `enter` | Save | Save the current changes |
-| `esc` | Cancel | Close modal without saving |
+| `escape` | Cancel | Close modal without saving |
 
 #### Task Status Indicators
 - ○ **Not started** - Task hasn't been started yet

@@ -2,7 +2,7 @@ import uuid
 from xnoted.sync.syncProvider import SyncStatus
 from textual.containers import Container
 from textual.widgets import Input, TextArea, RadioSet, RadioButton, Label
-from textual.app import ComposeResult, Binding
+from textual.app import ComposeResult
 from xnoted.database.dataProvider import DataProvider, Project
 from xnoted.components.tasks import Tasks
 from typing import cast, Callable, Any
@@ -15,6 +15,7 @@ from xnoted.utils.constants import (
     PROJECT_TYPE_ID,
     PROJECT_OTHER_TYPE_ID,
 )
+from xnoted.config.manager import ConfigHandler
 from typing import Iterator
 
 
@@ -49,6 +50,7 @@ class CreateProjectForm(Container):
     def __init__(
         self,
         data_provider: DataProvider,
+        config_handler: ConfigHandler,
         project_id="",
         on_submit=Callable[[], Any],
         project_type=PROJECT_TASK_TYPE_ID,
@@ -58,12 +60,9 @@ class CreateProjectForm(Container):
         self.data_provider = data_provider
         self.project_type = project_type
         self.editing = editing
+        self.config_handler = config_handler
         self.on_submit = on_submit
         self.project_id = project_id
-
-    BINDINGS = [
-        Binding("enter", "submit", "Save project form", priority=True),
-    ]
 
     def _get_title_widget(self) -> InputContainer:
         return cast(InputContainer, self.query_one(f"#{PROJECT_TITLE_ID}"))
@@ -94,6 +93,11 @@ class CreateProjectForm(Container):
                 return
 
     def on_mount(self) -> None:
+        config = self.config_handler.get()
+        kb = config.keybindings.form
+
+        self._bindings.bind(keys=kb.save, action="submit", description="Save project form")
+
         if self.editing:
             project = self.data_provider.get_project(self.project_id)
 

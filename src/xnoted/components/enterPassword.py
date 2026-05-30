@@ -1,6 +1,6 @@
 from textual.containers import Container
 from typing import cast
-from textual.app import Timer,Binding
+from textual.app import Timer
 from collections.abc import Callable
 from textual.widgets import Input, Static
 from textual.app import ComposeResult
@@ -11,6 +11,7 @@ from xnoted.utils.constants import (
     PASSWORD,
     ENTER_PASSWORD_FORM_CONTAINER_ID,
 )
+from xnoted.config.manager import ConfigHandler
 
 
 class InputContainer(Input):
@@ -38,16 +39,22 @@ class EnterPasswordForm(Container):
         data_provider: DataProvider,
         close_app: Callable[[], None],
         on_password_valid: Callable[[], None],
+        config_handler: ConfigHandler,
     ):
         super().__init__(id=ENTER_PASSWORD_ID)
         self.data_provider = data_provider
         self.close_app = close_app
+        self.config_handler = config_handler
         self.on_password_valid = on_password_valid
         self._debounce_timer: Timer | None = None
 
-    BINDINGS = [
-        Binding("enter", "submit", "Validate password", priority=True),
-    ]
+    def on_mount(self) -> None:
+        config = self.config_handler.get()
+        kb = config.keybindings.form
+
+        self._bindings.bind(
+            keys=kb.save, action="submit", description="Validate password"
+        )
 
     def compose(self) -> ComposeResult:
         yield FormContainer()
@@ -58,9 +65,7 @@ class EnterPasswordForm(Container):
 
         if not is_valid_password:
             password_widget = self.query_one(f"#{PASSWORD_ID}")
-            password_widget.border_title = (
-                f"{PASSWORD} / Invalid password"
-            )
+            password_widget.border_title = f"{PASSWORD} / Invalid password"
         else:
             self.on_password_valid()
             self.close_app()

@@ -2,19 +2,18 @@ from __future__ import annotations
 from textual.widgets import Static, Input
 from xnoted.utils.constants import TASKS_ID
 from xnoted.database.dataProvider import DataProvider
-from textual.app import Binding
 from typing import Iterator, cast
+from xnoted.config.manager import ConfigHandler
 
 
 class FooterSearch(Static):
-    BINDINGS = [
-        Binding("enter", "submit", "Submit search", priority=True),
-    ]
-
-    def __init__(self, data_provider: DataProvider, toggle_search):
+    def __init__(
+        self, data_provider: DataProvider, toggle_search, config_handler: ConfigHandler
+    ):
         super().__init__()
         self.data_provider = data_provider
         self.toggle_search = toggle_search
+        self.config_handler = config_handler
 
     def compose(self) -> Iterator[Input]:
         yield Input(
@@ -32,6 +31,12 @@ class FooterSearch(Static):
         tasks_widget.quick_search(event.value)
 
     def on_mount(self) -> None:
+        config = self.config_handler.get()
+        kb = config.keybindings.form
+
+        self._bindings.bind(
+            keys=kb.save, action="submit", description="Submit search", priority=True
+        )
         self.query_one("#search-input").focus()
 
     def action_submit(self) -> None:

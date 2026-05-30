@@ -1,11 +1,10 @@
 from dataclasses import dataclass
-from xnoted.errors.errorHandler import ErrorHandler
 from typing import Callable, cast
 
 from xnoted.utils.helpers import mask
 from xnoted.screens.confirm import ConfirmModal
 from xnoted.screens.enterPassword import EnterPasswordModal
-from textual.app import ComposeResult, Binding
+from textual.app import ComposeResult
 from textual.containers import Container
 from textual.widgets import Input
 from textual.app import Timer
@@ -13,6 +12,7 @@ from xnoted.utils.constants import ERROR_TITLE
 from xnoted.database.dataProvider import DataProvider
 from xnoted.utils.keyringService import DBKeyring
 from xnoted.utils.logger import get_logger
+from xnoted.config.manager import ConfigHandler
 
 URL_ID = "url"
 DATABASE_NAME_ID = "database"
@@ -33,10 +33,9 @@ class InputContainer(Input):
 
 
 class SyncConfigForm(Container):
-    BINDINGS = [Binding("enter", "submit", "Save form", priority=True)]
-
     def __init__(
         self,
+        config_handler: ConfigHandler,
         on_submit: Callable[[FormData], None],
         data_provider: DataProvider,
         task_id: str = "",
@@ -46,6 +45,7 @@ class SyncConfigForm(Container):
         self.data_provider = data_provider
         self.on_submit = on_submit
         self._actual_url = ""
+        self.config_handler = config_handler
         self._debounce_timer: Timer | None = None
 
     @property
@@ -92,6 +92,13 @@ class SyncConfigForm(Container):
         self._get_db_name_widget().value = data.db_name
 
     def on_mount(self) -> None:
+        config = self.config_handler.get()
+        kb = config.keybindings.form
+
+        self._bindings.bind(
+            keys=kb.save, action="submit", description="Move task", priority=True
+        )
+
         db_keyring = DBKeyring()
         credentials = db_keyring.get_credentials()
 
@@ -131,6 +138,7 @@ class SyncConfigForm(Container):
             EnterPasswordModal(
                 data_provider=self.data_provider,
                 on_password_valid=lambda: self.on_submit(form_data),
+                config_handler=self.config_handler,
             )
         )
 
@@ -141,6 +149,7 @@ class SyncConfigForm(Container):
                     on_confirm=self._handle_submit,
                     title="Alert",
                     message="Invalid URL detected, are you sure you want to continue?",
+                    config_handler=self.config_handler,
                 )
             )
             return
