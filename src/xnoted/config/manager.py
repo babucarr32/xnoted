@@ -2,11 +2,12 @@ from xnoted.config.loader import ConfigLoader
 from xnoted.models.appConfig import AppConfig
 from pydantic import ValidationError
 from xnoted.utils.deepMerge import deep_merge
+from xnoted.utils.helpers import find_file
 
 
 class ConfigHandler:
     def __init__(self, path="config.toml") -> None:
-        self.loader = ConfigLoader(path)
+        self.loader = ConfigLoader(find_file(path))
         self._raw: dict = {}
         self._custom_raw: dict = {}
         self._config: AppConfig | None = None
